@@ -50,7 +50,8 @@ Then:
     2. Sort the result page by last published
     3. Copy the search URL in @RentingBerlinBot chat
 ```
-Done. You will get messages whenever new ads are discovered.
+Done. You will get messages whenever new ads are discovered. Checks are run every 2 minutes.
+
 
 
 ## Supported websites
