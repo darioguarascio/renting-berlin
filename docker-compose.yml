@@ -1,0 +1,53 @@
+version: "3.5"
+
+volumes:
+  worker-logs:
+    driver: local
+  redis-data:
+    driver: local
+
+services:
+    redis:
+      volumes:
+        - redis-data:/data
+      container_name: rb.redis
+      restart: always
+      image: redis:latest
+
+    cli:
+      environment:
+        REDIS_ADDRESS: rb.redis:6379
+        TG_APIKEY:
+        TG_BOTNAME:
+        TG_ADMINS:
+
+        working_dir: /app
+      build:
+        context: docker/worker
+      restart: unless-stopped
+      volumes:
+        - worker-logs:/logs
+        - ./VERSION:/VERSION
+        - ./src/phalcon-cli/:/app
+      depends_on:
+        - redis
+
+    bot:
+      container_name: rb.bot
+      entrypoint: [ "pcli", "bot" ]
+      environment:
+        REDIS_ADDRESS: rb.redis:6379
+        TG_APIKEY:
+        TG_BOTNAME:
+        TG_ADMINS:
+
+        working_dir: /app
+      build:
+        context: docker/worker
+      restart: unless-stopped
+      volumes:
+        - worker-logs:/logs
+        - ./VERSION:/VERSION
+        - ./src/phalcon-cli/:/app
+      depends_on:
+        - redis
