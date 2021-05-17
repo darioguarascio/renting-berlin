@@ -1,6 +1,11 @@
 # Renting Berlin project
 *renting.berlin* is a project born out of living the nightmare of finding a place to live in Berlin, aiming to make a little bit better the house hunting process, already difficult per se, and in Berlin this task becomes a full-time frustrating job, eating out your time and nerves.
 
+
+## DISCLAIMER
+Some websites implement an anti-automated requests policy that end up with this bot unable to perform requests. There are tecniques to bypass this protections such as rotating proxies or increasing requests interval, none of which have been implemented here as this is a proof-of-concept.
+In short: take it as it is
+
 ## How to find an apartment in Berlin?
 The modern approach is to use real estate websites such as [immobilienscout24](https://www.immobilienscout24.de) or [wg-gesucht](https://www.wg-gesucht.de/). 
 Because of Berlin's high demand, one of the main issues of this process is the significant loss of time spent waiting for new ads to be published. After searching for a while, you can start feeling the pressure of having more demand than offer, which pushes you to try to be among the first ones applying, in order to have more chances.
