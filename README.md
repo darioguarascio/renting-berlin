@@ -41,18 +41,6 @@ TG_ADMINS=<comma-separated user id list>
 - `docker-compose run --rm cli pcli main load` this commands fills the workers queue, triggering them to run checks. It needs to be run periodically
 
 
-## Hosted version
-In Telegram, search for [@RentingBerlinBot](https://t.me/RentingBerlinBot) and type `/start` in its chat.
-<br/>
-Then:
-```
-    1. Search for your apartment criteria in any of the supported websites
-    2. Sort the result page by last published
-    3. Copy the search URL in @RentingBerlinBot chat
-```
-Done. You will get messages whenever new ads are discovered. Checks are run every 2 minutes.
-
-
 
 ## Supported websites
 Each websites has a unique xpath query to retrive the latest item published on a listing page.
