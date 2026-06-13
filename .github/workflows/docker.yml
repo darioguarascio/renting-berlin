@@ -53,12 +53,30 @@ jobs:
           command_timeout: 10m
           script: |
             set -euo pipefail
+            export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${PATH:-}"
             cd "${{ secrets.DEPLOY_PATH }}"
-            if docker compose version >/dev/null 2>&1; then
-              COMPOSE="docker compose"
-            else
-              COMPOSE="docker-compose"
-            fi
-            $COMPOSE pull
-            $COMPOSE --profile tools run --rm migrate
-            $COMPOSE up -d
+
+            compose() {
+              if docker compose version >/dev/null 2>&1; then
+                docker compose "$@"
+              elif command -v docker-compose >/dev/null 2>&1; then
+                docker-compose "$@"
+              else
+                echo "Installing Docker Compose plugin..."
+                plugin_dir="${HOME}/.docker/cli-plugins"
+                mkdir -p "$plugin_dir"
+                arch="$(uname -m)"
+                case "$arch" in
+                  x86_64) arch=amd64 ;;
+                  aarch64|arm64) arch=arm64 ;;
+                esac
+                curl -fsSL "https://github.com/docker/compose/releases/download/v2.36.0/docker-compose-linux-${arch}" \
+                  -o "${plugin_dir}/docker-compose"
+                chmod +x "${plugin_dir}/docker-compose"
+                docker compose "$@"
+              fi
+            }
+
+            compose pull
+            compose --profile tools run --rm migrate
+            compose up -d
