@@ -53,23 +53,19 @@ jobs:
           command_timeout: 10m
           script: |
             set -euo pipefail
-            export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${PATH:-}"
+            export PATH="${HOME}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${PATH:-}"
             cd "${{ secrets.DEPLOY_PATH }}"
 
             compose() {
-              if docker compose version >/dev/null 2>&1; then
-                docker compose "$@"
+              if [ -x "${HOME}/bin/docker-compose" ]; then
+                "${HOME}/bin/docker-compose" "$@"
               elif command -v docker-compose >/dev/null 2>&1; then
                 docker-compose "$@"
-              else
-                echo "Installing Docker Compose plugin..."
-                plugin_dir="${HOME}/.docker/cli-plugins"
-                mkdir -p "$plugin_dir"
-                arch="$(uname -m)"
-                curl -fsSL "https://github.com/docker/compose/releases/download/v2.36.2/docker-compose-linux-${arch}" \
-                  -o "${plugin_dir}/docker-compose"
-                chmod +x "${plugin_dir}/docker-compose"
+              elif docker compose version >/dev/null 2>&1; then
                 docker compose "$@"
+              else
+                echo "docker-compose not found; expected ${HOME}/bin/docker-compose" >&2
+                exit 1
               fi
             }
 
