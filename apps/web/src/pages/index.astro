@@ -1,24 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import HeroSection from '../components/HeroSection.tsx';
-import StatsStrip from '../components/StatsStrip.tsx';
-
-const neighborhoods = [
-  { slug: 'kreuzberg',       name: 'Kreuzberg',        gradient: 'linear-gradient(135deg, #c2410c 0%, #9a3412 100%)' },
-  { slug: 'neukolln',        name: 'Neukölln',          gradient: 'linear-gradient(135deg, #166534 0%, #14532d 100%)' },
-  { slug: 'mitte',           name: 'Mitte',             gradient: 'linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%)' },
-  { slug: 'friedrichshain',  name: 'Friedrichshain',    gradient: 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)' },
-  { slug: 'prenzlauer-berg', name: 'Prenzlauer Berg',   gradient: 'linear-gradient(135deg, #be185d 0%, #831843 100%)' },
-  { slug: 'charlottenburg',  name: 'Charlottenburg',    gradient: 'linear-gradient(135deg, #0891b2 0%, #164e63 100%)' },
-  { slug: 'wedding',         name: 'Wedding',           gradient: 'linear-gradient(135deg, #4338ca 0%, #312e81 100%)' },
-  { slug: 'schoneberg',      name: 'Schöneberg',        gradient: 'linear-gradient(135deg, #b45309 0%, #92400e 100%)' },
-];
 ---
 
 <BaseLayout>
   <HeroSection client:load />
-
-  <StatsStrip client:visible />
 
   <section id="trust" class="border-y border-[var(--color-border)] bg-[var(--color-paper)] py-14" data-reveal>
     <div class="mx-auto max-w-7xl px-4 sm:px-6">
@@ -89,57 +75,6 @@ const neighborhoods = [
             <p class="mt-1 text-sm leading-relaxed text-[var(--color-ink-muted)]">Every listing is in Berlin. Smaller pool, faster results, map-first discovery.</p>
           </div>
         </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- Testimonial -->
-  <section class="bg-[var(--color-ink)] py-16 sm:py-20" data-reveal>
-    <div class="mx-auto max-w-4xl px-4 sm:px-6">
-      <div class="text-center">
-        <svg class="mx-auto mb-6 opacity-20" width="48" height="36" viewBox="0 0 48 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <path d="M0 36V22.5C0 14.667 2.667 8.667 8 4.5L13.5 0L18 4.5C14.667 7.167 13 11 13 16H20V36H0ZM28 36V22.5C28 14.667 30.667 8.667 36 4.5L41.5 0L46 4.5C42.667 7.167 41 11 41 16H48V36H28Z" fill="white"/>
-        </svg>
-        <blockquote class="font-display text-xl font-bold leading-snug text-white sm:text-2xl lg:text-[1.75rem]">
-          "Found my Neukölln flat in under a week. As an expat with no Schufa, I thought it would be impossible — renting.berlin proved me wrong."
-        </blockquote>
-        <footer class="mt-8">
-          <div class="mx-auto inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-5 py-3">
-            <div class="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-contrast)] to-[#ff8aab] text-sm font-bold text-white" aria-hidden="true">M</div>
-            <div class="text-left">
-              <p class="text-sm font-semibold text-white">Maria S.</p>
-              <p class="text-xs text-white/50">Moved from Barcelona · 2024</p>
-            </div>
-          </div>
-        </footer>
-      </div>
-    </div>
-  </section>
-
-  <!-- Neighborhoods -->
-  <section class="bg-[var(--color-paper)] py-14" data-reveal>
-    <div class="mx-auto max-w-7xl px-4 sm:px-6">
-      <div class="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-brand)]">Explore Berlin</p>
-          <h2 class="mt-1 font-display text-2xl font-extrabold text-[var(--color-ink)] sm:text-3xl">Popular neighborhoods</h2>
-        </div>
-        <a href="/signup?redirect=%2Foffers" class="btn-ghost text-sm">Sign up to browse</a>
-      </div>
-      <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {neighborhoods.map(({ slug, name, gradient }, i) => (
-          <a
-            href={`/rent-in/${slug}`}
-            class={`neighborhood-card${i === 0 ? ' sm:col-span-2' : ''}`}
-            style={`background: ${gradient};`}
-            data-reveal
-            data-reveal-delay={String(Math.min(i + 1, 4))}
-          >
-            <div class="neighborhood-card__overlay" aria-hidden="true" />
-            <p class="neighborhood-card__name">{name}</p>
-            <p class="neighborhood-card__hint">Explore →</p>
-          </a>
-        ))}
       </div>
     </div>
   </section>
