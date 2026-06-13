@@ -13,3 +13,4 @@ apps/web/public/uploads/*
 !apps/web/public/uploads/.gitkeep
 *.pem
 *.key
+docker-compose.prod.yml

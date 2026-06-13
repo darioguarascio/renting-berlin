@@ -19,13 +19,16 @@ services:
   migrate:
     profiles:
       - tools
+    image: darioguarascio/renting.berlin:${DOCKER_IMAGE_TAG:-dev}
     build:
       context: .
-      target: migrate
+      target: runner
     env_file:
       - .env
     environment:
       DATABASE_URL: ${DATABASE_URL}
+    working_dir: /app/apps/web
+    entrypoint: ["./migrate.sh"]
     restart: "no"
 
 volumes:

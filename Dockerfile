@@ -36,8 +36,15 @@ COPY --from=prod-deps /app/node_modules /app/node_modules
 COPY --from=prod-deps /app/apps/web/node_modules /app/apps/web/node_modules
 COPY --from=build /app/apps/web/dist ./dist
 COPY --from=build /app/apps/web/public ./public
+COPY --from=build /app/apps/web/server.mjs ./server.mjs
+COPY --from=build /app/apps/web/server ./server
+COPY --from=build /app/apps/web/migrate.sh ./migrate.sh
+COPY --from=build /app/apps/web/drizzle.config.ts ./drizzle.config.ts
+COPY --from=build /app/apps/web/drizzle ./drizzle
+COPY --from=build /app/apps/web/src/db/schema.ts ./src/db/schema.ts
 
 RUN mkdir -p public/uploads \
+  && chmod +x migrate.sh \
   && chown -R node:node /app
 
 USER node
@@ -48,9 +55,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD wget -qO- "http://127.0.0.1:${PORT}/" >/dev/null 2>&1 || exit 1
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["node", "dist/server/entry.mjs"]
-
-FROM deps AS migrate
-WORKDIR /app
-COPY . .
-CMD ["sh", "-c", "cd apps/web && ./node_modules/.bin/drizzle-kit push --force"]
+CMD ["node", "server.mjs"]
