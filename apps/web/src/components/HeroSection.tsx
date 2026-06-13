@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react';
 import { authEntryUrl } from '../lib/public-routes';
 
+const TYPEWRITER_PHRASES = [
+  'Anmeldung possible',
+  'No German required',
+  'Pets welcome',
+  'Short-term rentals',
+  'Furnished options',
+  'WG-rooms available',
+];
+
 const PATHS = [
   {
     id: 'offers',
@@ -39,11 +48,38 @@ const PATHS = [
 
 export default function HeroSection() {
   const [ready, setReady] = useState(false);
+  const [typed, setTyped] = useState('');
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [phase, setPhase] = useState<'typing' | 'waiting' | 'deleting'>('typing');
 
   useEffect(() => {
     const t = requestAnimationFrame(() => setReady(true));
     return () => cancelAnimationFrame(t);
   }, []);
+
+  useEffect(() => {
+    const phrase = TYPEWRITER_PHRASES[phraseIndex];
+    if (phase === 'typing') {
+      if (typed.length < phrase.length) {
+        const t = setTimeout(() => setTyped(phrase.slice(0, typed.length + 1)), 65);
+        return () => clearTimeout(t);
+      }
+      const t = setTimeout(() => setPhase('waiting'), 2200);
+      return () => clearTimeout(t);
+    }
+    if (phase === 'waiting') {
+      const t = setTimeout(() => setPhase('deleting'), 200);
+      return () => clearTimeout(t);
+    }
+    if (phase === 'deleting') {
+      if (typed.length > 0) {
+        const t = setTimeout(() => setTyped(typed.slice(0, -1)), 28);
+        return () => clearTimeout(t);
+      }
+      setPhraseIndex((i) => (i + 1) % TYPEWRITER_PHRASES.length);
+      setPhase('typing');
+    }
+  }, [typed, phase, phraseIndex]);
 
   return (
     <section className={`hero-skyline relative overflow-hidden ${ready ? 'hero-ready' : ''}`}>
@@ -56,12 +92,15 @@ export default function HeroSection() {
             <span className="size-1.5 animate-pulse rounded-full bg-[var(--color-signal)]" />
             Berlin only · English-first
           </div>
-          <h1 className="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-[3.5rem]">
+          <h1 className="font-display text-5xl font-extrabold leading-[1.02] tracking-tight text-white sm:text-6xl lg:text-7xl">
             Rent in Berlin,<br />
             <span className="text-[var(--color-brand-light)]">with trust built in</span>
           </h1>
-          <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">
-            Whether you have a place or need one — find your match in Berlin&apos;s international rental market.
+          <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-white/75 sm:text-lg">
+            Browse listings with:{' '}
+            <span className="font-semibold text-[var(--color-brand-light)]">
+              {typed || ' '}<span className="hero-cursor" aria-hidden="true">|</span>
+            </span>
           </p>
           <div className="mx-auto mt-6 flex flex-wrap items-center justify-center gap-3">
             <a href={authEntryUrl('/dashboard', 'signup')} className="btn-brand">
