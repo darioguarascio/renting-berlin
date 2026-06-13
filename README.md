@@ -22,7 +22,7 @@ Periodic loader → job queue → workers → scrape sites → Telegram alert
 
 It worked. It was also fragile — layout changes or anti-bot measures broke scraping overnight — and it only watched *other people's* listings. The hosted bot was taken down in 2022; the repo lingered with a static landing page pointing back to Telegram.
 
-That code lives on the **`master`** branch. It is not part of the current application.
+That code is archived on **`archive/bot-2021`**. It is not part of the current application.
 
 ---
 
@@ -109,8 +109,9 @@ npm run docker:up      # production-like container locally
 
 | Branch | Contents |
 |--------|----------|
-| **`dev`** | Current platform — active development and deploy target |
-| **`master`** | Archived 2021 PHP/Telegram bot |
+| **`master`** | Official upstream — current platform |
+| **`dev`** | Active development (tracks `master`; deploy target) |
+| **`archive/bot-2021`** | Archived 2021 PHP/Telegram bot |
 | **`gh-pages`** | Archived static landing page (2022) |
 
 ---
