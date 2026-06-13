@@ -5,7 +5,11 @@ on:
     branches: [main, master, dev]
 
 jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+
   build-web:
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
@@ -38,6 +42,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=web
 
   build-workers:
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
