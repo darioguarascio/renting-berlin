@@ -6,11 +6,17 @@ import { users } from '../../db/schema';
 import { getListingByPath } from '../../lib/listings';
 import { getPublishedListingFeedback, type ListingFeedbackSummary } from '../../lib/feedback';
 import { buildListingPath, listingHref } from '../../lib/urls';
+import {
+  buildListingSeoDescription,
+  canViewListingDetails,
+  getListingLockedReason,
+} from '../../lib/listing-access';
 import { CATEGORY_LABELS, RENT_TYPE_LABELS, NEIGHBORHOOD_LABELS } from '../../types/listing';
 import FavoriteButton from '../../components/FavoriteButton.tsx';
 import ContactButton from '../../components/ContactButton.tsx';
 import ListingGallery from '../../components/ListingGallery.tsx';
 import ListingFeedbackSection from '../../components/ListingFeedbackSection.tsx';
+import ListingLockedSection from '../../components/ListingLockedSection.tsx';
 import MapView from '../../components/MapView.tsx';
 import ListingPhotoPlaceholder from '../../components/ListingPhotoPlaceholder.tsx';
 
@@ -47,6 +53,13 @@ if (pathParam !== canonicalPath) {
   return Astro.redirect(listingHref(listing.slug, listing.shortCode), 301);
 }
 
+const session = Astro.locals.session;
+const isOwner = session?.user.id === listing.publisherId;
+const isAuthenticated = !!session;
+const canViewFull = canViewListingDetails({ isOwner, isAuthenticated });
+const lockedReason = getListingLockedReason({ isOwner, isAuthenticated });
+const loginRedirect = Astro.url.pathname;
+
 const summary = {
   id: listing.id,
   slug: listing.slug,
@@ -72,40 +85,62 @@ const summary = {
 };
 
 const neighborhoodLabel = NEIGHBORHOOD_LABELS[listing.neighborhood as keyof typeof NEIGHBORHOOD_LABELS] ?? listing.neighborhood;
+const seoDescription = buildListingSeoDescription({
+  title: listing.title,
+  neighborhood: listing.neighborhood,
+  neighborhoodLabel,
+  rentPerMonth: listing.costs.rentPerMonth,
+  sizeSqm: listing.sizeSqm,
+  rooms: listing.rooms,
+  categoryLabel: CATEGORY_LABELS[listing.category],
+});
 ---
 
-<BaseLayout title={`${listing.title} — renting.berlin`}>
+<BaseLayout title={`${listing.title} — renting.berlin`} description={seoDescription}>
   <article class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
     <div class="grid gap-8 lg:grid-cols-5">
       <div class="lg:col-span-3">
-        {listing.photoUrls.length > 0 ? (
+        {canViewFull && listing.photoUrls.length > 0 ? (
           <ListingGallery client:load photos={listing.photoUrls} title={listing.title} />
         ) : (
-          <div class="aspect-[16/9] overflow-hidden rounded-xl">
+          <div class="relative aspect-[16/9] overflow-hidden rounded-xl">
             <ListingPhotoPlaceholder client:load neighborhood={listing.neighborhood} />
+            {!canViewFull && (
+              <div class="absolute inset-0 flex items-center justify-center bg-[var(--color-ink)]/20 backdrop-blur-[2px]">
+                <span class="rounded-full bg-white/95 px-4 py-2 text-sm font-semibold text-[var(--color-brand-deep)] shadow-sm">
+                  Sign up to see photos
+                </span>
+              </div>
+            )}
           </div>
         )}
 
-        <div class="mt-8 space-y-8">
-          {listing.descriptions.apartment && (
-            <section>
-              <h2 class="font-display text-xl font-bold text-[var(--color-ink)]">About the apartment</h2>
-              <p class="mt-3 leading-relaxed text-[var(--color-ink-muted)]">{listing.descriptions.apartment}</p>
-            </section>
-          )}
-          {listing.descriptions.location && (
-            <section>
-              <h2 class="font-display text-xl font-bold text-[var(--color-ink)]">Location</h2>
-              <p class="mt-3 leading-relaxed text-[var(--color-ink-muted)]">{listing.descriptions.location}</p>
-            </section>
-          )}
+        {canViewFull ? (
+          <div class="mt-8 space-y-8">
+            {listing.descriptions.apartment && (
+              <section>
+                <h2 class="font-display text-xl font-bold text-[var(--color-ink)]">About the apartment</h2>
+                <p class="mt-3 leading-relaxed text-[var(--color-ink-muted)]">{listing.descriptions.apartment}</p>
+              </section>
+            )}
+            {listing.descriptions.location && (
+              <section>
+                <h2 class="font-display text-xl font-bold text-[var(--color-ink)]">Location</h2>
+                <p class="mt-3 leading-relaxed text-[var(--color-ink-muted)]">{listing.descriptions.location}</p>
+              </section>
+            )}
 
-          <ListingFeedbackSection
-            client:load
-            summary={feedbackSummary}
-            publisherName={publisher?.name ?? 'the landlord'}
-          />
-        </div>
+            <ListingFeedbackSection
+              client:load
+              summary={feedbackSummary}
+              publisherName={publisher?.name ?? 'the landlord'}
+            />
+          </div>
+        ) : lockedReason ? (
+          <div class="mt-8">
+            <ListingLockedSection client:load loginRedirect={loginRedirect} />
+          </div>
+        ) : null}
       </div>
 
       <aside class="lg:col-span-2">
@@ -119,7 +154,7 @@ const neighborhoodLabel = NEIGHBORHOOD_LABELS[listing.neighborhood as keyof type
                 {neighborhoodLabel}
               </p>
               <h1 class="mt-1 font-display text-2xl font-bold text-[var(--color-ink)]">{listing.title}</h1>
-              {feedbackSummary.totalCount > 0 && feedbackSummary.averageRating && (
+              {canViewFull && feedbackSummary.totalCount > 0 && feedbackSummary.averageRating && (
                 <p class="mt-2 flex items-center gap-1.5 text-sm font-semibold text-[var(--color-ink)]">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 text-[var(--color-brand)]">
                     <path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.753-.38-1.831-4.401Z" clip-rule="evenodd" />
@@ -131,7 +166,7 @@ const neighborhoodLabel = NEIGHBORHOOD_LABELS[listing.neighborhood as keyof type
                 </p>
               )}
             </div>
-            <FavoriteButton client:load listingId={listing.id} />
+            {canViewFull && <FavoriteButton client:load listingId={listing.id} />}
           </div>
 
           <div class="price-block mt-5">
@@ -146,8 +181,8 @@ const neighborhoodLabel = NEIGHBORHOOD_LABELS[listing.neighborhood as keyof type
             <div class="detail-cell"><dt>Rent type</dt><dd>{RENT_TYPE_LABELS[listing.rentType]}</dd></div>
             <div class="detail-cell"><dt>Size</dt><dd>{listing.sizeSqm} m²</dd></div>
             <div class="detail-cell"><dt>Rooms</dt><dd>{listing.rooms}</dd></div>
-            {listing.costs.deposit && <div class="detail-cell"><dt>Deposit</dt><dd>€{listing.costs.deposit}</dd></div>}
-            {listing.costs.utilities && <div class="detail-cell"><dt>Utilities</dt><dd>€{listing.costs.utilities}/mo</dd></div>}
+            {canViewFull && listing.costs.deposit && <div class="detail-cell"><dt>Deposit</dt><dd>€{listing.costs.deposit}</dd></div>}
+            {canViewFull && listing.costs.utilities && <div class="detail-cell"><dt>Utilities</dt><dd>€{listing.costs.utilities}/mo</dd></div>}
           </dl>
 
           <div class="mt-4 flex flex-wrap gap-2">
@@ -157,15 +192,27 @@ const neighborhoodLabel = NEIGHBORHOOD_LABELS[listing.neighborhood as keyof type
             {listing.onlineViewingAvailable && <span class="badge badge-accent">Online viewing</span>}
           </div>
 
-          <ContactButton client:load listingId={listing.id} publisherName={publisher?.name ?? 'landlord'} />
-        </div>
-
-        <div class="mt-6">
-          <MapView client:only="react" listings={[summary]} height="280px" />
-          {listing.approximateLocation && (
-            <p class="mt-2 text-xs text-[var(--color-ink-muted)]">Approximate location shown for privacy</p>
+          {canViewFull ? (
+            <ContactButton client:load listingId={listing.id} publisherName={publisher?.name ?? 'landlord'} />
+          ) : (
+            <p class="mt-5 text-sm text-[var(--color-ink-muted)]">
+              Create a free account to contact {publisher?.name ? 'the landlord' : 'this landlord'} and save this listing.
+            </p>
           )}
         </div>
+
+        {canViewFull ? (
+          <div class="mt-6">
+            <MapView client:only="react" listings={[summary]} height="280px" />
+            {listing.approximateLocation && (
+              <p class="mt-2 text-xs text-[var(--color-ink-muted)]">Approximate location shown for privacy</p>
+            )}
+          </div>
+        ) : (
+          <div class="mt-6">
+            <ListingLockedSection client:load loginRedirect={loginRedirect} compact />
+          </div>
+        )}
       </aside>
     </div>
   </article>

@@ -1,17 +1,20 @@
 import type { ListingSummary } from '../types/listing';
 import { CATEGORY_LABELS, RENT_TYPE_LABELS, NEIGHBORHOOD_LABELS } from '../types/listing';
+import type { ListingLockedReason } from '../lib/listing-access';
 import FavoriteButton from './FavoriteButton';
 import ListingPhotoPlaceholder from './ListingPhotoPlaceholder';
 
 interface Props {
   listing: ListingSummary;
+  canViewFull?: boolean;
+  lockedReason?: ListingLockedReason | null;
 }
 
 function formatPrice(amount: number): string {
   return new Intl.NumberFormat('en-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(amount);
 }
 
-export default function ListingRow({ listing }: Props) {
+export default function ListingRow({ listing, canViewFull = true, lockedReason = null }: Props) {
   const neighborhoodLabel =
     NEIGHBORHOOD_LABELS[listing.neighborhood as keyof typeof NEIGHBORHOOD_LABELS] ??
     listing.neighborhood;
@@ -20,7 +23,7 @@ export default function ListingRow({ listing }: Props) {
     <article className="card group overflow-hidden transition-all duration-200 hover:border-[var(--color-brand)] hover:shadow-[var(--shadow-card)]">
       <a href={`/listings/${listing.path}`} className="flex flex-col sm:flex-row">
         <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden bg-[var(--color-brand-muted)] sm:aspect-auto sm:h-36 sm:w-44">
-          {listing.primaryPhotoUrl ? (
+          {canViewFull && listing.primaryPhotoUrl ? (
             <img
               src={listing.primaryPhotoUrl}
               alt={listing.title}
@@ -29,6 +32,13 @@ export default function ListingRow({ listing }: Props) {
             />
           ) : (
             <ListingPhotoPlaceholder neighborhood={listing.neighborhood} />
+          )}
+          {!canViewFull && (
+            <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-ink)]/15 px-2 text-center">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-brand-deep)]">
+                Members only
+              </span>
+            </div>
           )}
         </div>
 
@@ -52,6 +62,9 @@ export default function ListingRow({ listing }: Props) {
               {!listing.schufaRequired && <span className="badge badge-brand">No SCHUFA</span>}
               {listing.onlineViewingAvailable && <span className="badge badge-accent">Online viewing</span>}
             </div>
+            {!canViewFull && lockedReason === 'login' && (
+              <p className="mt-2 text-xs text-[var(--color-ink-muted)]">Log in for full details and contact</p>
+            )}
           </div>
 
           <div className="flex shrink-0 items-center justify-between gap-4 border-t border-[var(--color-border)] pt-3 sm:flex-col sm:items-end sm:justify-center sm:border-0 sm:pt-0">
@@ -59,9 +72,11 @@ export default function ListingRow({ listing }: Props) {
               {formatPrice(listing.rentPerMonth)}
               <span className="text-xs font-normal text-[var(--color-ink-muted)]">/mo</span>
             </p>
-            <div className="rounded-full bg-[var(--color-paper)] p-1" onClick={(e) => e.preventDefault()}>
-              <FavoriteButton listingId={listing.id} />
-            </div>
+            {canViewFull && (
+              <div className="rounded-full bg-[var(--color-paper)] p-1" onClick={(e) => e.preventDefault()}>
+                <FavoriteButton listingId={listing.id} />
+              </div>
+            )}
           </div>
         </div>
       </a>

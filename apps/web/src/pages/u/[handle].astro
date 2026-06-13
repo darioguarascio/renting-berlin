@@ -3,6 +3,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import AccountProfileHeader from '../../components/AccountProfileHeader.tsx';
 import SeekerProfileView from '../../components/SeekerProfileView.tsx';
 import UserPublicListings from '../../components/UserPublicListings.tsx';
+import {
+  canViewListingDetails,
+  getListingLockedReason,
+  redactListingSummaryForViewer,
+} from '../../lib/listing-access';
 import { getActiveListingsForPublisher } from '../../lib/listings';
 import { getUserByHandle } from '../../lib/user-handle';
 import { getActiveTenantRequestForUser } from '../../lib/tenant-requests';
@@ -70,6 +75,22 @@ const lockedReason = profile
   : null;
 const displayProfile = profile && !canViewFull ? redactTenantRequestForViewer(profile) : profile;
 
+const listingDisplayRows = activeListings.map((listing) => {
+  const listingCanViewFull = canViewListingDetails({
+    isOwner,
+    isAuthenticated,
+  });
+  const listingLockedReason = getListingLockedReason({
+    isOwner,
+    isAuthenticated,
+  });
+  return {
+    listing: listingCanViewFull ? listing : redactListingSummaryForViewer(listing),
+    canViewFull: listingCanViewFull,
+    lockedReason: listingLockedReason,
+  };
+});
+
 if (session && !isOwner) {
   void recordProfileView(account.id, session.user.id).catch(() => {});
 }
@@ -126,7 +147,7 @@ if (isOwner) {
               visitors={visitors}
             />
           )}
-          <UserPublicListings client:load listings={activeListings} handle={handle} />
+          <UserPublicListings client:load rows={listingDisplayRows} handle={handle} />
         </>
       )}
     </div>

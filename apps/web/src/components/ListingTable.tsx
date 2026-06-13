@@ -7,9 +7,16 @@ import {
   loadTableColumns,
   saveTableColumns,
 } from '../lib/listing-table-columns';
+import type { ListingLockedReason } from '../lib/listing-access';
+
+interface DisplayRow {
+  listing: ListingSummary;
+  canViewFull: boolean;
+  lockedReason: ListingLockedReason | null;
+}
 
 interface Props {
-  listings: ListingSummary[];
+  rows: DisplayRow[];
 }
 
 function formatPrice(amount: number): string {
@@ -58,7 +65,7 @@ function cellValue(listing: ListingSummary, columnId: ListingTableColumnId): str
   }
 }
 
-export default function ListingTable({ listings }: Props) {
+export default function ListingTable({ rows }: Props) {
   const [visibleColumns, setVisibleColumns] = useState<ListingTableColumnId[]>(() => loadTableColumns());
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -97,7 +104,7 @@ export default function ListingTable({ listings }: Props) {
     <div className="card">
       <div className="relative z-10 flex items-center justify-between gap-3 border-b border-[var(--color-border)] bg-[var(--color-paper)] px-4 py-3">
         <p className="text-sm font-semibold text-[var(--color-ink-muted)]">
-          {listings.length} listing{listings.length !== 1 ? 's' : ''}
+          {rows.length} listing{rows.length !== 1 ? 's' : ''}
         </p>
         <div className="relative" ref={pickerRef}>
           <button
@@ -163,9 +170,9 @@ export default function ListingTable({ listings }: Props) {
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--color-border)]">
-            {listings.map((listing) => (
+            {rows.map((row) => (
               <tr
-                key={listing.id}
+                key={row.listing.id}
                 className="group transition hover:bg-[var(--color-brand-muted)]/40"
               >
                 {columnMeta.map((col) => (
@@ -177,15 +184,18 @@ export default function ListingTable({ listings }: Props) {
                   >
                     {col.id === 'title' ? (
                       <a
-                        href={`/listings/${listing.path}`}
+                        href={`/listings/${row.listing.path}`}
                         className="text-[var(--color-brand-deep)] group-hover:text-[var(--color-brand)] hover:underline"
                       >
-                        {listing.title}
+                        {row.listing.title}
+                        {!row.canViewFull && row.lockedReason === 'login' && (
+                          <span className="ml-2 text-xs font-normal text-[var(--color-ink-muted)]">· log in</span>
+                        )}
                       </a>
                     ) : col.id === 'rentPerMonth' ? (
-                      <span className="font-semibold text-[var(--color-brand-deep)]">{cellValue(listing, col.id)}</span>
+                      <span className="font-semibold text-[var(--color-brand-deep)]">{cellValue(row.listing, col.id)}</span>
                     ) : (
-                      cellValue(listing, col.id)
+                      cellValue(row.listing, col.id)
                     )}
                   </td>
                 ))}

@@ -2,9 +2,10 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '../db';
 import * as schema from '../db/schema';
+import { getSiteUrl } from './site-url';
 
 function getTrustedOrigins(): string[] {
-  const base = process.env.BETTER_AUTH_URL ?? 'http://localhost:4321';
+  const base = getSiteUrl();
   const extra =
     process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(',')
       .map((origin) => origin.trim())
@@ -63,7 +64,7 @@ export const auth = betterAuth({
   },
   trustedOrigins: getTrustedOrigins(),
   secret: getAuthSecret(),
-  baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:4321',
+  baseURL: getSiteUrl(),
 });
 
 export type Session = typeof auth.$Infer.Session;
