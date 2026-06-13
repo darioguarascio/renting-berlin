@@ -50,11 +50,15 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT }}
-          script_stop: true
           command_timeout: 10m
           script: |
             set -euo pipefail
             cd "${{ secrets.DEPLOY_PATH }}"
-            docker compose pull
-            docker compose --profile tools run --rm migrate
-            docker compose up -d
+            if docker compose version >/dev/null 2>&1; then
+              COMPOSE="docker compose"
+            else
+              COMPOSE="docker-compose"
+            fi
+            $COMPOSE pull
+            $COMPOSE --profile tools run --rm migrate
+            $COMPOSE up -d
