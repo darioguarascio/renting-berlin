@@ -1,5 +1,6 @@
 import type { ListingCategory, RentType, ListingStatus } from './listing';
 import { NEIGHBORHOOD_LABELS } from './listing';
+import type { SeekerVisibility } from '../lib/seeker-profile-access';
 
 export const HOUSEHOLD_TYPES = ['single', 'couple', 'family_1_kid', 'family_2_kids', 'family_3_plus_kids'] as const;
 export type HouseholdType = (typeof HOUSEHOLD_TYPES)[number];
@@ -148,11 +149,12 @@ export interface TenantRequestFull {
   spokenLanguages: string[];
   description: string;
   photoUrls: string[];
-  landlordsOnly: boolean;
+  visibility: SeekerVisibility;
   seekerName: string;
   seekerImage: string | null;
   seekerId: string;
   status: ListingStatus;
+  moderationStatus: 'pending' | 'approved' | 'flagged';
   createdAt: string;
 }
 

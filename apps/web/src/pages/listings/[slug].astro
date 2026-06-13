@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { users } from '../../db/schema';
 import { getListingByPath } from '../../lib/listings';
+import { recordListingView } from '../../lib/listing-views';
 import { getPublishedListingFeedback, type ListingFeedbackSummary } from '../../lib/feedback';
 import { buildListingPath, listingHref } from '../../lib/urls';
 import { CATEGORY_LABELS, RENT_TYPE_LABELS, NEIGHBORHOOD_LABELS } from '../../types/listing';
@@ -40,6 +41,16 @@ try {
 
 if (!listing) {
   return Astro.redirect('/offers');
+}
+
+const session = Astro.locals.session;
+const isPublisher = session?.user.id === listing.publisherId;
+if (listing.status !== 'active' || (listing.moderationStatus !== 'approved' && !isPublisher)) {
+  return Astro.redirect('/offers');
+}
+
+if (session && !isPublisher) {
+  void recordListingView(listing.id, session.user.id).catch(() => {});
 }
 
 const canonicalPath = buildListingPath(listing.slug, listing.shortCode);

@@ -1,6 +1,14 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import { GUIDES, GUIDE_CATEGORIES, type Guide } from '../lib/guides';
+import {
+  buildGuideArticleJsonLd,
+  buildGuideBreadcrumbJsonLd,
+  formatGuideDate,
+  guideUrl,
+  sectionAnchorId,
+  toIsoDateTime,
+} from '../lib/guide-seo';
 
 interface Props {
   guide: Guide;
@@ -10,9 +18,21 @@ const { guide } = Astro.props;
 const related = guide.relatedSlugs
   .map((slug) => GUIDES.find((g) => g.slug === slug))
   .filter(Boolean) as Guide[];
+
+const modifiedAt = guide.updatedAt ?? guide.publishedAt;
+const pageTitle = `${guide.title} — renting.berlin`;
 ---
 
-<BaseLayout title={`${guide.title} — renting.berlin`} description={guide.description}>
+<BaseLayout
+  title={pageTitle}
+  description={guide.description}
+  canonical={guideUrl(guide.slug)}
+  ogType="article"
+  articlePublishedTime={toIsoDateTime(guide.publishedAt)}
+  articleModifiedTime={toIsoDateTime(modifiedAt)}
+  articleSection={GUIDE_CATEGORIES[guide.category]}
+  jsonLd={[buildGuideArticleJsonLd(guide), buildGuideBreadcrumbJsonLd(guide)]}
+>
   <div class="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <a href="/guides" class="text-sm font-semibold text-[var(--color-brand)] hover:underline">← All guides</a>
@@ -23,7 +43,15 @@ const related = guide.relatedSlugs
         {guide.title}
       </h1>
       <p class="mt-3 max-w-2xl text-[var(--color-ink-muted)]">{guide.description}</p>
-      <p class="mt-2 text-xs text-[var(--color-ink-muted)]">{guide.readMinutes} min read</p>
+      <p class="mt-2 text-xs text-[var(--color-ink-muted)]">
+        {guide.readMinutes} min read ·
+        <time datetime={guide.publishedAt}>Published {formatGuideDate(guide.publishedAt)}</time>
+        {guide.updatedAt && (
+          <>
+            {' '}· <time datetime={guide.updatedAt}>Updated {formatGuideDate(guide.updatedAt)}</time>
+          </>
+        )}
+      </p>
     </div>
   </div>
 
@@ -52,10 +80,16 @@ const related = guide.relatedSlugs
         </nav>
       </aside>
 
-      <article class="guide-prose lg:col-span-6">
+      <article class="guide-prose lg:col-span-6" itemscope itemtype="https://schema.org/Article">
+        <meta itemprop="headline" content={guide.title} />
+        <meta itemprop="description" content={guide.description} />
+        <meta itemprop="datePublished" content={guide.publishedAt} />
+        <meta itemprop="dateModified" content={modifiedAt} />
         {guide.sections.map((section) => (
           <section class="mb-10">
-            <h2 class="font-display text-xl font-bold text-[var(--color-ink)]">{section.heading}</h2>
+            <h2 id={sectionAnchorId(section.heading)} class="font-display text-xl font-bold text-[var(--color-ink)]">
+              {section.heading}
+            </h2>
             {section.paragraphs.map((p) => (
               <p class="mt-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">{p}</p>
             ))}

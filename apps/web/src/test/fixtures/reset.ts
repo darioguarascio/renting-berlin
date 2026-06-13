@@ -9,6 +9,7 @@ const TRUNCATE_SQL = sql`
     search_notifications,
     saved_searches,
     profile_views,
+    listing_views,
     feedback,
     rental_transactions,
     favorites,

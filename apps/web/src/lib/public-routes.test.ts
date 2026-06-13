@@ -13,10 +13,15 @@ describe('isPublicPage', () => {
     expect(isPublicPage('/rent-in/neukolln')).toBe(true);
   });
 
+  it('allows guide pages', () => {
+    expect(isPublicPage('/guides')).toBe(true);
+    expect(isPublicPage('/guides/anmeldung')).toBe(true);
+    expect(isPublicPage('/guides/schufa')).toBe(true);
+  });
+
   it('blocks app pages', () => {
     expect(isPublicPage('/offers')).toBe(false);
     expect(isPublicPage('/requests')).toBe(false);
-    expect(isPublicPage('/guides/anmeldung')).toBe(false);
     expect(isPublicPage('/listings/foo--abc')).toBe(false);
   });
 });

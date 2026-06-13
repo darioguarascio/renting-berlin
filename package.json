@@ -15,12 +15,20 @@
     "db:migrate": "npm run db:migrate -w apps/web",
     "db:seed": "npm run db:seed -w apps/web",
     "db:seed-dev-user": "npm run db:seed-dev-user -w apps/web",
-    "worker:profile-views": "npm run worker:profile-views -w apps/web",
+    "worker:profile-views": "cd workers && UPLOADS_DIR=../apps/web/public/uploads python3 -m renting_berlin_workers profile-views",
+    "worker:notifications": "cd workers && UPLOADS_DIR=../apps/web/public/uploads python3 -m renting_berlin_workers notifications",
+    "worker:emails": "cd workers && python3 -m renting_berlin_workers emails",
+    "worker:moderation": "cd workers && UPLOADS_DIR=../apps/web/public/uploads python3 -m renting_berlin_workers moderation",
+    "workers:install": "python3 -m pip install -r workers/requirements.txt",
     "db:setup": "bash scripts/db-setup.sh",
     "docker:build": "docker compose build",
+    "docker:build:web": "docker compose build web",
+    "docker:build:workers": "docker compose build worker-notifications",
     "docker:up": "docker compose up -d",
+    "docker:up:web": "docker compose up -d web",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f web",
+    "docker:logs:workers": "docker compose logs -f worker-notifications worker-emails worker-moderation worker-profile-views",
     "docker:migrate": "docker compose --profile tools run --rm migrate"
   }
 }

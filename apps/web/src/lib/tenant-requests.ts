@@ -5,6 +5,7 @@ import { db } from '../db';
 import { tenantRequests, users } from '../db/schema';
 import { BERLIN_NEIGHBORHOODS, LISTING_CATEGORIES, RENT_TYPES } from '../types/listing';
 import { HOUSEHOLD_TYPES, NATIONALITIES, SPOKEN_LANGUAGES, type HouseholdType, type TenantRequestFull } from '../types/tenant-request';
+import { SEEKER_VISIBILITY_OPTIONS } from './seeker-profile-access';
 import { getUserByHandle, requireUserHandle } from './user-handle';
 import {
   isValidHandle,
@@ -42,7 +43,7 @@ export const tenantRequestInputSchema = z.object({
     .array(z.union([z.string().url(), z.string().regex(/^\/uploads\//)]))
     .max(10)
     .default([]),
-  landlordsOnly: z.boolean().default(false),
+  visibility: z.enum(SEEKER_VISIBILITY_OPTIONS).default('everyone'),
   status: z.enum(['draft', 'active']).default('active'),
 });
 
@@ -129,11 +130,12 @@ function toFull(
     spokenLanguages: row.spokenLanguages,
     description: row.description,
     photoUrls: row.photoUrls,
-    landlordsOnly: row.landlordsOnly,
+    visibility: row.visibility,
     seekerName: seeker.name,
     seekerImage: seeker.image,
     seekerId: seeker.id,
     status: row.status,
+    moderationStatus: row.moderationStatus,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -179,15 +181,15 @@ export async function createTenantRequest(seekerId: string, input: TenantRequest
       spokenLanguages: data.spokenLanguages,
       description: data.description,
       photoUrls: data.photoUrls,
-      landlordsOnly: data.landlordsOnly,
+      visibility: data.visibility,
       publishedAt: data.status === 'active' ? now : null,
       updatedAt: now,
     })
     .returning();
 
   if (data.status === 'active') {
-    const { notifyNewTenantRequest } = await import('./saved-searches');
-    notifyNewTenantRequest(id).catch(() => {});
+    const { requestTenantRequestModeration } = await import('./moderation-handlers');
+    await requestTenantRequestModeration(id);
   }
 
   return row;
@@ -198,7 +200,7 @@ export async function searchTenantRequests(filters: TenantRequestFilters = {}) {
   const limit = filters.limit ?? 12;
   const offset = (page - 1) * limit;
 
-  const conditions = [eq(tenantRequests.status, 'active')];
+  const conditions = [eq(tenantRequests.status, 'active'), eq(tenantRequests.moderationStatus, 'approved')];
 
   if (filters.category) conditions.push(eq(tenantRequests.category, filters.category));
   if (filters.rentType) conditions.push(eq(tenantRequests.rentType, filters.rentType));

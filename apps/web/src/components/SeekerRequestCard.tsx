@@ -1,4 +1,5 @@
 import type { TenantRequestFull } from '../types/tenant-request';
+import type { SeekerProfileLockedReason } from '../lib/seeker-profile-access';
 import { formatBudget, HOUSEHOLD_LABELS, toPublicProfile } from '../types/tenant-request';
 import { CATEGORY_LABELS, NEIGHBORHOOD_LABELS, RENT_TYPE_LABELS } from '../types/listing';
 import { seekerProfileHref } from '../lib/urls';
@@ -6,7 +7,7 @@ import { seekerProfileHref } from '../lib/urls';
 interface Props {
   request: TenantRequestFull;
   canViewFull: boolean;
-  lockedReason: 'login' | 'landlords' | null;
+  lockedReason: SeekerProfileLockedReason | null;
 }
 
 export default function SeekerRequestCard({ request, canViewFull, lockedReason }: Props) {
@@ -49,7 +50,7 @@ export default function SeekerRequestCard({ request, canViewFull, lockedReason }
           <p className="mt-0.5 truncate text-xs text-[var(--color-ink-muted)]">
             {primaryArea}
             {publicProfile.areaCount > 1 ? ` +${publicProfile.areaCount - 1}` : ''}
-            {!canViewFull && (lockedReason === 'landlords' ? ' · landlords only' : ' · log in for details')}
+            {!canViewFull && (lockedReason === 'restricted' ? ' · restricted' : lockedReason === 'login' ? ' · log in for details' : '')}
           </p>
         </div>
       </a>

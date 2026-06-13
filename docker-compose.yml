@@ -1,3 +1,15 @@
+x-worker-image: &worker-image
+  image: darioguarascio/renting.berlin-workers:${DOCKER_IMAGE_TAG:-dev}
+  build:
+    context: ./workers
+    dockerfile: Dockerfile
+
+x-worker-common: &worker-common
+  <<: *worker-image
+  env_file:
+    - .env
+  restart: unless-stopped
+
 services:
   web:
     image: darioguarascio/renting.berlin:${DOCKER_IMAGE_TAG:-dev}
@@ -15,6 +27,27 @@ services:
     volumes:
       - uploads:/app/apps/web/public/uploads
     restart: unless-stopped
+
+  worker-notifications:
+    <<: *worker-common
+    command: ["python3", "-m", "renting_berlin_workers", "notifications"]
+
+  worker-emails:
+    <<: *worker-common
+    command: ["python3", "-m", "renting_berlin_workers", "emails"]
+
+  worker-moderation:
+    <<: *worker-common
+    environment:
+      MODERATION_USE_ML: "1"
+      UPLOADS_DIR: /app/uploads
+    volumes:
+      - uploads:/app/uploads
+    command: ["python3", "-m", "renting_berlin_workers", "moderation"]
+
+  worker-profile-views:
+    <<: *worker-common
+    command: ["python3", "-m", "renting_berlin_workers", "profile-views"]
 
   migrate:
     profiles:

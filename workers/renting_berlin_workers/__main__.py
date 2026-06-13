@@ -1,0 +1,79 @@
+from __future__ import annotations
+
+import argparse
+import logging
+import os
+import sys
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+from .config import REDIS_KEYS
+from .db import close_connection
+from .services.email import process_email_job
+from .services.moderation_handler import process_moderation_job
+from .services.notifications import process_notification_job
+from .services.profile_views import process_profile_view_job
+from .stream_worker import run_stream_worker
+
+WORKERS = {
+    "notifications": {
+        "stream": REDIS_KEYS["notification_events"],
+        "group": REDIS_KEYS["notification_workers"],
+        "handler": lambda _id, data: process_notification_job(data),
+        "env_name": "NOTIFICATION_WORKER_NAME",
+    },
+    "emails": {
+        "stream": REDIS_KEYS["email_events"],
+        "group": REDIS_KEYS["email_workers"],
+        "handler": lambda _id, data: process_email_job(data),
+        "env_name": "EMAIL_WORKER_NAME",
+    },
+    "moderation": {
+        "stream": REDIS_KEYS["moderation_events"],
+        "group": REDIS_KEYS["moderation_workers"],
+        "handler": lambda _id, data: process_moderation_job(data),
+        "env_name": "MODERATION_WORKER_NAME",
+        "batch_size": 3,
+    },
+    "profile-views": {
+        "stream": REDIS_KEYS["profile_view_events"],
+        "group": REDIS_KEYS["profile_view_workers"],
+        "handler": lambda _id, data: process_profile_view_job(data),
+        "env_name": "PROFILE_VIEW_WORKER_NAME",
+    },
+}
+
+
+def main(argv: list[str] | None = None) -> int:
+    repo_root = Path(__file__).resolve().parents[2]
+    load_dotenv(repo_root / ".env")
+    load_dotenv()
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+
+    parser = argparse.ArgumentParser(description="renting.berlin background worker")
+    parser.add_argument(
+        "worker",
+        choices=sorted(WORKERS.keys()),
+        help="which worker stream to consume",
+    )
+    args = parser.parse_args(argv)
+
+    config = WORKERS[args.worker]
+
+    try:
+        run_stream_worker(
+            config["stream"],
+            config["group"],
+            config["handler"],
+            batch_size=config.get("batch_size", 10),
+            consumer_name=os.environ.get(config["env_name"]),
+        )
+    finally:
+        close_connection()
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

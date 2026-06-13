@@ -12,7 +12,7 @@ export const REQUEST_TABLE_COLUMNS = [
   { id: 'hasSchufa', label: 'SCHUFA', default: false },
   { id: 'isStudent', label: 'Student', default: false },
   { id: 'hasPets', label: 'Pets', default: false },
-  { id: 'landlordsOnly', label: 'Landlords only', default: false },
+  { id: 'visibility', label: 'Visibility', default: false },
   { id: 'createdAt', label: 'Posted', default: false },
 ] as const;
 

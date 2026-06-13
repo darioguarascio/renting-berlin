@@ -69,7 +69,7 @@ export async function warmListingCache(): Promise<number> {
   await connectRedis();
   const redis = getRedis();
   const rows = await db.query.listings.findMany({
-    where: eq(listings.status, 'active'),
+    where: and(eq(listings.status, 'active'), eq(listings.moderationStatus, 'approved')),
   });
 
   const pipeline = redis.pipeline();
@@ -113,7 +113,7 @@ async function searchFromRedis(filters: ListingSearchFilters): Promise<ListingSu
 }
 
 async function searchFromPostgres(filters: ListingSearchFilters): Promise<ListingSummary[]> {
-  const conditions = [eq(listings.status, 'active')];
+  const conditions = [eq(listings.status, 'active'), eq(listings.moderationStatus, 'approved')];
 
   if (filters.category) conditions.push(eq(listings.category, filters.category));
   if (filters.rentType) conditions.push(eq(listings.rentType, filters.rentType));
@@ -186,7 +186,7 @@ export async function searchListings(filters: ListingSearchFilters = {}): Promis
 
 export async function indexListing(id: string): Promise<void> {
   const row = await db.query.listings.findFirst({ where: eq(listings.id, id) });
-  if (!row || row.status !== 'active') {
+  if (!row || row.status !== 'active' || row.moderationStatus !== 'approved') {
     await removeListingFromIndex(id);
     return;
   }

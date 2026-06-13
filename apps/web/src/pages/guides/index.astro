@@ -1,13 +1,19 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { GUIDES, GUIDE_CATEGORIES } from '../../lib/guides';
+import { buildGuidesIndexJsonLd, guidesIndexUrl } from '../../lib/guide-seo';
 
 const categories = Object.entries(GUIDE_CATEGORIES) as [keyof typeof GUIDE_CATEGORIES, string][];
+const pageTitle = 'Berlin rental guides — renting.berlin';
+const pageDescription =
+  'Plain-English guides on Anmeldung, SCHUFA, rent costs, tenant rights, and finding a flat in Berlin.';
 ---
 
 <BaseLayout
-  title="Berlin rental guides — renting.berlin"
-  description="Plain-English guides on Anmeldung, SCHUFA, rent costs, tenant rights, and finding a flat in Berlin."
+  title={pageTitle}
+  description={pageDescription}
+  canonical={guidesIndexUrl()}
+  jsonLd={buildGuidesIndexJsonLd(GUIDES)}
 >
   <div class="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
     <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6">

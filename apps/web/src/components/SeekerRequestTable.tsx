@@ -8,7 +8,8 @@ import {
 } from '../types/tenant-request';
 import { CATEGORY_LABELS, RENT_TYPE_LABELS } from '../types/listing';
 import { seekerProfileHref } from '../lib/urls';
-import type { SeekerProfileLockedReason } from '../lib/seeker-profile-access';
+import type { SeekerDisplayRow } from '../lib/seeker-profile-visibility';
+import { SEEKER_VISIBILITY_LABELS } from '../lib/seeker-profile-access';
 import {
   REQUEST_TABLE_COLUMNS,
   type RequestTableColumnId,
@@ -16,11 +17,7 @@ import {
   saveRequestTableColumns,
 } from '../lib/request-table-columns';
 
-interface DisplayRow {
-  request: TenantRequestFull;
-  canViewFull: boolean;
-  lockedReason: SeekerProfileLockedReason | null;
-}
+interface DisplayRow extends SeekerDisplayRow {}
 
 interface Props {
   rows: DisplayRow[];
@@ -52,7 +49,7 @@ function cellValue(row: DisplayRow, columnId: RequestTableColumnId): string {
       return formatBudget(publicProfile.budgetMax);
     case 'neighborhoods':
       if (!canViewFull) {
-        return lockedReason === 'landlords' ? 'Landlords only' : 'Log in to view';
+        return lockedReason === 'restricted' ? 'Restricted' : 'Log in to view';
       }
       return formatNeighborhoodList(request.desiredNeighborhoods);
     case 'householdType':
@@ -69,8 +66,8 @@ function cellValue(row: DisplayRow, columnId: RequestTableColumnId): string {
       return request.isStudent ? 'Yes' : 'No';
     case 'hasPets':
       return request.hasPets ? 'Yes' : 'No';
-    case 'landlordsOnly':
-      return request.landlordsOnly ? 'Yes' : 'No';
+    case 'visibility':
+      return SEEKER_VISIBILITY_LABELS[request.visibility];
     case 'createdAt':
       return formatDate(request.createdAt.slice(0, 10));
     default:

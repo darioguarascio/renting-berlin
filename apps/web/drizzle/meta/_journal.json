@@ -15,6 +15,20 @@
       "when": 1781355004358,
       "tag": "0001_reserved_handles",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781355004359,
+      "tag": "0002_seeker_visibility",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781355004360,
+      "tag": "0003_workers_moderation",
+      "breakpoints": true
     }
   ]
 }

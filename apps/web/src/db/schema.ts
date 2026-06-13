@@ -25,6 +25,27 @@ export const householdTypeEnum = pgEnum('household_type', [
 export const savedSearchTypeEnum = pgEnum('saved_search_type', ['listings', 'tenant_requests']);
 export const emailDigestEnum = pgEnum('email_digest', ['instant', 'daily', 'weekly']);
 export const messageTemplateKindEnum = pgEnum('message_template_kind', ['inquiry', 'outreach', 'general']);
+export const seekerVisibilityEnum = pgEnum('seeker_visibility', [
+  'everyone',
+  'visited_listings',
+  'favorited_listings',
+  'messaged_listings',
+  'nobody',
+]);
+export const moderationStatusEnum = pgEnum('moderation_status', ['pending', 'approved', 'flagged']);
+export const moderationEntityTypeEnum = pgEnum('moderation_entity_type', [
+  'listing',
+  'tenant_request',
+  'image',
+  'message',
+]);
+export const moderationFieldEnum = pgEnum('moderation_field', [
+  'title',
+  'description',
+  'photo',
+  'body',
+  'attachment',
+]);
 
 export const users = pgTable('users', {
   id: text('id').primaryKey(),
@@ -128,9 +149,11 @@ export const listings = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     publishedAt: timestamp('published_at', { withTimezone: true }),
+    moderationStatus: moderationStatusEnum('moderation_status').notNull().default('approved'),
   },
   (table) => [
     index('listings_status_idx').on(table.status),
+    index('listings_moderation_status_idx').on(table.moderationStatus),
     index('listings_neighborhood_idx').on(table.neighborhood),
     index('listings_rent_type_idx').on(table.rentType),
     index('listings_category_idx').on(table.category),
@@ -235,13 +258,15 @@ export const tenantRequests = pgTable(
     spokenLanguages: jsonb('spoken_languages').notNull().$type<string[]>().default([]),
     description: text('description').notNull(),
     photoUrls: jsonb('photo_urls').notNull().$type<string[]>().default([]),
-    landlordsOnly: boolean('landlords_only').notNull().default(false),
+    visibility: seekerVisibilityEnum('visibility').notNull().default('everyone'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     publishedAt: timestamp('published_at', { withTimezone: true }),
+    moderationStatus: moderationStatusEnum('moderation_status').notNull().default('approved'),
   },
   (table) => [
     index('tenant_requests_status_idx').on(table.status),
+    index('tenant_requests_moderation_status_idx').on(table.moderationStatus),
     index('tenant_requests_seeker_idx').on(table.seekerId),
     index('tenant_requests_rent_type_idx').on(table.rentType),
     index('tenant_requests_category_idx').on(table.category),
@@ -289,6 +314,25 @@ export const messageTemplates = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index('message_templates_user_idx').on(table.userId)],
+);
+
+export const listingViews = pgTable(
+  'listing_views',
+  {
+    id: text('id').primaryKey(),
+    listingId: text('listing_id')
+      .notNull()
+      .references(() => listings.id, { onDelete: 'cascade' }),
+    viewerId: text('viewer_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    firstViewedAt: timestamp('first_viewed_at', { withTimezone: true }).notNull().defaultNow(),
+    lastViewedAt: timestamp('last_viewed_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('listing_views_listing_viewer_idx').on(table.listingId, table.viewerId),
+    index('listing_views_viewer_idx').on(table.viewerId),
+  ],
 );
 
 export const profileViews = pgTable(
@@ -352,6 +396,21 @@ export const userNotificationPreferences = pgTable('user_notification_preference
   preferredContactHours: text('preferred_contact_hours'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const moderationResults = pgTable(
+  'moderation_results',
+  {
+    id: text('id').primaryKey(),
+    entityType: moderationEntityTypeEnum('entity_type').notNull(),
+    entityId: text('entity_id').notNull(),
+    field: moderationFieldEnum('field').notNull(),
+    score: doublePrecision('score').notNull(),
+    labels: jsonb('labels').notNull().$type<string[]>().default([]),
+    approved: boolean('approved').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('moderation_results_entity_idx').on(table.entityType, table.entityId)],
+);
 
 export const searchNotifications = pgTable(
   'search_notifications',

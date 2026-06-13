@@ -12,6 +12,9 @@ import { HOUSEHOLD_LABELS } from '../types/tenant-request';
 import { seekerProfileHref } from './urls';
 import { shouldNotifyInApp } from './notification-preferences';
 import { buildSearchUrl, normalizeFilters } from './search-url';
+import { enqueueEmailJob } from './email-events';
+import { buildSavedSearchEmail } from './email';
+import { getSiteUrl } from './site-url';
 
 export { normalizeFilters, buildSearchUrl };
 
@@ -191,7 +194,7 @@ async function appendKnownId(savedSearchId: string, itemId: string, current: str
 
 export async function notifyNewListing(listingId: string) {
   const row = await db.query.listings.findFirst({ where: eq(listings.id, listingId) });
-  if (!row || row.status !== 'active') return;
+  if (!row || row.status !== 'active' || row.moderationStatus !== 'approved') return;
 
   const item = toSummary(row);
   const saved = await db.query.savedSearches.findMany({
@@ -214,13 +217,22 @@ export async function notifyNewListing(listingId: string) {
       body: item.title,
       link: `/listings/${item.path}`,
     });
+    enqueueEmailJob(
+      buildSavedSearchEmail({
+        userId: search.userId,
+        title: 'New listing matches your search',
+        body: item.title,
+        link: `/listings/${item.path}`,
+        siteUrl: getSiteUrl(),
+      }),
+    ).catch(() => {});
     await appendKnownId(search.id, item.id, search.lastKnownIds);
   }
 }
 
 export async function notifyNewTenantRequest(requestId: string) {
   const row = await db.query.tenantRequests.findFirst({ where: eq(tenantRequests.id, requestId) });
-  if (!row || row.status !== 'active') return;
+  if (!row || row.status !== 'active' || row.moderationStatus !== 'approved') return;
 
   const seeker = await db.query.users.findFirst({
     where: eq(users.id, row.seekerId),
@@ -248,6 +260,15 @@ export async function notifyNewTenantRequest(requestId: string) {
       body: row.title,
       link: seekerProfileHref(seeker.handle),
     });
+    enqueueEmailJob(
+      buildSavedSearchEmail({
+        userId: search.userId,
+        title: 'New seeker matches your search',
+        body: row.title,
+        link: seekerProfileHref(seeker.handle),
+        siteUrl: getSiteUrl(),
+      }),
+    ).catch(() => {});
     await appendKnownId(search.id, row.id, search.lastKnownIds);
   }
 }

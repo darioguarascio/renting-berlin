@@ -34,17 +34,24 @@ export function AccountNavLinks({
           <a
             key={item.href}
             href={item.href}
-            className={`link-row ${active ? 'bg-[var(--color-brand-muted)]' : ''}`}
+            className={`link-row ${active ? 'link-row--active' : ''}`}
+            aria-current={active ? 'page' : undefined}
             onClick={onNavigate}
           >
             <LinkRowIcon name={item.icon} accent={item.accent} />
             <span className="link-row__main">
-              <span className={`link-row__title ${active ? 'text-[var(--color-brand-deep)]' : ''}`}>{item.label}</span>
+              <span className="link-row__title">{item.label}</span>
               {!active && <span className="link-row__desc">{item.description}</span>}
             </span>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="link-row__chevron size-4" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m5.75 12.5 4.5-4.5-4.5-4.5" />
-            </svg>
+            {active ? (
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-3.5 text-[var(--color-brand)] opacity-60" aria-hidden="true">
+                <circle cx="8" cy="8" r="3" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="link-row__chevron size-4" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m5.75 12.5 4.5-4.5-4.5-4.5" />
+              </svg>
+            )}
           </a>
         );
       })}

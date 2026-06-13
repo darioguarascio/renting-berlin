@@ -104,6 +104,17 @@ body {
   position: absolute;
   inset: 0;
   background: url('/images/berlin-skyline.jpg') center 30% / cover no-repeat;
+  animation: hero-bg-drift 36s ease-in-out infinite;
+  will-change: transform;
+  transform-origin: center center;
+}
+
+@keyframes hero-bg-drift {
+  0%   { transform: scale(1.16) translate(-4%,  1%); }
+  25%  { transform: scale(1.16) translate( 0%, -2%); }
+  50%  { transform: scale(1.16) translate( 4%,  1%); }
+  75%  { transform: scale(1.16) translate( 0%,  3%); }
+  100% { transform: scale(1.16) translate(-4%,  1%); }
 }
 
 .hero-skyline__overlay {
@@ -256,6 +267,17 @@ a.link-row:hover {
   background: var(--color-paper);
 }
 
+a.link-row--active,
+a.link-row--active:hover {
+  background: var(--color-brand-muted);
+  border-left: 3px solid var(--color-brand);
+  padding-left: calc(1rem - 3px);
+}
+
+a.link-row--active .link-row__title {
+  color: var(--color-brand-deep);
+}
+
 .link-row__main {
   flex: 1;
   min-width: 0;
@@ -390,6 +412,190 @@ a.link-row:hover .link-row__chevron {
   to {
     transform: translateX(0);
   }
+}
+
+/* ─── Mobile site navigation drawer (main header, right-side) ─── */
+.mobile-nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mobile-nav-backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgb(15 26 46 / 50%);
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+}
+
+.mobile-nav-drawer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: min(20rem, 90vw);
+  height: 100%;
+  background: var(--color-surface);
+  box-shadow: -4px 0 32px rgb(15 26 46 / 14%);
+  animation: mobile-nav-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.mobile-nav-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: max(1rem, env(safe-area-inset-top)) 1rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.mobile-nav-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem 1rem;
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+
+.mobile-nav-section-label {
+  padding: 0 0.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 0.875rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.mobile-nav-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1rem;
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  text-decoration: none;
+  border-top: 1px solid var(--color-border);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.mobile-nav-link:first-child {
+  border-top: none;
+}
+
+.mobile-nav-link:hover {
+  background: var(--color-paper);
+  color: var(--color-brand-deep);
+}
+
+.mobile-nav-link--cta {
+  color: var(--color-brand-deep);
+  background: var(--color-brand-muted);
+  font-weight: 700;
+}
+
+.mobile-nav-link--cta:hover {
+  background: var(--color-brand-light);
+}
+
+.mobile-nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.375rem;
+  height: 1.375rem;
+  padding: 0 0.3125rem;
+  border-radius: 9999px;
+  background: var(--color-signal);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: white;
+}
+
+.mobile-nav-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-brand);
+}
+
+.mobile-nav-auth {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@keyframes mobile-nav-in {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* ─── Breadcrumbs ───────────────────────────────── */
+.breadcrumb {
+  margin-bottom: 1.25rem;
+}
+
+.breadcrumb__list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.breadcrumb__item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.breadcrumb__link {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-ink-muted);
+  text-decoration: none;
+  transition: color 0.12s ease;
+}
+
+.breadcrumb__link:hover {
+  color: var(--color-brand);
+}
+
+.breadcrumb__current {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.breadcrumb__separator {
+  display: block;
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--color-border-strong);
+  flex-shrink: 0;
 }
 
 .feature-row {
@@ -1722,6 +1928,7 @@ body:has(.chat-app) footer {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hero-skyline__image,
   .skyline-drift,
   .skyline-tower-pulse,
   .skyline-lights,

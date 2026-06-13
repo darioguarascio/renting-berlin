@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import RequestsSearchPage from '../../components/RequestsSearchPage.tsx';
 import { searchTenantRequests, parseHouseholdTypesParam } from '../../lib/tenant-requests';
-import { userHasListing } from '../../lib/user-has-listing';
+import { prepareSeekerDisplayRows } from '../../lib/seeker-profile-visibility';
 import type { TenantRequestFilters } from '../../lib/tenant-requests';
 
 export const prerender = false;
@@ -25,14 +25,15 @@ const viewParam = params.get('view');
 const view = viewParam === 'list' ? 'list' : viewParam === 'table' ? 'table' : 'cards';
 
 let result = { items: [], total: 0, page: 1, limit: 12, totalPages: 1 };
+let displayRows = [];
 const session = Astro.locals.session;
-let viewerIsLandlord = false;
 
 try {
   result = await searchTenantRequests(filters);
-  if (session) {
-    viewerIsLandlord = await userHasListing(session.user.id);
-  }
+  displayRows = await prepareSeekerDisplayRows(
+    result.items,
+    session ? { id: session.user.id } : null,
+  );
 } catch {
   // DB may not be running
 }
@@ -43,8 +44,8 @@ try {
     client:load
     initialFilters={filters}
     result={result}
+    displayRows={displayRows}
     view={view}
-    viewerIsLandlord={viewerIsLandlord}
     isAuthenticated={!!session}
     loginRedirect={Astro.url.pathname + Astro.url.search}
   />

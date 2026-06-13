@@ -2,7 +2,10 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ContactComposeForm from '../../components/ContactComposeForm.tsx';
 import { getTenantRequestByHandle } from '../../lib/tenant-requests';
-import { userHasListing } from '../../lib/user-has-listing';
+import {
+  canViewSeekerProfileDetails,
+} from '../../lib/seeker-profile-access';
+import { viewerHasSeekerRelationship } from '../../lib/seeker-profile-visibility';
 import { accountProfileHref } from '../../lib/urls';
 import { formatBudget } from '../../types/tenant-request';
 
@@ -34,9 +37,25 @@ if (profile.seekerId === session.user.id) {
   return Astro.redirect(accountProfileHref(profile.handle));
 }
 
-if (profile.landlordsOnly) {
-  const viewerIsLandlord = await userHasListing(session.user.id);
-  if (!viewerIsLandlord) {
+const isOwner = profile.seekerId === session.user.id;
+if (!isOwner) {
+  const hasRelationship =
+    profile.visibility === 'everyone'
+      ? true
+      : profile.visibility === 'nobody'
+        ? false
+        : await viewerHasSeekerRelationship(profile.seekerId, session.user.id, profile.visibility);
+
+  const canContact = canViewSeekerProfileDetails({
+    visibility: profile.visibility,
+    seekerId: profile.seekerId,
+    isOwner: false,
+    isAuthenticated: true,
+    viewerId: session.user.id,
+    hasRelationship,
+  });
+
+  if (!canContact) {
     return Astro.redirect(accountProfileHref(profile.handle));
   }
 }

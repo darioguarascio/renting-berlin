@@ -38,5 +38,9 @@ export default defineConfig({
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? 'test-secret-integration',
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL ?? 'http://localhost:4321',
     NODE_ENV: 'test',
+    MODERATION_DISABLED: '1',
+    NOTIFICATIONS_SYNC: '1',
+    EMAILS_SYNC: '1',
+    MODERATION_USE_ML: '0',
   },
 });

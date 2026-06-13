@@ -4,11 +4,7 @@ import SeekerRequestTable from './SeekerRequestTable';
 import RequestsSearchForm from './RequestsSearchForm';
 import SearchFilterLayout from './SearchFilterLayout';
 import SearchViewSwitcher from './SearchViewSwitcher';
-import {
-  canViewSeekerProfileDetails,
-  getSeekerProfileLockedReason,
-  redactTenantRequestForViewer,
-} from '../lib/seeker-profile-access';
+import type { SeekerDisplayRow } from '../lib/seeker-profile-visibility';
 import type { TenantRequestFull } from '../types/tenant-request';
 import type { TenantRequestFilters } from '../lib/tenant-requests';
 import type { SearchViewMode } from '../types/search-view';
@@ -25,8 +21,8 @@ interface SearchResult {
 interface Props {
   initialFilters: TenantRequestFilters;
   result: SearchResult;
+  displayRows: SeekerDisplayRow[];
   view: SearchViewMode;
-  viewerIsLandlord: boolean;
   isAuthenticated: boolean;
   loginRedirect: string;
 }
@@ -38,38 +34,15 @@ function buildPageUrl(filters: TenantRequestFilters, page: number, view: SearchV
   return `/requests?${params.toString()}`;
 }
 
-function prepareDisplayRows(
-  items: TenantRequestFull[],
-  isAuthenticated: boolean,
-  viewerIsLandlord: boolean,
-) {
-  return items.map((request) => {
-    const canViewFull = canViewSeekerProfileDetails({
-      landlordsOnly: request.landlordsOnly,
-      isOwner: false,
-      isAuthenticated,
-      viewerIsLandlord,
-    });
-    const lockedReason = getSeekerProfileLockedReason({
-      landlordsOnly: request.landlordsOnly,
-      isOwner: false,
-      isAuthenticated,
-      viewerIsLandlord,
-    });
-    const displayRequest = canViewFull ? request : redactTenantRequestForViewer(request);
-    return { request: displayRequest, canViewFull, lockedReason };
-  });
-}
-
 export default function RequestsSearchPage({
   initialFilters,
   result,
+  displayRows,
   view,
-  viewerIsLandlord,
   isAuthenticated,
   loginRedirect,
 }: Props) {
-  const displayRows = prepareDisplayRows(result.items, isAuthenticated, viewerIsLandlord);
+  const hasRestrictedProfiles = result.items.some((item) => item.visibility !== 'everyone');
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
@@ -79,8 +52,8 @@ export default function RequestsSearchPage({
           <h1 className="mt-1 font-display text-3xl font-extrabold text-[var(--color-ink)]">People looking for a place</h1>
           <p className="mt-2 max-w-xl text-sm text-[var(--color-ink-muted)]">
             <strong className="font-semibold text-[var(--color-brand-deep)]">{result.total}</strong> profile{result.total !== 1 ? 's' : ''} found
-            {!isAuthenticated && ' · log in for full details'}
-            {isAuthenticated && !viewerIsLandlord && result.items.some((r) => r.landlordsOnly) && ' · some profiles are landlords only'}
+            {!isAuthenticated && hasRestrictedProfiles && ' · log in for full details on some profiles'}
+            {isAuthenticated && hasRestrictedProfiles && ' · some profiles have restricted visibility'}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -102,7 +75,7 @@ export default function RequestsSearchPage({
           clearFiltersHref="/requests"
           filterForm={<RequestsSearchForm initial={initialFilters} />}
         >
-          {result.items.length > 0 ? (
+          {displayRows.length > 0 ? (
             <>
               {view === 'cards' ? (
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

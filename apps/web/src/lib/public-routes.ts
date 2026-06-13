@@ -1,5 +1,5 @@
-const PUBLIC_PAGES = new Set(['/', '/login', '/signup', '/signup/handle']);
-const PUBLIC_PAGE_PREFIXES = ['/rent-in/'];
+const PUBLIC_PAGES = new Set(['/', '/login', '/signup', '/signup/handle', '/guides']);
+const PUBLIC_PAGE_PREFIXES = ['/rent-in/', '/guides/'];
 
 export function isPublicPage(path: string): boolean {
   if (PUBLIC_PAGES.has(path)) return true;

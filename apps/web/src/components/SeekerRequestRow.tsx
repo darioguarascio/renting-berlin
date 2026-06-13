@@ -46,7 +46,7 @@ export default function SeekerRequestRow({ request, canViewFull, lockedReason }:
           <p className="mt-1 text-sm text-[var(--color-ink-muted)]">
             {primaryArea}
             {publicProfile.areaCount > 1 ? ` +${publicProfile.areaCount - 1}` : ''}
-            {!canViewFull && (lockedReason === 'landlords' ? ' · landlords only' : ' · log in for details')}
+            {!canViewFull && (lockedReason === 'restricted' ? ' · restricted' : lockedReason === 'login' ? ' · log in for details' : '')}
           </p>
         </div>
         <div className="shrink-0 text-right">

@@ -10,6 +10,8 @@ export interface Guide {
   description: string;
   category: 'bureaucracy' | 'money' | 'search' | 'rights';
   readMinutes: number;
+  publishedAt: string;
+  updatedAt?: string;
   relatedSlugs: string[];
   externalLinks?: { label: string; href: string }[];
   sections: GuideSection[];
@@ -30,6 +32,7 @@ export const GUIDES: Guide[] = [
       'Why landlords ask about Anmeldung, what registration means for tenants, and how it fits into your Berlin rental search.',
     category: 'bureaucracy',
     readMinutes: 5,
+    publishedAt: '2025-01-15',
     relatedSlugs: ['schufa', 'rental-documents', 'rent-costs'],
     externalLinks: [
       {
@@ -85,6 +88,7 @@ export const GUIDES: Guide[] = [
       'What SCHUFA is, when landlords request it, and what to do if you are new to Germany or have no score yet.',
     category: 'money',
     readMinutes: 6,
+    publishedAt: '2025-01-22',
     relatedSlugs: ['anmeldung', 'rental-documents', 'rent-costs'],
     externalLinks: [
       {
@@ -135,6 +139,7 @@ export const GUIDES: Guide[] = [
       'Kaltmiete vs Warmmiete, Nebenkosten, Kaution, and what the monthly price on a listing actually means.',
     category: 'money',
     readMinutes: 5,
+    publishedAt: '2025-02-03',
     relatedSlugs: ['schufa', 'rental-documents', 'tenant-rights'],
     externalLinks: [
       {
@@ -178,6 +183,7 @@ export const GUIDES: Guide[] = [
       'The paperwork Berlin landlords expect — and how to prepare your application as an international tenant.',
     category: 'search',
     readMinutes: 5,
+    publishedAt: '2025-02-12',
     relatedSlugs: ['schufa', 'anmeldung', 'finding-a-flat'],
     externalLinks: [
       {
@@ -223,6 +229,7 @@ export const GUIDES: Guide[] = [
       'Deposits, rent increases, repairs, and where to get help — a short overview for renters in Berlin.',
     category: 'rights',
     readMinutes: 6,
+    publishedAt: '2025-02-20',
     relatedSlugs: ['rent-costs', 'finding-a-flat', 'anmeldung'],
     externalLinks: [
       {
@@ -273,6 +280,7 @@ export const GUIDES: Guide[] = [
       'How the Berlin rental market works, WG culture, scam red flags, and how to search smarter.',
     category: 'search',
     readMinutes: 7,
+    publishedAt: '2025-03-01',
     relatedSlugs: ['rental-documents', 'anmeldung', 'tenant-rights'],
     externalLinks: [
       {

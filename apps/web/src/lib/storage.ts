@@ -37,5 +37,11 @@ async function saveFile(file: File, allowed: Set<string>): Promise<string> {
   const buffer = Buffer.from(await file.arrayBuffer());
   await writeFile(path.join(UPLOAD_DIR, filename), buffer);
 
-  return `/uploads/${filename}`;
+  const url = `/uploads/${filename}`;
+  const { enqueueModerationJob, moderationEnabled } = await import('./moderation-events');
+  if (moderationEnabled()) {
+    enqueueModerationJob({ type: 'image', entityId: url, photoUrl: url }).catch(() => {});
+  }
+
+  return url;
 }

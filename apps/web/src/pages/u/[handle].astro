@@ -8,11 +8,9 @@ import { getUserByHandle } from '../../lib/user-handle';
 import { getActiveTenantRequestForUser } from '../../lib/tenant-requests';
 import { getProfileVisitors, recordProfileView } from '../../lib/profile-views';
 import {
-  canViewSeekerProfileDetails,
-  getSeekerProfileLockedReason,
   redactTenantRequestForViewer,
 } from '../../lib/seeker-profile-access';
-import { userHasListing } from '../../lib/user-has-listing';
+import { resolveSeekerProfileAccessForViewer } from '../../lib/seeker-profile-visibility';
 import { accountProfileHref, parseAccountHandle } from '../../lib/urls';
 
 export const prerender = false;
@@ -48,26 +46,24 @@ if (param !== handle && param !== `@${handle}`) {
 const session = Astro.locals.session;
 const isOwner = session?.user.id === account.id;
 const isAuthenticated = !!session;
-const viewerIsLandlord = session ? await userHasListing(session.user.id) : false;
-const hasSeekerProfile = profile?.status === 'active';
+const hasSeekerProfile =
+  profile?.status === 'active' && (profile.moderationStatus === 'approved' || isOwner);
 const hasPublicContent = hasSeekerProfile || activeListings.length > 0;
 
-const canViewFull = profile
-  ? canViewSeekerProfileDetails({
-      landlordsOnly: profile.landlordsOnly,
-      isOwner,
-      isAuthenticated,
-      viewerIsLandlord,
-    })
-  : false;
-const lockedReason = profile
-  ? getSeekerProfileLockedReason({
-      landlordsOnly: profile.landlordsOnly,
-      isOwner,
-      isAuthenticated,
-      viewerIsLandlord,
-    })
-  : null;
+let canViewFull = false;
+let lockedReason = null;
+
+if (profile) {
+  const accessMap = await resolveSeekerProfileAccessForViewer(
+    [{ seekerId: profile.seekerId, visibility: profile.visibility }],
+    session ? { id: session.user.id } : null,
+    account.id,
+  );
+  const access = accessMap.get(profile.seekerId) ?? { canViewFull: false, lockedReason: 'login' as const };
+  canViewFull = access.canViewFull;
+  lockedReason = access.lockedReason;
+}
+
 const displayProfile = profile && !canViewFull ? redactTenantRequestForViewer(profile) : profile;
 
 if (session && !isOwner) {

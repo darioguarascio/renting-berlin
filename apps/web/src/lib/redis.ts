@@ -33,6 +33,12 @@ export const REDIS_KEYS = {
   searchCache: (hash: string) => `search:${hash}`,
   profileViewEvents: 'profile_views:events',
   profileViewWorkers: 'profile-view-workers',
+  notificationEvents: 'notifications:events',
+  notificationWorkers: 'notification-workers',
+  emailEvents: 'emails:events',
+  emailWorkers: 'email-workers',
+  moderationEvents: 'moderation:events',
+  moderationWorkers: 'moderation-workers',
 } as const;
 
 export async function connectRedis(): Promise<void> {

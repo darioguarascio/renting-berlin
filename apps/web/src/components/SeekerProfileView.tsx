@@ -33,6 +33,22 @@ function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   );
 }
 
+function lockedMessage(lockedReason: SeekerProfileLockedReason): { title: string; body: string; cta: ReactNode } {
+  if (lockedReason === 'restricted') {
+    return {
+      title: 'Full profile restricted',
+      body: 'This seeker limits full details to specific landlords. Visit, save, or message their listings to unlock access.',
+      cta: <a href="/offers" className="btn-brand mt-5 inline-flex text-sm">Browse listings</a>,
+    };
+  }
+
+  return {
+    title: 'Full profile for members only',
+    body: 'Log in to see income, photos, occupation, languages, and contact this seeker.',
+    cta: null,
+  };
+}
+
 function LockedSection({
   loginRedirect,
   lockedReason,
@@ -40,7 +56,7 @@ function LockedSection({
   loginRedirect: string;
   lockedReason: SeekerProfileLockedReason;
 }) {
-  const isLandlordsOnly = lockedReason === 'landlords';
+  const message = lockedMessage(lockedReason);
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-paper)] p-8 text-center">
@@ -51,22 +67,14 @@ function LockedSection({
             <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
           </svg>
         </div>
-        <p className="font-display text-lg font-bold text-[var(--color-ink)]">
-          {isLandlordsOnly ? 'Full profile for landlords only' : 'Full profile for members only'}
-        </p>
-        <p className="mx-auto mt-2 max-w-sm text-sm text-[var(--color-ink-muted)]">
-          {isLandlordsOnly
-            ? 'Post at least one listing to see income, photos, occupation, languages, and contact this seeker.'
-            : 'Log in to see income, photos, occupation, languages, and contact this seeker.'}
-        </p>
-        {isLandlordsOnly ? (
-          <a href="/offers/new" className="btn-brand mt-5 inline-flex text-sm">
-            Post a listing to unlock
-          </a>
-        ) : (
+        <p className="font-display text-lg font-bold text-[var(--color-ink)]">{message.title}</p>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-[var(--color-ink-muted)]">{message.body}</p>
+        {lockedReason === 'login' ? (
           <a href={`/login?redirect=${encodeURIComponent(loginRedirect)}`} className="btn-brand mt-5 inline-flex text-sm">
             Log in to unlock
           </a>
+        ) : (
+          message.cta
         )}
       </div>
     </div>
@@ -107,7 +115,7 @@ export default function SeekerProfileView({ profile, canViewFull, lockedReason, 
                 <p className="mt-1 text-sm text-[var(--color-ink-muted)]">by {profile.seekerName}</p>
               ) : (
                 <p className="mt-1 text-sm text-[var(--color-ink-muted)]">
-                  Berlin seeker · {lockedReason === 'landlords' ? 'landlords only' : 'log in for details'}
+                  Berlin seeker · {lockedReason === 'restricted' ? 'restricted visibility' : 'log in for details'}
                 </p>
               )}
             </div>

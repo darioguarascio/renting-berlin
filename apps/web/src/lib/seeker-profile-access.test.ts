@@ -34,7 +34,7 @@ const baseProfile = {
   spokenLanguages: ['english'],
   description: 'About me',
   photoUrls: ['/uploads/photo.jpg'],
-  landlordsOnly: false,
+  visibility: 'everyone',
   seekerName: 'Alex',
   seekerImage: null,
   seekerId: 'seeker-1',
@@ -46,78 +46,98 @@ describe('canViewSeekerProfileDetails', () => {
   it('allows owners always', () => {
     expect(
       canViewSeekerProfileDetails({
-        landlordsOnly: true,
+        visibility: 'nobody',
+        seekerId: 'seeker-1',
         isOwner: true,
         isAuthenticated: false,
-        viewerIsLandlord: false,
       }),
     ).toBe(true);
   });
 
-  it('requires login for full profile by default', () => {
+  it('allows everyone without login', () => {
     expect(
       canViewSeekerProfileDetails({
-        landlordsOnly: false,
+        visibility: 'everyone',
+        seekerId: 'seeker-1',
         isOwner: false,
         isAuthenticated: false,
-        viewerIsLandlord: false,
-      }),
-    ).toBe(false);
-  });
-
-  it('allows any logged-in member when landlordsOnly is false', () => {
-    expect(
-      canViewSeekerProfileDetails({
-        landlordsOnly: false,
-        isOwner: false,
-        isAuthenticated: true,
-        viewerIsLandlord: false,
       }),
     ).toBe(true);
   });
 
-  it('requires a listing when landlordsOnly is true', () => {
+  it('requires login for relationship-based visibility', () => {
     expect(
       canViewSeekerProfileDetails({
-        landlordsOnly: true,
+        visibility: 'visited_listings',
+        seekerId: 'seeker-1',
         isOwner: false,
-        isAuthenticated: true,
-        viewerIsLandlord: false,
+        isAuthenticated: false,
       }),
     ).toBe(false);
+  });
 
+  it('allows relationship-based visibility when connected', () => {
     expect(
       canViewSeekerProfileDetails({
-        landlordsOnly: true,
+        visibility: 'favorited_listings',
+        seekerId: 'seeker-1',
         isOwner: false,
         isAuthenticated: true,
-        viewerIsLandlord: true,
+        viewerId: 'landlord-1',
+        hasRelationship: true,
       }),
     ).toBe(true);
+  });
+
+  it('blocks relationship-based visibility without connection', () => {
+    expect(
+      canViewSeekerProfileDetails({
+        visibility: 'messaged_listings',
+        seekerId: 'seeker-1',
+        isOwner: false,
+        isAuthenticated: true,
+        viewerId: 'landlord-1',
+        hasRelationship: false,
+      }),
+    ).toBe(false);
+  });
+
+  it('blocks everyone except owner when visibility is nobody', () => {
+    expect(
+      canViewSeekerProfileDetails({
+        visibility: 'nobody',
+        seekerId: 'seeker-1',
+        isOwner: false,
+        isAuthenticated: true,
+        viewerId: 'landlord-1',
+      }),
+    ).toBe(false);
   });
 });
 
 describe('getSeekerProfileLockedReason', () => {
-  it('returns login before landlords when unauthenticated', () => {
+  it('returns login before restricted when unauthenticated', () => {
     expect(
       getSeekerProfileLockedReason({
-        landlordsOnly: true,
+        visibility: 'visited_listings',
+        seekerId: 'seeker-1',
         isOwner: false,
         isAuthenticated: false,
-        viewerIsLandlord: false,
       }),
     ).toBe('login');
   });
 
-  it('returns landlords for logged-in non-landlords', () => {
+  it('returns restricted for logged-in viewers without relationship', () => {
     expect(
       getSeekerProfileLockedReason({
-        landlordsOnly: true,
+        visibility: 'favorited_listings',
+        seekerId: 'seeker-1',
         isOwner: false,
         isAuthenticated: true,
-        viewerIsLandlord: false,
+        viewerId: 'landlord-1',
+        hasRelationship: false,
       }),
-    ).toBe('landlords');
+    ).toBe('restricted');
   });
 });
 

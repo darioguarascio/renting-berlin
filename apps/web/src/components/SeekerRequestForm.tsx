@@ -19,6 +19,12 @@ import {
   SPOKEN_LANGUAGES,
 } from '../types/tenant-request';
 import type { Nationality } from '../types/tenant-request';
+import {
+  SEEKER_VISIBILITY_DESCRIPTIONS,
+  SEEKER_VISIBILITY_LABELS,
+  SEEKER_VISIBILITY_OPTIONS,
+  type SeekerVisibility,
+} from '../lib/seeker-profile-access';
 import { accountProfileHref } from '../lib/urls';
 
 const defaultNeighborhoods = ['kreuzberg', 'neukolln', 'friedrichshain'];
@@ -58,7 +64,7 @@ export default function SeekerRequestForm() {
   const [roomsMin, setRoomsMin] = useState('');
   const [sizeMin, setSizeMin] = useState('');
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
-  const [landlordsOnly, setLandlordsOnly] = useState(false);
+  const [visibility, setVisibility] = useState<SeekerVisibility>('everyone');
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -121,7 +127,7 @@ export default function SeekerRequestForm() {
           spokenLanguages: languages,
           description,
           photoUrls,
-          landlordsOnly,
+          visibility,
           status: 'active',
         }),
       });
@@ -344,43 +350,34 @@ export default function SeekerRequestForm() {
           <div>
             <p className="field-label">Who can see your full profile?</p>
             <div className="mt-2 space-y-3">
-              <label className="flex cursor-pointer items-start gap-3 text-sm">
-                <input
-                  type="radio"
-                  name="visibility"
-                  className="mt-0.5 size-4 border-[var(--color-border)]"
-                  checked={!landlordsOnly}
-                  onChange={() => setLandlordsOnly(false)}
-                />
-                <span>
-                  <span className="font-medium text-[var(--color-ink)]">All logged-in members</span>
-                  <span className="mt-0.5 block text-[var(--color-ink-muted)]">
-                    Anyone with an account can see your photos, income, and contact you.
+              {SEEKER_VISIBILITY_OPTIONS.map((option) => (
+                <label key={option} className="flex cursor-pointer items-start gap-3 text-sm">
+                  <input
+                    type="radio"
+                    name="visibility"
+                    className="mt-0.5 size-4 border-[var(--color-border)]"
+                    checked={visibility === option}
+                    onChange={() => setVisibility(option)}
+                  />
+                  <span>
+                    <span className="font-medium text-[var(--color-ink)]">{SEEKER_VISIBILITY_LABELS[option]}</span>
+                    <span className="mt-0.5 block text-[var(--color-ink-muted)]">
+                      {SEEKER_VISIBILITY_DESCRIPTIONS[option]}
+                    </span>
                   </span>
-                </span>
-              </label>
-              <label className="flex cursor-pointer items-start gap-3 text-sm">
-                <input
-                  type="radio"
-                  name="visibility"
-                  className="mt-0.5 size-4 border-[var(--color-border)]"
-                  checked={landlordsOnly}
-                  onChange={() => setLandlordsOnly(true)}
-                />
-                <span>
-                  <span className="font-medium text-[var(--color-ink)]">Landlords only</span>
-                  <span className="mt-0.5 block text-[var(--color-ink-muted)]">
-                    Full details visible only to users who have posted at least one listing.
-                  </span>
-                </span>
-              </label>
+                </label>
+              ))}
             </div>
           </div>
           <PhotoUploadField
             photoUrls={photoUrls}
             onChange={setPhotoUrls}
             maxPhotos={10}
-            hint={landlordsOnly ? 'Up to 10 photos. Only visible to landlords with a listing.' : 'Up to 10 photos. Only visible to logged-in members.'}
+            hint={
+              visibility === 'everyone'
+                ? 'Up to 10 photos. Visible according to your profile visibility setting.'
+                : 'Up to 10 photos. Only shown to viewers who match your visibility setting.'
+            }
             uploading={uploading}
             onUpload={uploadPhotos}
           />

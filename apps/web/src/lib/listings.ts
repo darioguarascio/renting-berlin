@@ -96,9 +96,8 @@ export async function createListing(publisherId: string, input: ListingInput) {
     .returning();
 
   if (data.status === 'active') {
-    await indexListing(id);
-    const { notifyNewListing } = await import('./saved-searches');
-    notifyNewListing(id).catch(() => {});
+    const { requestListingModeration } = await import('./moderation-handlers');
+    await requestListingModeration(id);
   }
 
   return row;
@@ -156,10 +155,13 @@ export async function updateListing(
     .returning();
 
   if (row.status === 'active') {
-    await indexListing(listingId);
     if (!wasActive) {
-      const { notifyNewListing } = await import('./saved-searches');
-      notifyNewListing(listingId).catch(() => {});
+      const { requestListingModeration } = await import('./moderation-handlers');
+      await requestListingModeration(listingId);
+    } else if (row.moderationStatus === 'approved') {
+      await indexListing(listingId);
+    } else {
+      await removeListingFromIndex(listingId);
     }
   } else if (wasActive || row.status === 'paused' || row.status === 'closed') {
     await removeListingFromIndex(listingId);
@@ -232,7 +234,11 @@ function toListingSummary(row: typeof listings.$inferSelect): ListingSummary {
 
 export async function getActiveListingsForPublisher(publisherId: string): Promise<ListingSummary[]> {
   const rows = await db.query.listings.findMany({
-    where: and(eq(listings.publisherId, publisherId), eq(listings.status, 'active')),
+    where: and(
+      eq(listings.publisherId, publisherId),
+      eq(listings.status, 'active'),
+      eq(listings.moderationStatus, 'approved'),
+    ),
     orderBy: [desc(listings.publishedAt), desc(listings.createdAt)],
   });
   return rows.map(toListingSummary);
