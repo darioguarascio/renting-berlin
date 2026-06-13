@@ -49,7 +49,7 @@ export default function MessageContent({ body, attachments, isMine = false }: Pr
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium ${
-                  isMine ? 'bg-black/5 text-[#111b21]' : 'bg-[#f0f2f5] text-[#111b21]'
+                  isMine ? 'bg-[var(--color-brand-muted)] text-[var(--color-ink)]' : 'bg-[var(--color-paper)] text-[var(--color-ink)]'
                 }`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-3.5 shrink-0">

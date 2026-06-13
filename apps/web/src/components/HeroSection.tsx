@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { authEntryUrl } from '../lib/public-routes';
 
 const PATHS = [
   {
@@ -6,10 +7,10 @@ const PATHS = [
     eyebrow: 'Angebote · Offers',
     title: 'Looking for an apartment',
     description: 'Browse flats and rooms for rent across Berlin. Filter by neighborhood, budget, Anmeldung, and more.',
-    cta: 'Search listings',
-    href: '/offers',
+    cta: 'Sign up to browse',
+    href: authEntryUrl('/offers', 'signup'),
     secondaryCta: 'Post your listing',
-    secondaryHref: '/listings/new',
+    secondaryHref: authEntryUrl('/listings/new', 'signup'),
     accent: 'from-[var(--color-brand)] to-[#1a8fc4]',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
@@ -23,10 +24,10 @@ const PATHS = [
     eyebrow: 'Gesuche · Requests',
     title: 'Looking for tenants',
     description: 'List yourself as a seeker — or browse people looking for a place. Landlords find you faster.',
-    cta: 'Browse seekers',
-    href: '/requests',
+    cta: 'Sign up to browse',
+    href: authEntryUrl('/requests', 'signup'),
     secondaryCta: 'Post your profile',
-    secondaryHref: '/requests/new',
+    secondaryHref: authEntryUrl('/requests/new', 'signup'),
     accent: 'from-[var(--color-accent)] to-[#8b5cf6]',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
@@ -62,6 +63,14 @@ export default function HeroSection() {
           <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">
             Whether you have a place or need one — find your match in Berlin&apos;s international rental market.
           </p>
+          <div className="mx-auto mt-6 flex flex-wrap items-center justify-center gap-3">
+            <a href={authEntryUrl('/dashboard', 'signup')} className="btn-brand">
+              Sign up free
+            </a>
+            <a href="/login" className="btn-ghost border-white/30 text-white hover:bg-white/10">
+              Log in
+            </a>
+          </div>
         </div>
 
         <div className="hero-paths mx-auto mt-12 grid max-w-4xl gap-4 sm:grid-cols-2 sm:gap-5">

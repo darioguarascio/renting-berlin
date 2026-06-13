@@ -28,6 +28,13 @@ function getAuthSecret(): string {
   return 'dev-only-not-for-production';
 }
 
+function isOAuthProviderEnabled(provider: 'google' | 'github'): boolean {
+  if (provider === 'google') {
+    return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  }
+  return Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET);
+}
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'pg',
@@ -46,12 +53,12 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID ?? '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
-      enabled: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+      enabled: isOAuthProviderEnabled('google'),
     },
     github: {
       clientId: process.env.GITHUB_CLIENT_ID ?? '',
       clientSecret: process.env.GITHUB_CLIENT_SECRET ?? '',
-      enabled: Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET),
+      enabled: isOAuthProviderEnabled('github'),
     },
   },
   user: {
@@ -68,3 +75,10 @@ export const auth = betterAuth({
 });
 
 export type Session = typeof auth.$Infer.Session;
+
+export const OAUTH_PROVIDERS = ['google', 'github'] as const;
+export type OAuthProvider = (typeof OAUTH_PROVIDERS)[number];
+
+export function getEnabledOAuthProviders(): OAuthProvider[] {
+  return OAUTH_PROVIDERS.filter(isOAuthProviderEnabled);
+}

@@ -8,6 +8,13 @@
       "when": 1781355004357,
       "tag": "0000_baseline",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781355004358,
+      "tag": "0001_reserved_handles",
+      "breakpoints": true
     }
   ]
 }

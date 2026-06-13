@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import AddressMapPicker, { type LocationValue } from './AddressMapPicker';
 import ListingCheckoutModal, { type CheckoutIntent } from './ListingCheckoutModal';
 import FormShell from './forms/FormShell';
-import FormTabs, { FormActions, FormTabPanel } from './forms/FormTabs';
+import FormAccordion, { FormAccordionPanel, FormActions, getSectionIndex } from './forms/FormAccordion';
 import PhotoUploadField, { uploadPhotosToApi } from './forms/PhotoUploadField';
 import {
   BERLIN_NEIGHBORHOODS,
@@ -86,7 +86,7 @@ const initialState: FormState = {
 
 export default function ListingForm({ listingId, reactivate = false }: { listingId?: string; reactivate?: boolean }) {
   const [form, setForm] = useState<FormState>(initialState);
-  const [activeTab, setActiveTab] = useState<TabId>('basics');
+  const [expandedSection, setExpandedSection] = useState<TabId>('basics');
   const [currentStatus, setCurrentStatus] = useState<string>('draft');
   const [loadingListing, setLoadingListing] = useState(Boolean(listingId));
   const [uploading, setUploading] = useState(false);
@@ -253,6 +253,16 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
   }
 
   const canPublish = form.title.length >= 5 && form.location.address.length >= 5;
+  const stepIndex = getSectionIndex([...TABS], expandedSection);
+  const isFirstStep = stepIndex === 0;
+  const isLastStep = stepIndex === TABS.length - 1;
+
+  function goToStep(direction: 'next' | 'prev') {
+    const nextIndex = direction === 'next' ? stepIndex + 1 : stepIndex - 1;
+    if (nextIndex >= 0 && nextIndex < TABS.length) {
+      setExpandedSection(TABS[nextIndex].id);
+    }
+  }
 
   if (loadingListing) {
     return <p className="text-sm text-[var(--color-ink-muted)]">Loading listing…</p>;
@@ -328,12 +338,23 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
               </>
             ) : (
               <>
+                {!isFirstStep && (
+                  <button type="button" onClick={() => goToStep('prev')} disabled={submitting || uploading} className="btn-ghost">
+                    Back
+                  </button>
+                )}
                 <button type="button" onClick={() => submit('draft')} disabled={submitting || uploading} className="btn-ghost">
                   Save draft
                 </button>
-                <button type="submit" disabled={submitting || uploading || !canPublish} className="btn-brand">
-                  {submitting ? 'Publishing…' : 'Publish listing'}
-                </button>
+                {!isLastStep ? (
+                  <button type="button" onClick={() => goToStep('next')} disabled={submitting || uploading} className="btn-brand">
+                    Continue
+                  </button>
+                ) : (
+                  <button type="submit" disabled={submitting || uploading || !canPublish} className="btn-brand">
+                    {submitting ? 'Publishing…' : 'Publish listing'}
+                  </button>
+                )}
               </>
             )}
           </FormActions>
@@ -357,16 +378,14 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
           ) : undefined
         }
       >
-        <FormTabs
-          tabs={[...TABS]}
-          activeTab={activeTab}
-          onChange={setActiveTab}
+        <FormAccordion
+          sections={[...TABS]}
+          expandedSection={expandedSection}
+          onExpandedChange={setExpandedSection}
           idPrefix="listing"
           ariaLabel="Listing sections"
-        />
-
-        <div className="form-body">
-          <FormTabPanel id="listing-tab-basics" labelledBy="listing-tab-btn-basics" active={activeTab === 'basics'}>
+        >
+          <FormAccordionPanel sectionId="basics">
               <div>
                 <label className="field-label" htmlFor="title">Title</label>
                 <input
@@ -404,13 +423,13 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
                   <input id="availableTo" type="date" className="field-input" value={form.availableTo} onChange={(e) => update('availableTo', e.target.value)} />
                 </div>
               </div>
-          </FormTabPanel>
+          </FormAccordionPanel>
 
-          <FormTabPanel id="listing-tab-location" labelledBy="listing-tab-btn-location" active={activeTab === 'location'} className="space-y-0">
+          <FormAccordionPanel sectionId="location" className="space-y-0">
             <AddressMapPicker value={form.location} onChange={(loc) => update('location', loc)} />
-          </FormTabPanel>
+          </FormAccordionPanel>
 
-          <FormTabPanel id="listing-tab-property" labelledBy="listing-tab-btn-property" active={activeTab === 'property'}>
+          <FormAccordionPanel sectionId="property">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="field-label" htmlFor="sizeSqm">Size (m²)</label>
@@ -457,9 +476,9 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
                   SCHUFA required
                 </label>
               </div>
-          </FormTabPanel>
+          </FormAccordionPanel>
 
-          <FormTabPanel id="listing-tab-description" labelledBy="listing-tab-btn-description" active={activeTab === 'description'}>
+          <FormAccordionPanel sectionId="description">
               <div>
                 <label className="field-label" htmlFor="apartmentDesc">About the apartment</label>
                 <textarea id="apartmentDesc" className="field-input min-h-[120px]" rows={4} value={form.descriptions.apartment} onChange={(e) => update('descriptions', { ...form.descriptions, apartment: e.target.value })} placeholder="Describe the flat, room layout, condition…" />
@@ -472,9 +491,9 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
                 <label className="field-label" htmlFor="miscDesc">Miscellaneous notes</label>
                 <textarea id="miscDesc" className="field-input min-h-[80px]" rows={3} value={form.descriptions.misc} onChange={(e) => update('descriptions', { ...form.descriptions, misc: e.target.value })} placeholder="Anything else tenants should know" />
               </div>
-          </FormTabPanel>
+          </FormAccordionPanel>
 
-          <FormTabPanel id="listing-tab-requirements" labelledBy="listing-tab-btn-requirements" active={activeTab === 'requirements'}>
+          <FormAccordionPanel sectionId="requirements">
               <div>
                 <label className="field-label">Documents required from tenant</label>
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -495,9 +514,9 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
                   ))}
                 </div>
               </div>
-          </FormTabPanel>
+          </FormAccordionPanel>
 
-          <FormTabPanel id="listing-tab-photos" labelledBy="listing-tab-btn-photos" active={activeTab === 'photos'}>
+          <FormAccordionPanel sectionId="photos">
             <PhotoUploadField
               photoUrls={form.photoUrls}
               onChange={(urls) => update('photoUrls', urls)}
@@ -506,8 +525,8 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
               uploading={uploading}
               onUpload={uploadPhotos}
             />
-          </FormTabPanel>
-        </div>
+          </FormAccordionPanel>
+        </FormAccordion>
       </FormShell>
     </>
   );

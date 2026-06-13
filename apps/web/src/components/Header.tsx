@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { authClient } from '../lib/auth-client';
+import { authEntryUrl } from '../lib/public-routes';
 import Logo from './Logo';
 
 interface User {
@@ -43,18 +44,34 @@ export default function Header({ initialUser = null, favoriteCount = 0, unreadCo
         </a>
 
         <nav className="hidden items-center gap-1 md:flex">
-          <a href="/offers" className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-brand-muted)] hover:text-[var(--color-brand-deep)]">
-            Offers
-          </a>
-          <a href="/requests" className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)]">
-            Requests
-          </a>
-          <a href="/offers?view=map" className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-brand-muted)] hover:text-[var(--color-brand-deep)]">
-            Map
-          </a>
-          <a href="/guides" className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-brand-muted)] hover:text-[var(--color-brand-deep)]">
-            Guides
-          </a>
+          {user ? (
+            <>
+              <a href="/offers" className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-brand-muted)] hover:text-[var(--color-brand-deep)]">
+                Offers
+              </a>
+              <a href="/requests" className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)]">
+                Requests
+              </a>
+              <a href="/offers?view=map" className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-brand-muted)] hover:text-[var(--color-brand-deep)]">
+                Map
+              </a>
+              <a href="/guides" className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-brand-muted)] hover:text-[var(--color-brand-deep)]">
+                Guides
+              </a>
+            </>
+          ) : (
+            <>
+              <a href={authEntryUrl('/offers')} className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-brand-muted)] hover:text-[var(--color-brand-deep)]">
+                Offers
+              </a>
+              <a href={authEntryUrl('/requests')} className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)]">
+                Requests
+              </a>
+              <a href={authEntryUrl('/guides')} className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-brand-muted)] hover:text-[var(--color-brand-deep)]">
+                Guides
+              </a>
+            </>
+          )}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -95,7 +112,7 @@ export default function Header({ initialUser = null, favoriteCount = 0, unreadCo
           ) : (
             <>
               <a href="/login" className="btn-ghost hidden sm:inline-flex">Log in</a>
-              <a href="/listings/new" className="btn-brand">List a place</a>
+              <a href={authEntryUrl('/dashboard', 'signup')} className="btn-brand">Sign up free</a>
             </>
           )}
         </div>

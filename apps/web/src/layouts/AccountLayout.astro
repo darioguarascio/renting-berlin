@@ -1,6 +1,7 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import AccountNav from '../components/AccountNav.tsx';
+import AccountMobileMenu from '../components/AccountMobileMenu.tsx';
 
 interface Props {
   title: string;
@@ -15,15 +16,20 @@ const { title, heading, description, currentPath } = Astro.props;
 <BaseLayout title={title}>
   <div class="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-brand)]">My account</p>
-      <h1 class="mt-1 font-display text-3xl font-bold text-[var(--color-ink)]">{heading}</h1>
-      {description && <p class="mt-1.5 max-w-2xl text-sm text-[var(--color-ink-muted)]">{description}</p>}
+      <div class="flex items-start justify-between gap-4">
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-brand)]">My account</p>
+          <h1 class="mt-1 font-display text-3xl font-bold text-[var(--color-ink)]">{heading}</h1>
+          {description && <p class="mt-1.5 max-w-2xl text-sm text-[var(--color-ink-muted)]">{description}</p>}
+        </div>
+        <AccountMobileMenu client:load currentPath={currentPath} />
+      </div>
     </div>
   </div>
 
   <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6">
     <div class="grid gap-10 lg:grid-cols-[240px_minmax(0,1fr)]">
-      <aside class="lg:sticky lg:top-24 lg:self-start">
+      <aside class="hidden lg:block lg:sticky lg:top-24 lg:self-start">
         <AccountNav client:load currentPath={currentPath} />
       </aside>
       <div class="min-w-0">

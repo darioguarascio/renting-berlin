@@ -54,14 +54,24 @@ export function parseSeekerHandle(param: string): string {
   return parseAccountHandle(param);
 }
 
-export function normalizeHandle(input: string): string {
+export const HANDLE_MIN_LENGTH = 3;
+export const HANDLE_MAX_LENGTH = 30;
+const HANDLE_INPUT_PATTERN = /[^a-z0-9_-]/g;
+
+/** Strip disallowed characters while the user types. */
+export function sanitizeHandleInput(input: string): string {
   return input
     .toLowerCase()
     .replace(/^@/, '')
-    .replace(/[^a-z0-9_]/g, '_')
+    .replace(HANDLE_INPUT_PATTERN, '')
+    .slice(0, HANDLE_MAX_LENGTH);
+}
+
+export function normalizeHandle(input: string): string {
+  return sanitizeHandleInput(input)
+    .replace(/-+/g, '-')
     .replace(/_+/g, '_')
-    .replace(/^_|_$/g, '')
-    .slice(0, 30);
+    .replace(/^[-_]+|[-_]+$/g, '');
 }
 
 export function suggestHandleFromTitle(title: string): string {
@@ -76,6 +86,41 @@ export function suggestHandleFromTitle(title: string): string {
   return normalizeHandle(base);
 }
 
+export function suggestHandleFromName(name: string): string {
+  const words = name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+  let base = words.join('_');
+  if (base.length < 3) base = `user_${nanoid(6)}`;
+  return normalizeHandle(base);
+}
+
 export function isValidHandle(handle: string): boolean {
-  return /^[a-z][a-z0-9_]{2,29}$/.test(handle);
+  if (handle.length < HANDLE_MIN_LENGTH || handle.length > HANDLE_MAX_LENGTH) return false;
+  return /^[a-z][a-z0-9_-]*$/.test(handle);
+}
+
+export function getHandleValidationError(handle: string): string | null {
+  if (!handle) return 'Enter a handle';
+
+  if (handle.length < HANDLE_MIN_LENGTH) {
+    return `At least ${HANDLE_MIN_LENGTH} characters (${handle.length}/${HANDLE_MIN_LENGTH})`;
+  }
+
+  if (handle.length > HANDLE_MAX_LENGTH) {
+    return `Maximum ${HANDLE_MAX_LENGTH} characters`;
+  }
+
+  if (!/^[a-z]/.test(handle)) {
+    return 'Must start with a letter (a–z)';
+  }
+
+  if (!/^[a-z0-9_-]+$/.test(handle)) {
+    return 'Only lowercase letters, numbers, underscores, and hyphens';
+  }
+
+  return null;
 }

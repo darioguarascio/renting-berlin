@@ -24,7 +24,8 @@ vi.mock('../db', () => ({
   },
 }));
 
-import { isHandleAvailable, setUserHandle } from './user-handle';
+import { getUserHandle, isHandleAvailable, setUserHandle } from './user-handle';
+import { HANDLE_MIN_LENGTH } from './urls';
 
 describe('isHandleAvailable', () => {
   beforeEach(() => {

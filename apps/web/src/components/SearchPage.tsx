@@ -2,16 +2,10 @@ import SearchForm from './SearchForm';
 import ListingCard from './ListingCard';
 import ListingRow from './ListingRow';
 import ListingTable from './ListingTable';
-import ListingLockedSection from './ListingLockedSection';
 import MapView from './MapView';
 import SearchFilterLayout from './SearchFilterLayout';
 import SearchViewSwitcher from './SearchViewSwitcher';
-import {
-  canViewListingDetails,
-  getListingLockedReason,
-  redactListingSummaryForViewer,
-} from '../lib/listing-access';
-import type { ListingSearchFilters, ListingSummary, SearchResult } from '../types/listing';
+import type { ListingSearchFilters, SearchResult } from '../types/listing';
 import type { SearchViewMode } from '../types/search-view';
 
 interface Props {
@@ -33,17 +27,7 @@ function buildPageUrl(filters: ListingSearchFilters, page: number, view: SearchV
   return `/offers?${params.toString()}`;
 }
 
-function prepareDisplayRows(items: ListingSummary[], isAuthenticated: boolean) {
-  return items.map((listing) => {
-    const canViewFull = canViewListingDetails({ isOwner: false, isAuthenticated });
-    const lockedReason = getListingLockedReason({ isOwner: false, isAuthenticated });
-    const displayListing = canViewFull ? listing : redactListingSummaryForViewer(listing);
-    return { listing: displayListing, canViewFull, lockedReason };
-  });
-}
-
 export default function SearchPage({ initialFilters, result, view, isAuthenticated, loginRedirect }: Props) {
-  const displayRows = prepareDisplayRows(result.items, isAuthenticated);
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -52,7 +36,6 @@ export default function SearchPage({ initialFilters, result, view, isAuthenticat
           <h1 className="mt-1 font-display text-3xl font-extrabold text-[var(--color-ink)]">Apartments for rent</h1>
           <p className="mt-1.5 text-sm text-[var(--color-ink-muted)]">
             <strong className="font-semibold text-[var(--color-brand-deep)]">{result.total}</strong> listing{result.total !== 1 ? 's' : ''} found
-            {!isAuthenticated && ' · sign up free for photos and contact'}
           </p>
         </div>
         <SearchViewSwitcher view={view} buildUrl={(v) => buildPageUrl(initialFilters, result.page, v)} />
@@ -67,37 +50,23 @@ export default function SearchPage({ initialFilters, result, view, isAuthenticat
         filterForm={<SearchForm initial={initialFilters} layout="sidebar" />}
       >
         {view === 'map' ? (
-          isAuthenticated ? (
-            <MapView listings={result.items} height="600px" />
-          ) : (
-            <ListingLockedSection loginRedirect={loginRedirect} />
-          )
+          <MapView listings={result.items} height="600px" />
         ) : (
           <>
             {view === 'cards' ? (
               <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                {displayRows.map((row) => (
-                  <ListingCard
-                    key={row.listing.id}
-                    listing={row.listing}
-                    canViewFull={row.canViewFull}
-                    lockedReason={row.lockedReason}
-                  />
+                {result.items.map((listing) => (
+                  <ListingCard key={listing.id} listing={listing} />
                 ))}
               </div>
             ) : view === 'list' ? (
               <div className="space-y-3">
-                {displayRows.map((row) => (
-                  <ListingRow
-                    key={row.listing.id}
-                    listing={row.listing}
-                    canViewFull={row.canViewFull}
-                    lockedReason={row.lockedReason}
-                  />
+                {result.items.map((listing) => (
+                  <ListingRow key={listing.id} listing={listing} />
                 ))}
               </div>
             ) : (
-              <ListingTable rows={displayRows} />
+              <ListingTable listings={result.items} />
             )}
 
             {result.items.length === 0 && (

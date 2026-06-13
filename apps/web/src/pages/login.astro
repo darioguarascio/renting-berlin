@@ -1,10 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import AuthForm from '../components/AuthForm.tsx';
+import { getEnabledOAuthProviders } from '../lib/auth';
+
+const enabledProviders = getEnabledOAuthProviders();
 ---
 
 <BaseLayout title="Log in — renting.berlin">
   <div class="hero-mesh min-h-[70vh] px-4 py-16 sm:px-6">
-    <AuthForm client:load mode="login" />
+    <AuthForm client:load mode="login" enabledProviders={enabledProviders} />
   </div>
 </BaseLayout>

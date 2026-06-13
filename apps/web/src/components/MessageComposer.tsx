@@ -187,7 +187,7 @@ export default function MessageComposer({
                 type="button"
                 onClick={() => setAttachments((prev) => prev.filter((a) => a.url !== file.url))}
                 disabled={sending}
-                className="text-[#667781] hover:text-[#111b21]"
+                className="text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
                 aria-label={`Remove ${file.name}`}
               >
                 ×
@@ -271,7 +271,7 @@ export default function MessageComposer({
       </div>
 
       <div className="chat-compose__extras">
-        <label className="flex cursor-pointer items-center gap-2 text-xs text-[#667781]">
+        <label className="flex cursor-pointer items-center gap-2 text-xs text-[var(--color-ink-muted)]">
           <input
             type="checkbox"
             checked={saveAsTemplate}
@@ -291,7 +291,7 @@ export default function MessageComposer({
             className="max-w-[10rem] rounded-lg border-none bg-white px-2.5 py-1 text-xs shadow-sm outline-none"
           />
         )}
-        <span className="ml-auto text-[10px] text-[#8696a0]">Ctrl+Enter to send</span>
+        <span className="chat-compose__hint ml-auto text-[10px] text-[var(--color-ink-muted)]">Ctrl+Enter to send</span>
       </div>
     </div>
   );

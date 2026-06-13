@@ -1,6 +1,5 @@
 import type { APIRoute } from 'astro';
 import { searchListings } from '../../lib/search';
-import { redactListingSummaryForViewer } from '../../lib/listing-access';
 import { getSession } from '../../lib/session';
 import type { ListingSearchFilters } from '../../types/listing';
 
@@ -8,7 +7,7 @@ export const prerender = false;
 
 export const GET: APIRoute = async ({ url, request }) => {
   const session = await getSession(request);
-  const isAuthenticated = !!session;
+  if (!session) return new Response('Unauthorized', { status: 401 });
 
   const filters: ListingSearchFilters = {
     q: url.searchParams.get('q') ?? undefined,
@@ -29,13 +28,5 @@ export const GET: APIRoute = async ({ url, request }) => {
   };
 
   const result = await searchListings(filters);
-
-  if (!isAuthenticated) {
-    return Response.json({
-      ...result,
-      items: result.items.map(redactListingSummaryForViewer),
-    });
-  }
-
   return Response.json(result);
 };

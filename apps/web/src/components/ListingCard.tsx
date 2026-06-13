@@ -1,20 +1,17 @@
 import type { ListingSummary } from '../types/listing';
 import { CATEGORY_LABELS, RENT_TYPE_LABELS, NEIGHBORHOOD_LABELS } from '../types/listing';
-import type { ListingLockedReason } from '../lib/listing-access';
 import FavoriteButton from './FavoriteButton';
 import ListingPhotoPlaceholder from './ListingPhotoPlaceholder';
 
 interface Props {
   listing: ListingSummary;
-  canViewFull?: boolean;
-  lockedReason?: ListingLockedReason | null;
 }
 
 function formatPrice(amount: number): string {
   return new Intl.NumberFormat('en-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(amount);
 }
 
-export default function ListingCard({ listing, canViewFull = true, lockedReason = null }: Props) {
+export default function ListingCard({ listing }: Props) {
   const neighborhoodLabel =
     NEIGHBORHOOD_LABELS[listing.neighborhood as keyof typeof NEIGHBORHOOD_LABELS] ??
     listing.neighborhood;
@@ -23,7 +20,7 @@ export default function ListingCard({ listing, canViewFull = true, lockedReason 
     <article className="card group overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:border-[var(--color-brand)] hover:shadow-[var(--shadow-float)]">
       <a href={`/listings/${listing.path}`} className="block">
         <div className="relative aspect-[4/3] overflow-hidden bg-[var(--color-brand-muted)]">
-          {canViewFull && listing.primaryPhotoUrl ? (
+          {listing.primaryPhotoUrl ? (
             <img
               src={listing.primaryPhotoUrl}
               alt={listing.title}
@@ -33,20 +30,11 @@ export default function ListingCard({ listing, canViewFull = true, lockedReason 
           ) : (
             <ListingPhotoPlaceholder neighborhood={listing.neighborhood} />
           )}
-          {!canViewFull && (
-            <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-ink)]/20 backdrop-blur-[2px]">
-              <span className="rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-[var(--color-brand-deep)] shadow-sm">
-                Sign up to see photos
-              </span>
+          <div className="absolute inset-x-0 top-0 flex items-start justify-end p-3">
+            <div className="rounded-full bg-white/95 p-1 shadow-sm backdrop-blur" onClick={(e) => e.preventDefault()}>
+              <FavoriteButton listingId={listing.id} />
             </div>
-          )}
-          {canViewFull && (
-            <div className="absolute inset-x-0 top-0 flex items-start justify-end p-3">
-              <div className="rounded-full bg-white/95 p-1 shadow-sm backdrop-blur" onClick={(e) => e.preventDefault()}>
-                <FavoriteButton listingId={listing.id} />
-              </div>
-            </div>
-          )}
+          </div>
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[var(--color-ink)]/80 via-[var(--color-ink)]/30 to-transparent" />
           <div className="absolute bottom-3 left-3">
             <span className="font-display text-xl font-extrabold text-white drop-shadow">
@@ -74,9 +62,6 @@ export default function ListingCard({ listing, canViewFull = true, lockedReason 
             {!listing.schufaRequired && <span className="badge badge-brand">No SCHUFA</span>}
             {listing.onlineViewingAvailable && <span className="badge badge-accent">Online viewing</span>}
           </div>
-          {!canViewFull && lockedReason === 'login' && (
-            <p className="mt-2 text-xs text-[var(--color-ink-muted)]">Log in for full details and contact</p>
-          )}
         </div>
       </a>
     </article>

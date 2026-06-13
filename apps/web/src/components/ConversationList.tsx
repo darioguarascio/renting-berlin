@@ -26,7 +26,7 @@ export default function ConversationList({ selectedId }: Props) {
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center p-6">
-        <p className="text-sm text-[#667781]">Loading…</p>
+        <p className="text-sm text-[var(--color-ink-muted)]">Loading…</p>
       </div>
     );
   }
@@ -34,7 +34,7 @@ export default function ConversationList({ selectedId }: Props) {
   if (items.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
-        <p className="text-sm text-[#667781]">No chats yet.</p>
+        <p className="text-sm text-[var(--color-ink-muted)]">No chats yet.</p>
         <a href="/offers" className="mt-3 text-sm font-medium text-[var(--color-brand)] hover:underline">
           Browse listings
         </a>
@@ -69,10 +69,10 @@ export default function ConversationList({ selectedId }: Props) {
             )}
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline justify-between gap-2">
-                <p className="truncate text-[1.0625rem] font-normal text-[#111b21]">{conv.otherUserName}</p>
-                <time className="shrink-0 text-xs text-[#667781]">{formatListTime(conv.lastMessageAt)}</time>
+                <p className="truncate text-[1.0625rem] font-normal text-[var(--color-ink)]">{conv.otherUserName}</p>
+                <time className="shrink-0 text-xs text-[var(--color-ink-muted)]">{formatListTime(conv.lastMessageAt)}</time>
               </div>
-              <p className="truncate text-sm text-[#667781]">
+              <p className="truncate text-sm text-[var(--color-ink-muted)]">
                 {conv.lastMessage ?? 'No messages yet'}
               </p>
             </div>

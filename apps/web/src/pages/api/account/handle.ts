@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { getUserHandle, isHandleAvailable, setUserHandle } from '../../../lib/user-handle';
+import { isValidHandle, normalizeHandle, HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH } from '../../../lib/urls';
 import { getSession } from '../../../lib/session';
 
 export const prerender = false;
@@ -14,7 +15,12 @@ export const GET: APIRoute = async ({ request }) => {
 };
 
 const patchSchema = z.object({
-  handle: z.string().min(3).max(30),
+  handle: z
+    .string()
+    .transform(normalizeHandle)
+    .refine(isValidHandle, {
+      message: `Handle must be ${HANDLE_MIN_LENGTH}–${HANDLE_MAX_LENGTH} characters, start with a letter, and use only lowercase letters, numbers, underscores, and hyphens`,
+    }),
 });
 
 export const PATCH: APIRoute = async ({ request }) => {

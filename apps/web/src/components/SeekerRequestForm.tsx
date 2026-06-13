@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
-import AccountHandleForm from './AccountHandleForm';
-import FormShell, { FormNotice } from './forms/FormShell';
-import FormTabs, { FormActions, FormTabPanel } from './forms/FormTabs';
+import { useState } from 'react';
+import FormShell from './forms/FormShell';
+import FormAccordion, { FormAccordionPanel, FormActions, getSectionIndex } from './forms/FormAccordion';
 import PhotoUploadField, { uploadPhotosToApi } from './forms/PhotoUploadField';
 import {
   BERLIN_NEIGHBORHOODS,
@@ -36,9 +35,7 @@ const TABS = [
 type TabId = (typeof TABS)[number]['id'];
 
 export default function SeekerRequestForm() {
-  const [accountHandle, setAccountHandle] = useState<string | null>(null);
-  const [handleLoading, setHandleLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabId>('basics');
+  const [expandedSection, setExpandedSection] = useState<TabId>('basics');
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<(typeof LISTING_CATEGORIES)[number]>('shared_room');
   const [rentType, setRentType] = useState<(typeof RENT_TYPES)[number]>('long_term');
@@ -65,13 +62,6 @@ export default function SeekerRequestForm() {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    fetch('/api/account/handle')
-      .then((r) => (r.ok ? r.json() : { handle: null }))
-      .then((d: { handle: string | null }) => setAccountHandle(d.handle))
-      .finally(() => setHandleLoading(false));
-  }, []);
 
   function toggleNeighborhood(slug: string) {
     setNeighborhoods((prev) =>
@@ -149,31 +139,24 @@ export default function SeekerRequestForm() {
     }
   }
 
-  if (handleLoading) {
-    return <p className="text-sm text-[var(--color-ink-muted)]">Loading…</p>;
-  }
-
-  if (!accountHandle) {
-    return (
-      <div className="card overflow-hidden">
-        <FormNotice variant="accent" title="Choose your account handle first">
-          Your handle belongs to your account — not this profile alone. It powers your public profile URL and who-viewed-you.
-        </FormNotice>
-        <div className="form-body py-6">
-          <AccountHandleForm onSaved={() => window.location.reload()} />
-        </div>
-      </div>
-    );
-  }
-
   const canPublish = title.length >= 5 && description.length >= 20 && neighborhoods.length > 0;
+  const stepIndex = getSectionIndex([...TABS], expandedSection);
+  const isFirstStep = stepIndex === 0;
+  const isLastStep = stepIndex === TABS.length - 1;
+
+  function goToStep(direction: 'next' | 'prev') {
+    const nextIndex = direction === 'next' ? stepIndex + 1 : stepIndex - 1;
+    if (nextIndex >= 0 && nextIndex < TABS.length) {
+      setExpandedSection(TABS[nextIndex].id);
+    }
+  }
 
   return (
     <FormShell
       error={error || undefined}
       notice={{
         variant: 'brand',
-        title: `Posting as @${accountHandle}`,
+        title: 'Post your seeker profile',
         children: (
           <>
             All profile details are optional — but the more you add, the easier it is for landlords to find you.
@@ -183,22 +166,31 @@ export default function SeekerRequestForm() {
       onSubmit={handleSubmit}
       footer={
         <FormActions>
-          <button type="submit" className="btn-brand" disabled={loading || uploading || !canPublish}>
-            {loading ? 'Publishing…' : 'Publish seeker profile'}
-          </button>
+          {!isFirstStep && (
+            <button type="button" onClick={() => goToStep('prev')} disabled={loading || uploading} className="btn-ghost">
+              Back
+            </button>
+          )}
+          {!isLastStep ? (
+            <button type="button" onClick={() => goToStep('next')} disabled={loading || uploading} className="btn-brand">
+              Continue
+            </button>
+          ) : (
+            <button type="submit" className="btn-brand" disabled={loading || uploading || !canPublish}>
+              {loading ? 'Publishing…' : 'Publish seeker profile'}
+            </button>
+          )}
         </FormActions>
       }
     >
-      <FormTabs
-        tabs={[...TABS]}
-        activeTab={activeTab}
-        onChange={setActiveTab}
+      <FormAccordion
+        sections={[...TABS]}
+        expandedSection={expandedSection}
+        onExpandedChange={setExpandedSection}
         idPrefix="seeker"
         ariaLabel="Seeker profile sections"
-      />
-
-      <div className="form-body">
-        <FormTabPanel id="seeker-tab-basics" labelledBy="seeker-tab-btn-basics" active={activeTab === 'basics'}>
+      >
+        <FormAccordionPanel sectionId="basics">
           <div>
             <label className="field-label" htmlFor="title">Headline</label>
             <input
@@ -232,9 +224,9 @@ export default function SeekerRequestForm() {
               </select>
             </div>
           </div>
-        </FormTabPanel>
+        </FormAccordionPanel>
 
-        <FormTabPanel id="seeker-tab-about" labelledBy="seeker-tab-btn-about" active={activeTab === 'about'}>
+        <FormAccordionPanel sectionId="about">
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
               <label className="field-label" htmlFor="birthYear">Year of birth</label>
@@ -279,9 +271,9 @@ export default function SeekerRequestForm() {
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
-        </FormTabPanel>
+        </FormAccordionPanel>
 
-        <FormTabPanel id="seeker-tab-budget" labelledBy="seeker-tab-btn-budget" active={activeTab === 'budget'}>
+        <FormAccordionPanel sectionId="budget">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="field-label" htmlFor="budgetMax">Budget (€/mo)</label>
@@ -302,9 +294,9 @@ export default function SeekerRequestForm() {
               Have SCHUFA
             </label>
           </div>
-        </FormTabPanel>
+        </FormAccordionPanel>
 
-        <FormTabPanel id="seeker-tab-requirements" labelledBy="seeker-tab-btn-requirements" active={activeTab === 'requirements'}>
+        <FormAccordionPanel sectionId="requirements">
           <div>
             <label className="field-label">Desired areas</label>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -329,9 +321,9 @@ export default function SeekerRequestForm() {
               <input id="sizeMin" type="number" className="field-input" min={5} value={sizeMin} onChange={(e) => setSizeMin(e.target.value)} />
             </div>
           </div>
-        </FormTabPanel>
+        </FormAccordionPanel>
 
-        <FormTabPanel id="seeker-tab-lifestyle" labelledBy="seeker-tab-btn-lifestyle" active={activeTab === 'lifestyle'}>
+        <FormAccordionPanel sectionId="lifestyle">
           <div className="flex flex-wrap gap-4">
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={hasPets} onChange={(e) => setHasPets(e.target.checked)} className="size-4 rounded border-[var(--color-border)]" />
@@ -346,9 +338,9 @@ export default function SeekerRequestForm() {
               Need bed linens & towels
             </label>
           </div>
-        </FormTabPanel>
+        </FormAccordionPanel>
 
-        <FormTabPanel id="seeker-tab-photos" labelledBy="seeker-tab-btn-photos" active={activeTab === 'photos'}>
+        <FormAccordionPanel sectionId="photos">
           <div>
             <p className="field-label">Who can see your full profile?</p>
             <div className="mt-2 space-y-3">
@@ -392,8 +384,8 @@ export default function SeekerRequestForm() {
             uploading={uploading}
             onUpload={uploadPhotos}
           />
-        </FormTabPanel>
-      </div>
+        </FormAccordionPanel>
+      </FormAccordion>
     </FormShell>
   );
 }

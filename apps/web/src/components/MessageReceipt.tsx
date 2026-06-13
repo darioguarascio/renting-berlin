@@ -5,11 +5,10 @@ interface Props {
   className?: string;
 }
 
-/** WhatsApp-style ticks: 1 gray = sent/delivered, 2 blue = read by recipient. */
+/** Read receipts: single tick = sent, double tick = read. */
 export default function MessageReceipt({ status, className = '' }: Props) {
   const isRead = status === 'read';
-  const stroke = isRead ? 'currentColor' : 'currentColor';
-  const colorClass = isRead ? 'text-[#53bdeb]' : 'opacity-70';
+  const colorClass = isRead ? 'text-[var(--color-brand)]' : 'text-[var(--color-ink-muted)] opacity-70';
 
   if (!isRead) {
     return (
@@ -22,7 +21,7 @@ export default function MessageReceipt({ status, className = '' }: Props) {
       >
         <path
           d="M1 5.5 4.5 9 11 1.5"
-          stroke={stroke}
+          stroke="currentColor"
           strokeWidth="1.75"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -41,14 +40,14 @@ export default function MessageReceipt({ status, className = '' }: Props) {
     >
       <path
         d="M1 5.5 4 8.5 9.5 1.5"
-        stroke={stroke}
+        stroke="currentColor"
         strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
         d="M6.5 5.5 9.5 8.5 15 1.5"
-        stroke={stroke}
+        stroke="currentColor"
         strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"

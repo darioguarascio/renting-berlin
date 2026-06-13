@@ -115,7 +115,7 @@ export default function MessageThread({ conversationId, embedded = false, showMo
   if (!data) {
     return (
       <div className={`flex flex-1 items-center justify-center ${embedded ? '' : 'py-16'}`}>
-        <p className="text-[#667781]">Loading…</p>
+        <p className="text-[var(--color-ink-muted)]">Loading…</p>
       </div>
     );
   }
@@ -159,19 +159,19 @@ export default function MessageThread({ conversationId, embedded = false, showMo
           {data.otherUser?.profileHref ? (
             <a
               href={data.otherUser.profileHref}
-              className="truncate text-base font-medium text-[#111b21] hover:text-[var(--color-brand)] hover:underline"
+              className="truncate text-base font-medium text-[var(--color-ink)] hover:text-[var(--color-brand)] hover:underline"
             >
               {data.otherUser.name}
             </a>
           ) : (
-            <p className="truncate text-base font-medium text-[#111b21]">{data.otherUser?.name}</p>
+            <p className="truncate text-base font-medium text-[var(--color-ink)]">{data.otherUser?.name}</p>
           )}
-          {profileSubtitle && <p className="truncate text-xs text-[#667781]">{profileSubtitle}</p>}
+          {profileSubtitle && <p className="truncate text-xs text-[var(--color-ink-muted)]">{profileSubtitle}</p>}
         </div>
 
         <button
           type="button"
-          className="chat-compose__icon-btn text-[#667781] hover:text-red-600"
+          className="chat-compose__icon-btn text-[var(--color-ink-muted)] hover:text-red-600"
           aria-label="Delete conversation"
           title="Delete conversation"
           disabled={deleting}

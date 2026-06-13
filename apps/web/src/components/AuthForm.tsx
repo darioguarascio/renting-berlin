@@ -1,16 +1,23 @@
 import { useState } from 'react';
+import type { OAuthProvider } from '../lib/auth';
 import { getLastUsedProvider, signInWithEmail, signInWithProvider, signUpWithEmail } from '../lib/auth-actions';
 import { DEV_ACCOUNTS, showDevLogin } from '../lib/dev-user';
 import Logo from './Logo';
 
 type Mode = 'login' | 'signup';
 
-const PROVIDERS = [
-  { id: 'google' as const, label: 'Google', icon: 'G' },
-  { id: 'github' as const, label: 'GitHub', icon: '⌘' },
+const PROVIDERS: { id: OAuthProvider; label: string; icon: string }[] = [
+  { id: 'google', label: 'Google', icon: 'G' },
+  { id: 'github', label: 'GitHub', icon: '⌘' },
 ];
 
-export default function AuthForm({ mode: initialMode = 'login' }: { mode?: Mode }) {
+export default function AuthForm({
+  mode: initialMode = 'login',
+  enabledProviders = [],
+}: {
+  mode?: Mode;
+  enabledProviders?: OAuthProvider[];
+}) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -19,7 +26,8 @@ export default function AuthForm({ mode: initialMode = 'login' }: { mode?: Mode 
   const [loading, setLoading] = useState(false);
   const lastUsed = getLastUsedProvider();
 
-  const sortedProviders = [...PROVIDERS].sort((a, b) => {
+  const enabledSet = new Set(enabledProviders);
+  const sortedProviders = PROVIDERS.filter((provider) => enabledSet.has(provider.id)).sort((a, b) => {
     if (a.id === lastUsed) return -1;
     if (b.id === lastUsed) return 1;
     return 0;
@@ -96,34 +104,38 @@ export default function AuthForm({ mode: initialMode = 'login' }: { mode?: Mode 
           </div>
         )}
 
-        <div className="mt-6 space-y-2.5">
-          {sortedProviders.map((provider) => (
-            <button
-              key={provider.id}
-              type="button"
-              onClick={() => signInWithProvider(provider.id)}
-              className="btn-ghost relative w-full"
-            >
-              {provider.id === lastUsed && (
-                <span className="absolute -top-2 right-3 rounded-full bg-[var(--color-signal)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-                  Last used
-                </span>
-              )}
-              <span className="flex size-5 items-center justify-center rounded-md bg-[var(--color-brand-muted)] text-xs font-bold text-[var(--color-brand)]">
-                {provider.icon}
-              </span>
-              Continue with {provider.label}
-            </button>
-          ))}
-        </div>
+        {sortedProviders.length > 0 && (
+          <>
+            <div className="mt-6 space-y-2.5">
+              {sortedProviders.map((provider) => (
+                <button
+                  key={provider.id}
+                  type="button"
+                  onClick={() => signInWithProvider(provider.id)}
+                  className="btn-ghost relative w-full"
+                >
+                  {provider.id === lastUsed && (
+                    <span className="absolute -top-2 right-3 rounded-full bg-[var(--color-signal)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                      Last used
+                    </span>
+                  )}
+                  <span className="flex size-5 items-center justify-center rounded-md bg-[var(--color-brand-muted)] text-xs font-bold text-[var(--color-brand)]">
+                    {provider.icon}
+                  </span>
+                  Continue with {provider.label}
+                </button>
+              ))}
+            </div>
 
-        <div className="my-6 flex items-center gap-3">
-          <div className="h-px flex-1 bg-[var(--color-border)]" />
-          <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-ink-muted)]">or email</span>
-          <div className="h-px flex-1 bg-[var(--color-border)]" />
-        </div>
+            <div className="my-6 flex items-center gap-3">
+              <div className="h-px flex-1 bg-[var(--color-border)]" />
+              <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-ink-muted)]">or email</span>
+              <div className="h-px flex-1 bg-[var(--color-border)]" />
+            </div>
+          </>
+        )}
 
-        <form onSubmit={handleEmailSubmit} className="space-y-4">
+        <form onSubmit={handleEmailSubmit} className={`space-y-4${sortedProviders.length === 0 ? ' mt-6' : ''}`}>
           {mode === 'signup' && (
             <label className="block">
               <span className="field-label">Name</span>

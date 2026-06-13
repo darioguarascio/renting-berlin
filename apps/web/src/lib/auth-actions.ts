@@ -18,6 +18,16 @@ function getCallbackUrl(): string {
   return params.get('redirect') ?? '/dashboard';
 }
 
+function getSignupCallbackUrl(): string {
+  if (typeof window === 'undefined') return '/signup/handle';
+  const params = new URLSearchParams(window.location.search);
+  const redirect = params.get('redirect');
+  if (redirect) {
+    return `/signup/handle?redirect=${encodeURIComponent(redirect)}`;
+  }
+  return '/signup/handle';
+}
+
 export async function signInWithProvider(provider: 'google' | 'github'): Promise<void> {
   setLastUsedProvider(provider);
   await authClient.signIn.social({
@@ -44,7 +54,7 @@ export async function signUpWithEmail(
   password: string,
 ): Promise<void> {
   setLastUsedProvider('email');
-  const callbackURL = getCallbackUrl();
+  const callbackURL = getSignupCallbackUrl();
   const { data, error } = await authClient.signUp.email({ name, email, password, callbackURL });
   if (error) {
     throw new Error(error.message ?? 'Sign up failed');

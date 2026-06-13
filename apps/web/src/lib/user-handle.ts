@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { reservedHandles, users } from '../db/schema';
-import { isValidHandle, normalizeHandle } from './urls';
+import { HANDLE_MIN_LENGTH, HANDLE_MAX_LENGTH, isValidHandle, normalizeHandle } from './urls';
 
 export async function getUserByHandle(handle: string) {
   const normalized = normalizeHandle(handle);
@@ -32,7 +32,9 @@ export async function isHandleAvailable(handle: string): Promise<boolean> {
 export async function setUserHandle(userId: string, handleInput: string) {
   const handle = normalizeHandle(handleInput);
   if (!isValidHandle(handle)) {
-    throw new Error('Handle must be 3–30 characters, start with a letter, and use only lowercase letters, numbers, and underscores');
+    throw new Error(
+      `Handle must be ${HANDLE_MIN_LENGTH}–${HANDLE_MAX_LENGTH} characters, start with a letter, and use only lowercase letters, numbers, underscores, and hyphens`,
+    );
   }
 
   const user = await db.query.users.findFirst({
@@ -67,7 +69,7 @@ export async function setUserHandle(userId: string, handleInput: string) {
 export async function requireUserHandle(userId: string): Promise<string> {
   const handle = await getUserHandle(userId);
   if (!handle) {
-    throw new Error('Set your account handle before posting a seeker profile');
+    throw new Error('Set your account handle to continue');
   }
   return handle;
 }

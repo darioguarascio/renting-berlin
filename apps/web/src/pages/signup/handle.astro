@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import HandleSetupPage from '../../components/HandleSetupPage.tsx';
+
+export const prerender = false;
+---
+
+<BaseLayout title="Choose your handle — renting.berlin">
+  <div class="hero-mesh min-h-[70vh] px-4 py-16 sm:px-6">
+    <HandleSetupPage client:load />
+  </div>
+</BaseLayout>

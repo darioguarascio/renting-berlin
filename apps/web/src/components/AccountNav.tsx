@@ -1,6 +1,6 @@
 import { LinkRowIcon } from './LinkRowIcon';
 
-type AccountNavItem = {
+export type AccountNavItem = {
   href: string;
   label: string;
   description: string;
@@ -8,7 +8,7 @@ type AccountNavItem = {
   accent?: boolean;
 };
 
-const ITEMS: AccountNavItem[] = [
+export const ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
   { href: '/dashboard', label: 'Dashboard', description: 'Overview', icon: 'dashboard' },
   { href: '/account/listings', label: 'My listings', description: 'Manage your offers', icon: 'listings' },
   { href: '/account/profile-views', label: 'Profile views', description: 'Who viewed your profile', icon: 'profile-views' },
@@ -19,16 +19,23 @@ const ITEMS: AccountNavItem[] = [
   { href: '/favorites', label: 'Favorites', description: 'Saved listings', icon: 'favorites' },
 ];
 
-export default function AccountNav({ currentPath }: { currentPath: string }) {
+export function AccountNavLinks({
+  currentPath,
+  onNavigate,
+}: {
+  currentPath: string;
+  onNavigate?: () => void;
+}) {
   return (
-    <nav className="link-rows" aria-label="Account">
-      {ITEMS.map((item) => {
+    <>
+      {ACCOUNT_NAV_ITEMS.map((item) => {
         const active = currentPath === item.href || currentPath.startsWith(`${item.href}/`);
         return (
           <a
             key={item.href}
             href={item.href}
             className={`link-row ${active ? 'bg-[var(--color-brand-muted)]' : ''}`}
+            onClick={onNavigate}
           >
             <LinkRowIcon name={item.icon} accent={item.accent} />
             <span className="link-row__main">
@@ -41,6 +48,14 @@ export default function AccountNav({ currentPath }: { currentPath: string }) {
           </a>
         );
       })}
+    </>
+  );
+}
+
+export default function AccountNav({ currentPath }: { currentPath: string }) {
+  return (
+    <nav className="link-rows" aria-label="Account">
+      <AccountNavLinks currentPath={currentPath} />
     </nav>
   );
 }

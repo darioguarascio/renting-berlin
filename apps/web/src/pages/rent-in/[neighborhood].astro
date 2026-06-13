@@ -1,52 +1,65 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import NeighborhoodRentPage from '../../components/NeighborhoodRentPage.tsx';
 import { NEIGHBORHOOD_LABELS, type BerlinNeighborhood } from '../../types/listing';
-import { searchListings } from '../../lib/search';
-import SearchPage from '../../components/SearchPage.tsx';
+import {
+  buildNeighborhoodSeoDescription,
+  type NeighborhoodListingStats,
+} from '../../lib/neighborhood-stats';
+import { getNeighborhoodListingStats } from '../../lib/get-neighborhood-listing-stats';
 
 export const prerender = false;
 
 const { neighborhood } = Astro.params as { neighborhood: string };
 const label = NEIGHBORHOOD_LABELS[neighborhood as BerlinNeighborhood] ?? neighborhood;
 
-const filters = { neighborhood, page: 1, limit: 12 };
-let result = { items: [], total: 0, page: 1, limit: 12, totalPages: 1 };
+const emptyStats: NeighborhoodListingStats = {
+  neighborhood,
+  totalListings: 0,
+  rent: { min: null, max: null, median: null, average: null },
+  size: { averageSqm: null, averageRooms: null },
+  byCategory: { full_flat: 0, shared_room: 0 },
+  byRentType: { long_term: 0, short_term: 0, overnight: 0 },
+  anmeldungAvailableCount: 0,
+  noSchufaCount: 0,
+  onlineViewingCount: 0,
+};
+
+let stats = emptyStats;
 try {
-  result = await searchListings(filters);
+  stats = await getNeighborhoodListingStats(neighborhood);
 } catch {
   // DB may not be running
 }
+
+const description = buildNeighborhoodSeoDescription(label, stats);
 ---
 
-<BaseLayout title={`Rent in ${label} — renting.berlin`} description={`Find apartments and rooms for rent in ${label}, Berlin.`}>
+<BaseLayout title={`Rent in ${label} — renting.berlin`} description={description}>
   <section class="hero-mesh grid-berlin relative overflow-hidden border-b border-[var(--color-border)] py-14">
     <div class="mx-auto max-w-7xl px-4 sm:px-6">
       <div class="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--color-brand-light)] bg-white/80 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[var(--color-brand-deep)] backdrop-blur">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-3.5 text-[var(--color-brand)]">
           <path fill-rule="evenodd" d="m8 14.5 5.5-5A5 5 0 1 0 2.5 9.5l5.5 5Zm0-6.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" clip-rule="evenodd" />
         </svg>
-        Berlin neighborhoods
+        Berlin neighborhoods · Market overview
       </div>
       <h1 class="font-display text-4xl font-extrabold leading-tight sm:text-5xl">
         Rent in <span class="bg-gradient-to-r from-[var(--color-brand)] to-[var(--color-accent)] bg-clip-text text-transparent">{label}</span>
       </h1>
-      <p class="mt-4 max-w-xl text-base text-[var(--color-ink-muted)]">
-        <strong class="font-semibold text-[var(--color-brand-deep)]">{result.total}</strong> active listings — apartments, rooms, and WGs.
+      <p class="mt-4 max-w-2xl text-base leading-relaxed text-[var(--color-ink-muted)]">
+        {stats.totalListings > 0 ? (
+          <>
+            Aggregated rental market data for {label}: <strong class="font-semibold text-[var(--color-brand-deep)]">{stats.totalListings}</strong> active
+            {stats.totalListings === 1 ? ' listing' : ' listings'}
+            {stats.rent.median != null && <> · median rent <strong class="font-semibold text-[var(--color-brand-deep)]">€{stats.rent.median}/mo</strong></>}.
+            Sign up to browse individual listings with photos and contact landlords.
+          </>
+        ) : (
+          <>Market overview for {label}. Sign up free to browse live listings as they are published.</>
+        )}
       </p>
-      <div class="mt-6 flex flex-wrap gap-2">
-        <a href={`/rent-in/${neighborhood}?category=apartment`} class="chip">Apartments</a>
-        <a href={`/rent-in/${neighborhood}?category=room`} class="chip">Rooms</a>
-        <a href={`/rent-in/${neighborhood}?anmeldungAvailable=true`} class="chip">Anmeldung</a>
-        <a href={`/rent-in/${neighborhood}?maxPrice=1000`} class="chip">Under €1000</a>
-      </div>
     </div>
   </section>
-  <SearchPage
-    client:load
-    initialFilters={filters}
-    result={result}
-    view="cards"
-    isAuthenticated={!!Astro.locals.session}
-    loginRedirect={Astro.url.pathname + Astro.url.search}
-  />
+  <NeighborhoodRentPage client:load neighborhood={neighborhood} label={label} stats={stats} />
 </BaseLayout>
