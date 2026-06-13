@@ -30,11 +30,7 @@ export default function ListingCard({ listing }: Props) {
           ) : (
             <ListingPhotoPlaceholder neighborhood={listing.neighborhood} />
           )}
-          <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
-            <div className="flex flex-wrap gap-1.5">
-              <span className="badge badge-brand backdrop-blur-sm">{CATEGORY_LABELS[listing.category]}</span>
-              <span className="badge badge-accent backdrop-blur-sm">{RENT_TYPE_LABELS[listing.rentType]}</span>
-            </div>
+          <div className="absolute inset-x-0 top-0 flex items-start justify-end p-3">
             <div className="rounded-full bg-white/95 p-1 shadow-sm backdrop-blur" onClick={(e) => e.preventDefault()}>
               <FavoriteButton listingId={listing.id} />
             </div>
@@ -60,6 +56,8 @@ export default function ListingCard({ listing }: Props) {
             {listing.sizeSqm} m² · {listing.rooms} {listing.rooms === 1 ? 'room' : 'rooms'}
           </p>
           <div className="mt-3 flex flex-wrap gap-1.5">
+            <span className="badge badge-brand">{CATEGORY_LABELS[listing.category]}</span>
+            <span className="badge badge-accent">{RENT_TYPE_LABELS[listing.rentType]}</span>
             {listing.anmeldungAvailable && <span className="badge badge-success">Anmeldung</span>}
             {!listing.schufaRequired && <span className="badge badge-brand">No SCHUFA</span>}
             {listing.onlineViewingAvailable && <span className="badge badge-accent">Online viewing</span>}

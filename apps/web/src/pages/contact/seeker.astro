@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ContactComposeForm from '../../components/ContactComposeForm.tsx';
 import { getTenantRequestByHandle } from '../../lib/tenant-requests';
+import { userHasListing } from '../../lib/user-has-listing';
 import { accountProfileHref } from '../../lib/urls';
 import { formatBudget } from '../../types/tenant-request';
 
@@ -32,6 +33,13 @@ if (!profile || profile.status !== 'active' || !profile.handle) {
 if (profile.seekerId === session.user.id) {
   return Astro.redirect(accountProfileHref(profile.handle));
 }
+
+if (profile.landlordsOnly) {
+  const viewerIsLandlord = await userHasListing(session.user.id);
+  if (!viewerIsLandlord) {
+    return Astro.redirect(accountProfileHref(profile.handle));
+  }
+}
 ---
 
 <BaseLayout title={`Contact seeker — @${profile.handle}`}>
@@ -44,7 +52,7 @@ if (profile.seekerId === session.user.id) {
         tenantRequestId: profile.id,
         recipientName: profile.seekerName,
         contextTitle: profile.title,
-        contextSubtitle: `${formatBudget(profile.budgetMin, profile.budgetMax)}/mo · @${profile.handle}`,
+        contextSubtitle: `${formatBudget(profile.budgetMax)}/mo · @${profile.handle}`,
         contextHref: accountProfileHref(profile.handle),
         contextImage: profile.photoUrls[0] ?? profile.seekerImage,
         backHref: accountProfileHref(profile.handle),

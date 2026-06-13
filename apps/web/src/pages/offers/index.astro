@@ -28,7 +28,8 @@ const filters: ListingSearchFilters = {
   limit: 12,
 };
 
-const view = params.get('view') === 'map' ? 'map' : 'list';
+const viewParam = params.get('view');
+const view = viewParam === 'map' ? 'map' : viewParam === 'list' ? 'list' : viewParam === 'table' ? 'table' : 'cards';
 
 let result = { items: [], total: 0, page: 1, limit: 12, totalPages: 1 };
 try {

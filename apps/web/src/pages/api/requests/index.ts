@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { createTenantRequest, searchTenantRequests, tenantRequestInputSchema } from '../../../lib/tenant-requests';
+import { createTenantRequest, parseHouseholdTypesParam, searchTenantRequests, tenantRequestInputSchema } from '../../../lib/tenant-requests';
 import { getUserHandle } from '../../../lib/user-handle';
 import { getSession } from '../../../lib/session';
 
@@ -17,6 +17,7 @@ export const GET: APIRoute = async ({ request }) => {
     maxBudget: params.get('maxBudget') ? Number(params.get('maxBudget')) : undefined,
     anmeldungNeeded: params.get('anmeldungNeeded') === 'true' ? true : undefined,
     hasSchufa: params.get('hasSchufa') === 'true' ? true : undefined,
+    householdTypes: parseHouseholdTypesParam(params),
     page: params.get('page') ? Number(params.get('page')) : 1,
     limit: 12,
   });

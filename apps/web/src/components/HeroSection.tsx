@@ -8,6 +8,8 @@ const PATHS = [
     description: 'Browse flats and rooms for rent across Berlin. Filter by neighborhood, budget, Anmeldung, and more.',
     cta: 'Search listings',
     href: '/offers',
+    secondaryCta: 'Post your listing',
+    secondaryHref: '/listings/new',
     accent: 'from-[var(--color-brand)] to-[#1a8fc4]',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">

@@ -130,7 +130,7 @@ type SeekerSeed = {
   budgetMin: number;
   budgetMax: number;
   neighborhoods: string[];
-  householdType: 'single' | 'couple';
+  householdType: 'single' | 'couple' | 'family_1_kid' | 'family_2_kids' | 'family_3_plus_kids';
   nationality: string;
   birthYear: number;
   occupation: string;

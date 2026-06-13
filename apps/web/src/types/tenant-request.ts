@@ -1,7 +1,7 @@
 import type { ListingCategory, RentType, ListingStatus } from './listing';
 import { NEIGHBORHOOD_LABELS } from './listing';
 
-export const HOUSEHOLD_TYPES = ['single', 'couple'] as const;
+export const HOUSEHOLD_TYPES = ['single', 'couple', 'family_1_kid', 'family_2_kids', 'family_3_plus_kids'] as const;
 export type HouseholdType = (typeof HOUSEHOLD_TYPES)[number];
 
 export const SPOKEN_LANGUAGES = [
@@ -24,6 +24,9 @@ export const SPOKEN_LANGUAGES = [
 export const HOUSEHOLD_LABELS: Record<HouseholdType, string> = {
   single: 'Single',
   couple: 'Couple',
+  family_1_kid: 'Family (1 kid)',
+  family_2_kids: 'Family (2 kids)',
+  family_3_plus_kids: 'Family (3+ kids)',
 };
 
 export const NATIONALITIES = [
@@ -145,6 +148,7 @@ export interface TenantRequestFull {
   spokenLanguages: string[];
   description: string;
   photoUrls: string[];
+  landlordsOnly: boolean;
   seekerName: string;
   seekerImage: string | null;
   seekerId: string;
@@ -186,10 +190,8 @@ export function formatNeighborhoodList(slugs: string[]): string {
     .join(', ');
 }
 
-export function formatBudget(min: number, max: number): string {
-  const fmt = new Intl.NumberFormat('en-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
-  if (min === max) return fmt.format(min);
-  return `${fmt.format(min)} – ${fmt.format(max)}`;
+export function formatBudget(amount: number): string {
+  return new Intl.NumberFormat('en-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(amount);
 }
 
 export function formatIncome(amount: number): string {

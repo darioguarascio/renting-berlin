@@ -15,6 +15,12 @@
     "db:migrate": "npm run db:migrate -w apps/web",
     "db:seed": "npm run db:seed -w apps/web",
     "db:seed-dev-user": "npm run db:seed-dev-user -w apps/web",
-    "db:setup": "bash scripts/db-setup.sh"
+    "worker:profile-views": "npm run worker:profile-views -w apps/web",
+    "db:setup": "bash scripts/db-setup.sh",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f web",
+    "docker:migrate": "docker compose --profile tools run --rm migrate"
   }
 }

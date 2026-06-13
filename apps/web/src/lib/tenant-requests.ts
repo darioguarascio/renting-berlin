@@ -1,10 +1,10 @@
-import { and, desc, eq, gte, lte, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import { db } from '../db';
 import { tenantRequests, users } from '../db/schema';
 import { BERLIN_NEIGHBORHOODS, LISTING_CATEGORIES, RENT_TYPES } from '../types/listing';
-import { HOUSEHOLD_TYPES, NATIONALITIES, SPOKEN_LANGUAGES, type TenantRequestFull } from '../types/tenant-request';
+import { HOUSEHOLD_TYPES, NATIONALITIES, SPOKEN_LANGUAGES, type HouseholdType, type TenantRequestFull } from '../types/tenant-request';
 import { getUserByHandle, requireUserHandle } from './user-handle';
 import {
   isValidHandle,
@@ -18,8 +18,8 @@ export const tenantRequestInputSchema = z.object({
   title: z.string().min(5).max(120),
   category: z.enum(LISTING_CATEGORIES),
   rentType: z.enum(RENT_TYPES),
-  budgetMin: z.number().int().min(0),
-  budgetMax: z.number().int().min(0),
+  budgetMin: z.number().int().min(0).optional(),
+  budgetMax: z.number().int().min(1),
   desiredNeighborhoods: z.array(z.enum(BERLIN_NEIGHBORHOODS)).min(1).max(8),
   availableFrom: z.string().datetime().or(z.string().date()),
   availableTo: z.string().datetime().or(z.string().date()).optional().nullable(),
@@ -42,10 +42,17 @@ export const tenantRequestInputSchema = z.object({
     .array(z.union([z.string().url(), z.string().regex(/^\/uploads\//)]))
     .max(10)
     .default([]),
+  landlordsOnly: z.boolean().default(false),
   status: z.enum(['draft', 'active']).default('active'),
 });
 
 export type TenantRequestInput = z.infer<typeof tenantRequestInputSchema>;
+
+export function parseHouseholdTypesParam(params: URLSearchParams): HouseholdType[] | undefined {
+  const valid = new Set<string>(HOUSEHOLD_TYPES);
+  const values = params.getAll('householdTypes').filter((v): v is HouseholdType => valid.has(v));
+  return values.length > 0 ? values : undefined;
+}
 
 export function matchesTenantRequestFilters(
   item: {
@@ -56,16 +63,20 @@ export function matchesTenantRequestFilters(
     desiredNeighborhoods: string[];
     anmeldungNeeded: boolean;
     hasSchufa: boolean;
+    householdType: string;
   },
   filters: TenantRequestFilters,
 ): boolean {
   if (filters.category && item.category !== filters.category) return false;
   if (filters.rentType && item.rentType !== filters.rentType) return false;
   if (filters.minBudget !== undefined && item.budgetMax < filters.minBudget) return false;
-  if (filters.maxBudget !== undefined && item.budgetMin > filters.maxBudget) return false;
+  if (filters.maxBudget !== undefined && item.budgetMax > filters.maxBudget) return false;
   if (filters.anmeldungNeeded && !item.anmeldungNeeded) return false;
   if (filters.hasSchufa && !item.hasSchufa) return false;
   if (filters.neighborhood && !item.desiredNeighborhoods.includes(filters.neighborhood)) return false;
+  if (filters.householdTypes?.length && !filters.householdTypes.includes(item.householdType as HouseholdType)) {
+    return false;
+  }
   return true;
 }
 
@@ -77,6 +88,7 @@ export interface TenantRequestFilters {
   maxBudget?: number;
   anmeldungNeeded?: boolean;
   hasSchufa?: boolean;
+  householdTypes?: HouseholdType[];
   page?: number;
   limit?: number;
 }
@@ -117,6 +129,7 @@ function toFull(
     spokenLanguages: row.spokenLanguages,
     description: row.description,
     photoUrls: row.photoUrls,
+    landlordsOnly: row.landlordsOnly,
     seekerName: seeker.name,
     seekerImage: seeker.image,
     seekerId: seeker.id,
@@ -127,9 +140,7 @@ function toFull(
 
 export async function createTenantRequest(seekerId: string, input: TenantRequestInput) {
   const data = tenantRequestInputSchema.parse(input);
-  if (data.budgetMax < data.budgetMin) {
-    throw new Error('Maximum budget must be at least the minimum');
-  }
+  const budgetMin = data.budgetMin ?? 0;
 
   await requireUserHandle(seekerId);
 
@@ -147,7 +158,7 @@ export async function createTenantRequest(seekerId: string, input: TenantRequest
       status: data.status,
       category: data.category,
       rentType: data.rentType,
-      budgetMin: data.budgetMin,
+      budgetMin,
       budgetMax: data.budgetMax,
       desiredNeighborhoods: data.desiredNeighborhoods,
       availableFrom: parseDate(data.availableFrom),
@@ -168,6 +179,7 @@ export async function createTenantRequest(seekerId: string, input: TenantRequest
       spokenLanguages: data.spokenLanguages,
       description: data.description,
       photoUrls: data.photoUrls,
+      landlordsOnly: data.landlordsOnly,
       publishedAt: data.status === 'active' ? now : null,
       updatedAt: now,
     })
@@ -191,11 +203,14 @@ export async function searchTenantRequests(filters: TenantRequestFilters = {}) {
   if (filters.category) conditions.push(eq(tenantRequests.category, filters.category));
   if (filters.rentType) conditions.push(eq(tenantRequests.rentType, filters.rentType));
   if (filters.minBudget) conditions.push(gte(tenantRequests.budgetMax, filters.minBudget));
-  if (filters.maxBudget) conditions.push(lte(tenantRequests.budgetMin, filters.maxBudget));
+  if (filters.maxBudget) conditions.push(lte(tenantRequests.budgetMax, filters.maxBudget));
   if (filters.anmeldungNeeded) conditions.push(eq(tenantRequests.anmeldungNeeded, true));
   if (filters.hasSchufa) conditions.push(eq(tenantRequests.hasSchufa, true));
   if (filters.neighborhood) {
     conditions.push(sql`${tenantRequests.desiredNeighborhoods} @> ${JSON.stringify([filters.neighborhood])}::jsonb`);
+  }
+  if (filters.householdTypes?.length) {
+    conditions.push(inArray(tenantRequests.householdType, filters.householdTypes));
   }
 
   const where = and(...conditions);

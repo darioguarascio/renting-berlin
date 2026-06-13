@@ -1,7 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import RequestsSearchPage from '../../components/RequestsSearchPage.tsx';
-import { searchTenantRequests } from '../../lib/tenant-requests';
+import { searchTenantRequests, parseHouseholdTypesParam } from '../../lib/tenant-requests';
+import { userHasListing } from '../../lib/user-has-listing';
 import type { TenantRequestFilters } from '../../lib/tenant-requests';
 
 export const prerender = false;
@@ -15,13 +16,23 @@ const filters: TenantRequestFilters = {
   maxBudget: params.get('maxBudget') ? Number(params.get('maxBudget')) : undefined,
   anmeldungNeeded: params.get('anmeldungNeeded') === 'true' ? true : undefined,
   hasSchufa: params.get('hasSchufa') === 'true' ? true : undefined,
+  householdTypes: parseHouseholdTypesParam(params),
   page: params.get('page') ? Number(params.get('page')) : 1,
   limit: 12,
 };
 
+const viewParam = params.get('view');
+const view = viewParam === 'list' ? 'list' : viewParam === 'table' ? 'table' : 'cards';
+
 let result = { items: [], total: 0, page: 1, limit: 12, totalPages: 1 };
+const session = Astro.locals.session;
+let viewerIsLandlord = false;
+
 try {
   result = await searchTenantRequests(filters);
+  if (session) {
+    viewerIsLandlord = await userHasListing(session.user.id);
+  }
 } catch {
   // DB may not be running
 }
@@ -32,7 +43,9 @@ try {
     client:load
     initialFilters={filters}
     result={result}
-    isAuthenticated={!!Astro.locals.session}
+    view={view}
+    viewerIsLandlord={viewerIsLandlord}
+    isAuthenticated={!!session}
     loginRedirect={Astro.url.pathname + Astro.url.search}
   />
 </BaseLayout>

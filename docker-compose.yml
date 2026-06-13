@@ -1,0 +1,32 @@
+services:
+  web:
+    image: darioguarascio/renting.berlin:${DOCKER_IMAGE_TAG:-dev}
+    build:
+      context: .
+      target: runner
+    ports:
+      - "${APP_PORT:-4321}:4321"
+    env_file:
+      - .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4321
+      NODE_ENV: production
+    volumes:
+      - uploads:/app/apps/web/public/uploads
+    restart: unless-stopped
+
+  migrate:
+    profiles:
+      - tools
+    build:
+      context: .
+      target: migrate
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    restart: "no"
+
+volumes:
+  uploads:

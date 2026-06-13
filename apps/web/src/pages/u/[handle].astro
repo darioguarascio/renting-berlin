@@ -7,6 +7,12 @@ import { getActiveListingsForPublisher } from '../../lib/listings';
 import { getUserByHandle } from '../../lib/user-handle';
 import { getActiveTenantRequestForUser } from '../../lib/tenant-requests';
 import { getProfileVisitors, recordProfileView } from '../../lib/profile-views';
+import {
+  canViewSeekerProfileDetails,
+  getSeekerProfileLockedReason,
+  redactTenantRequestForViewer,
+} from '../../lib/seeker-profile-access';
+import { userHasListing } from '../../lib/user-has-listing';
 import { accountProfileHref, parseAccountHandle } from '../../lib/urls';
 
 export const prerender = false;
@@ -42,15 +48,30 @@ if (param !== handle && param !== `@${handle}`) {
 const session = Astro.locals.session;
 const isOwner = session?.user.id === account.id;
 const isAuthenticated = !!session;
+const viewerIsLandlord = session ? await userHasListing(session.user.id) : false;
 const hasSeekerProfile = profile?.status === 'active';
 const hasPublicContent = hasSeekerProfile || activeListings.length > 0;
 
+const canViewFull = profile
+  ? canViewSeekerProfileDetails({
+      landlordsOnly: profile.landlordsOnly,
+      isOwner,
+      isAuthenticated,
+      viewerIsLandlord,
+    })
+  : false;
+const lockedReason = profile
+  ? getSeekerProfileLockedReason({
+      landlordsOnly: profile.landlordsOnly,
+      isOwner,
+      isAuthenticated,
+      viewerIsLandlord,
+    })
+  : null;
+const displayProfile = profile && !canViewFull ? redactTenantRequestForViewer(profile) : profile;
+
 if (session && !isOwner) {
-  try {
-    await recordProfileView(account.id, session.user.id);
-  } catch {
-    // non-critical
-  }
+  void recordProfileView(account.id, session.user.id).catch(() => {});
 }
 
 let visitors = [];
@@ -93,13 +114,15 @@ if (isOwner) {
               activeListingCount={activeListings.length}
             />
           )}
-          {hasSeekerProfile && profile && (
+          {hasSeekerProfile && displayProfile && (
             <SeekerProfileView
               client:load
-              profile={profile}
-              isAuthenticated={isAuthenticated}
+              profile={displayProfile}
+              canViewFull={canViewFull}
+              lockedReason={lockedReason}
               isOwner={isOwner}
               loginRedirect={Astro.url.pathname}
+              shareUrl={`${Astro.url.origin}${accountProfileHref(handle)}`}
               visitors={visitors}
             />
           )}

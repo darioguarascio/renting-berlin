@@ -1,24 +1,16 @@
 import { useState } from 'react';
 import type { ListingSearchFilters } from '../types/listing';
 import { BERLIN_NEIGHBORHOODS, NEIGHBORHOOD_LABELS, CATEGORY_LABELS, RENT_TYPE_LABELS } from '../types/listing';
+import { buildSearchUrl } from '../lib/search-url';
 
 interface Props {
   initial?: ListingSearchFilters;
-  compact?: boolean;
+  layout?: 'inline' | 'sidebar';
 }
 
-function buildSearchUrl(filters: ListingSearchFilters): string {
-  const params = new URLSearchParams();
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined && value !== '' && value !== false) {
-      params.set(key, String(value));
-    }
-  });
-  return `/offers?${params.toString()}`;
-}
-
-export default function SearchForm({ initial = {}, compact = false }: Props) {
+export default function SearchForm({ initial = {}, layout = 'sidebar' }: Props) {
   const [filters, setFilters] = useState<ListingSearchFilters>(initial);
+  const isSidebar = layout === 'sidebar';
 
   function update<K extends keyof ListingSearchFilters>(key: K, value: ListingSearchFilters[K]) {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -26,12 +18,12 @@ export default function SearchForm({ initial = {}, compact = false }: Props) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    window.location.href = buildSearchUrl(filters);
+    window.location.href = buildSearchUrl('listings', filters as Record<string, unknown>);
   }
 
   return (
-    <form onSubmit={handleSubmit} className={compact ? 'space-y-3' : 'space-y-4'}>
-      <div className={compact ? 'grid gap-3 sm:grid-cols-2 lg:grid-cols-4' : 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'}>
+    <form onSubmit={handleSubmit} className={isSidebar ? 'space-y-4' : 'space-y-4'}>
+      <div className={isSidebar ? 'space-y-4' : 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'}>
         <label className="block">
           <span className="field-label">Search</span>
           <input
@@ -121,7 +113,7 @@ export default function SearchForm({ initial = {}, compact = false }: Props) {
         </label>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 rounded-xl bg-[var(--color-brand-muted)] px-4 py-3">
+      <div className="space-y-3 rounded-xl bg-[var(--color-brand-muted)] px-4 py-3">
         <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-[var(--color-brand-deep)]">
           <input
             type="checkbox"
@@ -142,7 +134,7 @@ export default function SearchForm({ initial = {}, compact = false }: Props) {
         </label>
       </div>
 
-      <button type="submit" className="btn-brand w-full sm:w-auto">
+      <button type="submit" className={`btn-brand ${isSidebar ? 'w-full text-sm' : 'w-full sm:w-auto'}`}>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4">
           <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clipRule="evenodd" />
         </svg>

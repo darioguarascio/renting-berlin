@@ -43,7 +43,6 @@ export default function SeekerRequestForm() {
   const [category, setCategory] = useState<(typeof LISTING_CATEGORIES)[number]>('shared_room');
   const [rentType, setRentType] = useState<(typeof RENT_TYPES)[number]>('long_term');
   const [householdType, setHouseholdType] = useState<(typeof HOUSEHOLD_TYPES)[number]>('single');
-  const [budgetMin, setBudgetMin] = useState('600');
   const [budgetMax, setBudgetMax] = useState('900');
   const [monthlyIncome, setMonthlyIncome] = useState('');
   const [neighborhoods, setNeighborhoods] = useState<string[]>(defaultNeighborhoods);
@@ -62,6 +61,7 @@ export default function SeekerRequestForm() {
   const [roomsMin, setRoomsMin] = useState('');
   const [sizeMin, setSizeMin] = useState('');
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [landlordsOnly, setLandlordsOnly] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -113,7 +113,6 @@ export default function SeekerRequestForm() {
           category,
           rentType,
           householdType,
-          budgetMin: Number(budgetMin),
           budgetMax: Number(budgetMax),
           monthlyIncome: monthlyIncome ? Number(monthlyIncome) : null,
           desiredNeighborhoods: neighborhoods,
@@ -132,6 +131,7 @@ export default function SeekerRequestForm() {
           spokenLanguages: languages,
           description,
           photoUrls,
+          landlordsOnly,
           status: 'active',
         }),
       });
@@ -282,14 +282,10 @@ export default function SeekerRequestForm() {
         </FormTabPanel>
 
         <FormTabPanel id="seeker-tab-budget" labelledBy="seeker-tab-btn-budget" active={activeTab === 'budget'}>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="field-label" htmlFor="budgetMin">Budget min (€/mo)</label>
-              <input id="budgetMin" type="number" className="field-input" required min={0} value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)} />
-            </div>
-            <div>
-              <label className="field-label" htmlFor="budgetMax">Budget max (€/mo)</label>
-              <input id="budgetMax" type="number" className="field-input" required min={0} value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} />
+              <label className="field-label" htmlFor="budgetMax">Budget (€/mo)</label>
+              <input id="budgetMax" type="number" className="field-input" required min={1} value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} />
             </div>
             <div>
               <label className="field-label" htmlFor="monthlyIncome">Monthly income (€)</label>
@@ -353,11 +349,46 @@ export default function SeekerRequestForm() {
         </FormTabPanel>
 
         <FormTabPanel id="seeker-tab-photos" labelledBy="seeker-tab-btn-photos" active={activeTab === 'photos'}>
+          <div>
+            <p className="field-label">Who can see your full profile?</p>
+            <div className="mt-2 space-y-3">
+              <label className="flex cursor-pointer items-start gap-3 text-sm">
+                <input
+                  type="radio"
+                  name="visibility"
+                  className="mt-0.5 size-4 border-[var(--color-border)]"
+                  checked={!landlordsOnly}
+                  onChange={() => setLandlordsOnly(false)}
+                />
+                <span>
+                  <span className="font-medium text-[var(--color-ink)]">All logged-in members</span>
+                  <span className="mt-0.5 block text-[var(--color-ink-muted)]">
+                    Anyone with an account can see your photos, income, and contact you.
+                  </span>
+                </span>
+              </label>
+              <label className="flex cursor-pointer items-start gap-3 text-sm">
+                <input
+                  type="radio"
+                  name="visibility"
+                  className="mt-0.5 size-4 border-[var(--color-border)]"
+                  checked={landlordsOnly}
+                  onChange={() => setLandlordsOnly(true)}
+                />
+                <span>
+                  <span className="font-medium text-[var(--color-ink)]">Landlords only</span>
+                  <span className="mt-0.5 block text-[var(--color-ink-muted)]">
+                    Full details visible only to users who have posted at least one listing.
+                  </span>
+                </span>
+              </label>
+            </div>
+          </div>
           <PhotoUploadField
             photoUrls={photoUrls}
             onChange={setPhotoUrls}
             maxPhotos={10}
-            hint="Up to 10 photos. Only visible to logged-in landlords."
+            hint={landlordsOnly ? 'Up to 10 photos. Only visible to landlords with a listing.' : 'Up to 10 photos. Only visible to logged-in members.'}
             uploading={uploading}
             onUpload={uploadPhotos}
           />

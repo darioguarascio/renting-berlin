@@ -13,6 +13,11 @@ const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.
 export default defineConfig({
   output: 'server',
 
+  server: {
+    host: process.env.HOST ?? false,
+    port: Number(process.env.PORT ?? 4321),
+  },
+
   vite: {
     envDir: rootDir,
     plugins: [tailwindcss()],

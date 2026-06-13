@@ -15,7 +15,13 @@ import { sql } from 'drizzle-orm';
 export const listingCategoryEnum = pgEnum('listing_category', ['full_flat', 'shared_room']);
 export const rentTypeEnum = pgEnum('rent_type', ['long_term', 'short_term', 'overnight']);
 export const listingStatusEnum = pgEnum('listing_status', ['draft', 'active', 'paused', 'closed']);
-export const householdTypeEnum = pgEnum('household_type', ['single', 'couple']);
+export const householdTypeEnum = pgEnum('household_type', [
+  'single',
+  'couple',
+  'family_1_kid',
+  'family_2_kids',
+  'family_3_plus_kids',
+]);
 export const savedSearchTypeEnum = pgEnum('saved_search_type', ['listings', 'tenant_requests']);
 export const emailDigestEnum = pgEnum('email_digest', ['instant', 'daily', 'weekly']);
 export const messageTemplateKindEnum = pgEnum('message_template_kind', ['inquiry', 'outreach', 'general']);
@@ -229,6 +235,7 @@ export const tenantRequests = pgTable(
     spokenLanguages: jsonb('spoken_languages').notNull().$type<string[]>().default([]),
     description: text('description').notNull(),
     photoUrls: jsonb('photo_urls').notNull().$type<string[]>().default([]),
+    landlordsOnly: boolean('landlords_only').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     publishedAt: timestamp('published_at', { withTimezone: true }),

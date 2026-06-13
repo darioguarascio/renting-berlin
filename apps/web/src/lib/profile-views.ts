@@ -3,25 +3,46 @@ import { nanoid } from 'nanoid';
 import { db } from '../db';
 import { profileViews, tenantRequests, users } from '../db/schema';
 import type { ProfileVisitor } from '../types/tenant-request';
+import { enqueueProfileViewEvent } from './profile-view-events';
 import { getUserHandle } from './user-handle';
 
-export async function recordProfileView(profileUserId: string, viewerId: string) {
-  if (viewerId === profileUserId) return;
+function profileViewsSyncEnabled(): boolean {
+  return process.env.PROFILE_VIEWS_SYNC === '1';
+}
 
-  const now = new Date();
+export async function upsertProfileView(
+  profileUserId: string,
+  viewerId: string,
+  viewedAt: Date = new Date(),
+) {
   await db
     .insert(profileViews)
     .values({
       id: nanoid(),
       profileUserId,
       viewerId,
-      firstViewedAt: now,
-      lastViewedAt: now,
+      firstViewedAt: viewedAt,
+      lastViewedAt: viewedAt,
     })
     .onConflictDoUpdate({
       target: [profileViews.profileUserId, profileViews.viewerId],
-      set: { lastViewedAt: now },
+      set: { lastViewedAt: viewedAt },
     });
+}
+
+export async function recordProfileView(profileUserId: string, viewerId: string) {
+  if (viewerId === profileUserId) return;
+
+  if (profileViewsSyncEnabled()) {
+    await upsertProfileView(profileUserId, viewerId);
+    return;
+  }
+
+  try {
+    await enqueueProfileViewEvent(profileUserId, viewerId);
+  } catch {
+    await upsertProfileView(profileUserId, viewerId);
+  }
 }
 
 export async function getProfileVisitors(profileUserId: string, ownerId: string): Promise<ProfileVisitor[]> {

@@ -8,10 +8,12 @@ import { matchesTenantRequestFilters, searchTenantRequests } from './tenant-requ
 import type { ListingSearchFilters, ListingSummary } from '../types/listing';
 import type { TenantRequestFilters } from './tenant-requests';
 import { CATEGORY_LABELS, NEIGHBORHOOD_LABELS, RENT_TYPE_LABELS } from '../types/listing';
+import { HOUSEHOLD_LABELS } from '../types/tenant-request';
 import { seekerProfileHref } from './urls';
 import { shouldNotifyInApp } from './notification-preferences';
+import { buildSearchUrl, normalizeFilters } from './search-url';
 
-export type SavedSearchType = 'listings' | 'tenant_requests';
+export { normalizeFilters, buildSearchUrl };
 
 export interface SavedSearchRecord {
   id: string;
@@ -35,32 +37,12 @@ export interface SearchNotificationRecord {
   createdAt: string;
 }
 
-const PAGINATION_KEYS = new Set(['page', 'limit', 'view']);
-
-export function normalizeFilters(filters: Record<string, unknown>): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(filters)) {
-    if (PAGINATION_KEYS.has(key)) continue;
-    if (value === undefined || value === '' || value === false) continue;
-    out[key] = value;
-  }
-  return Object.fromEntries(Object.entries(out).sort(([a], [b]) => a.localeCompare(b)));
-}
+export type SavedSearchType = 'listings' | 'tenant_requests';
 
 export function filtersHash(type: SavedSearchType, filters: Record<string, unknown>): string {
   return createHash('md5')
     .update(JSON.stringify({ type, filters: normalizeFilters(filters) }))
     .digest('hex');
-}
-
-export function buildSearchUrl(type: SavedSearchType, filters: Record<string, unknown>): string {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(normalizeFilters(filters))) {
-    params.set(key, String(value));
-  }
-  const base = type === 'listings' ? '/offers' : '/requests';
-  const qs = params.toString();
-  return qs ? `${base}?${qs}` : base;
 }
 
 export function generateSearchName(type: SavedSearchType, filters: Record<string, unknown>): string {
@@ -87,6 +69,9 @@ export function generateSearchName(type: SavedSearchType, filters: Record<string
   }
   if (tf.category) parts.push(CATEGORY_LABELS[tf.category]);
   if (tf.maxBudget) parts.push(`max €${tf.maxBudget}`);
+  if (tf.householdTypes?.length) {
+    parts.push(tf.householdTypes.map((h) => HOUSEHOLD_LABELS[h]).join(', '));
+  }
   if (tf.anmeldungNeeded) parts.push('Anmeldung');
   if (tf.hasSchufa) parts.push('SCHUFA');
   if (parts.length === 0) parts.push('All seeker profiles');

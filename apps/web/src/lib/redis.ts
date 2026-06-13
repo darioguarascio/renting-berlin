@@ -31,6 +31,8 @@ export const REDIS_KEYS = {
   geoIndex: 'listings:geo',
   favorites: (userId: string) => `favorites:${userId}`,
   searchCache: (hash: string) => `search:${hash}`,
+  profileViewEvents: 'profile_views:events',
+  profileViewWorkers: 'profile-view-workers',
 } as const;
 
 export async function connectRedis(): Promise<void> {

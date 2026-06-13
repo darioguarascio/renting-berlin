@@ -22,7 +22,8 @@
     "db:migrate": "node --env-file=../../.env ./node_modules/.bin/drizzle-kit migrate",
     "db:push": "node --env-file=../../.env ./node_modules/.bin/drizzle-kit push",
     "db:seed": "node --env-file=../../.env ../../node_modules/.bin/tsx src/db/seed.ts",
-    "db:seed-dev-user": "node --env-file=../../.env ../../node_modules/.bin/tsx src/db/seed-dev-user.ts"
+    "db:seed-dev-user": "node --env-file=../../.env ../../node_modules/.bin/tsx src/db/seed-dev-user.ts",
+    "worker:profile-views": "node --env-file=../../.env ../../node_modules/.bin/tsx src/workers/profile-view-worker.ts"
   },
   "dependencies": {
     "@astrojs/node": "^10.1.4",
@@ -44,6 +45,7 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-leaflet": "^5.0.0",
+    "react-qr-code": "^2.2.0",
     "tailwindcss": "^4.3.0",
     "zod": "^4.4.3"
   },
