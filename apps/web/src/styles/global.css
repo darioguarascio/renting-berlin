@@ -57,6 +57,33 @@ html {
   scroll-behavior: smooth;
 }
 
+.logo-berlin-text {
+  background: linear-gradient(
+    125deg,
+    var(--color-contrast-hover) 0%,
+    var(--color-contrast) 28%,
+    #ff8aab 48%,
+    var(--color-contrast) 72%,
+    #e91e7a 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.logo-berlin-text-light {
+  background: linear-gradient(
+    125deg,
+    #ffc8da 0%,
+    #fff 38%,
+    #ffb8d0 62%,
+    #ffe4ee 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 body {
   font-family: var(--font-body);
   color: var(--color-ink);

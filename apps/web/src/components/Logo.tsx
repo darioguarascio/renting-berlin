@@ -32,7 +32,7 @@ export default function Logo({ size = 'md', showTagline = false, variant = 'defa
       <div className="leading-none">
         <span className={`font-display font-extrabold tracking-tight ${light ? 'text-white' : 'text-[var(--color-ink)]'} ${s.word}`}>
           renting<span className={light ? 'text-[var(--color-brand-light)]' : 'text-[var(--color-brand)]'}>.</span>
-          <span className={light ? 'text-[var(--color-accent-soft)]' : 'bg-gradient-to-r from-[var(--color-accent)] to-[#8b5cf6] bg-clip-text text-transparent'}>berlin</span>
+          <span className={light ? 'logo-berlin-text-light' : 'logo-berlin-text'}>berlin</span>
         </span>
         {showTagline && (
           <p className={`mt-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${light ? 'text-white/50' : 'text-[var(--color-ink-muted)]'}`}>
