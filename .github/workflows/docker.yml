@@ -66,11 +66,7 @@ jobs:
                 plugin_dir="${HOME}/.docker/cli-plugins"
                 mkdir -p "$plugin_dir"
                 arch="$(uname -m)"
-                case "$arch" in
-                  x86_64) arch=amd64 ;;
-                  aarch64|arm64) arch=arm64 ;;
-                esac
-                curl -fsSL "https://github.com/docker/compose/releases/download/v2.36.0/docker-compose-linux-${arch}" \
+                curl -fsSL "https://github.com/docker/compose/releases/download/v2.36.2/docker-compose-linux-${arch}" \
                   -o "${plugin_dir}/docker-compose"
                 chmod +x "${plugin_dir}/docker-compose"
                 docker compose "$@"
