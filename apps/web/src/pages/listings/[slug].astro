@@ -1,0 +1,172 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { eq } from 'drizzle-orm';
+import { db } from '../../db';
+import { users } from '../../db/schema';
+import { getListingByPath } from '../../lib/listings';
+import { getPublishedListingFeedback, type ListingFeedbackSummary } from '../../lib/feedback';
+import { buildListingPath, listingHref } from '../../lib/urls';
+import { CATEGORY_LABELS, RENT_TYPE_LABELS, NEIGHBORHOOD_LABELS } from '../../types/listing';
+import FavoriteButton from '../../components/FavoriteButton.tsx';
+import ContactButton from '../../components/ContactButton.tsx';
+import ListingGallery from '../../components/ListingGallery.tsx';
+import ListingFeedbackSection from '../../components/ListingFeedbackSection.tsx';
+import MapView from '../../components/MapView.tsx';
+import ListingPhotoPlaceholder from '../../components/ListingPhotoPlaceholder.tsx';
+
+export const prerender = false;
+
+const pathParam = Astro.params.slug!;
+let listing = null;
+let publisher = null;
+let feedbackSummary: ListingFeedbackSummary = {
+  averageRating: null,
+  totalCount: 0,
+  distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+  reviews: [],
+};
+
+try {
+  listing = await getListingByPath(pathParam);
+  if (listing) {
+    [publisher, feedbackSummary] = await Promise.all([
+      db.query.users.findFirst({ where: eq(users.id, listing.publisherId) }),
+      getPublishedListingFeedback(listing.id),
+    ]);
+  }
+} catch {
+  // DB unavailable
+}
+
+if (!listing) {
+  return Astro.redirect('/offers');
+}
+
+const canonicalPath = buildListingPath(listing.slug, listing.shortCode);
+if (pathParam !== canonicalPath) {
+  return Astro.redirect(listingHref(listing.slug, listing.shortCode), 301);
+}
+
+const summary = {
+  id: listing.id,
+  slug: listing.slug,
+  shortCode: listing.shortCode,
+  path: canonicalPath,
+  title: listing.title,
+  category: listing.category,
+  rentType: listing.rentType,
+  rentPerMonth: listing.costs.rentPerMonth,
+  sizeSqm: listing.sizeSqm,
+  rooms: listing.rooms,
+  neighborhood: listing.neighborhood,
+  availableFrom: listing.availableFrom.toISOString(),
+  availableTo: listing.availableTo?.toISOString() ?? null,
+  anmeldungAvailable: listing.anmeldungAvailable,
+  schufaRequired: listing.schufaRequired,
+  onlineViewingAvailable: listing.onlineViewingAvailable,
+  lat: listing.lat,
+  lng: listing.lng,
+  approximateLocation: listing.approximateLocation,
+  primaryPhotoUrl: listing.photoUrls[0] ?? null,
+  createdAt: listing.createdAt.toISOString(),
+};
+
+const neighborhoodLabel = NEIGHBORHOOD_LABELS[listing.neighborhood as keyof typeof NEIGHBORHOOD_LABELS] ?? listing.neighborhood;
+---
+
+<BaseLayout title={`${listing.title} — renting.berlin`}>
+  <article class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+    <div class="grid gap-8 lg:grid-cols-5">
+      <div class="lg:col-span-3">
+        {listing.photoUrls.length > 0 ? (
+          <ListingGallery client:load photos={listing.photoUrls} title={listing.title} />
+        ) : (
+          <div class="aspect-[16/9] overflow-hidden rounded-xl">
+            <ListingPhotoPlaceholder client:load neighborhood={listing.neighborhood} />
+          </div>
+        )}
+
+        <div class="mt-8 space-y-8">
+          {listing.descriptions.apartment && (
+            <section>
+              <h2 class="font-display text-xl font-bold text-[var(--color-ink)]">About the apartment</h2>
+              <p class="mt-3 leading-relaxed text-[var(--color-ink-muted)]">{listing.descriptions.apartment}</p>
+            </section>
+          )}
+          {listing.descriptions.location && (
+            <section>
+              <h2 class="font-display text-xl font-bold text-[var(--color-ink)]">Location</h2>
+              <p class="mt-3 leading-relaxed text-[var(--color-ink-muted)]">{listing.descriptions.location}</p>
+            </section>
+          )}
+
+          <ListingFeedbackSection
+            client:load
+            summary={feedbackSummary}
+            publisherName={publisher?.name ?? 'the landlord'}
+          />
+        </div>
+      </div>
+
+      <aside class="lg:col-span-2">
+        <div class="card sticky top-24 overflow-hidden p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="flex items-center gap-1.5 text-sm text-[var(--color-ink-muted)]">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-3.5 text-[var(--color-brand)]">
+                  <path fill-rule="evenodd" d="m8 14.5 5.5-5A5 5 0 1 0 2.5 9.5l5.5 5Z" clip-rule="evenodd" />
+                </svg>
+                {neighborhoodLabel}
+              </p>
+              <h1 class="mt-1 font-display text-2xl font-bold text-[var(--color-ink)]">{listing.title}</h1>
+              {feedbackSummary.totalCount > 0 && feedbackSummary.averageRating && (
+                <p class="mt-2 flex items-center gap-1.5 text-sm font-semibold text-[var(--color-ink)]">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 text-[var(--color-brand)]">
+                    <path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.753-.38-1.831-4.401Z" clip-rule="evenodd" />
+                  </svg>
+                  {feedbackSummary.averageRating.toFixed(1)}
+                  <span class="font-normal text-[var(--color-ink-muted)]">
+                    · {feedbackSummary.totalCount} review{feedbackSummary.totalCount === 1 ? '' : 's'}
+                  </span>
+                </p>
+              )}
+            </div>
+            <FavoriteButton client:load listingId={listing.id} />
+          </div>
+
+          <div class="price-block mt-5">
+            <p class="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-brand-deep)]">Monthly rent</p>
+            <p class="mt-1 font-display text-4xl font-extrabold text-[var(--color-ink)]">
+              €{listing.costs.rentPerMonth}<span class="ml-1 text-base font-normal text-[var(--color-ink-muted)]">/month</span>
+            </p>
+          </div>
+
+          <dl class="mt-5 grid grid-cols-2 gap-2">
+            <div class="detail-cell"><dt>Category</dt><dd>{CATEGORY_LABELS[listing.category]}</dd></div>
+            <div class="detail-cell"><dt>Rent type</dt><dd>{RENT_TYPE_LABELS[listing.rentType]}</dd></div>
+            <div class="detail-cell"><dt>Size</dt><dd>{listing.sizeSqm} m²</dd></div>
+            <div class="detail-cell"><dt>Rooms</dt><dd>{listing.rooms}</dd></div>
+            {listing.costs.deposit && <div class="detail-cell"><dt>Deposit</dt><dd>€{listing.costs.deposit}</dd></div>}
+            {listing.costs.utilities && <div class="detail-cell"><dt>Utilities</dt><dd>€{listing.costs.utilities}/mo</dd></div>}
+          </dl>
+
+          <div class="mt-4 flex flex-wrap gap-2">
+            {listing.anmeldungAvailable && <span class="badge badge-success">Anmeldung ✓</span>}
+            {!listing.schufaRequired && <span class="badge badge-brand">No SCHUFA</span>}
+            {listing.schufaRequired && <span class="badge badge-signal">SCHUFA required</span>}
+            {listing.onlineViewingAvailable && <span class="badge badge-accent">Online viewing</span>}
+          </div>
+
+          <ContactButton client:load listingId={listing.id} publisherName={publisher?.name ?? 'landlord'} />
+        </div>
+
+        <div class="mt-6">
+          <MapView client:only="react" listings={[summary]} height="280px" />
+          {listing.approximateLocation && (
+            <p class="mt-2 text-xs text-[var(--color-ink-muted)]">Approximate location shown for privacy</p>
+          )}
+        </div>
+      </aside>
+    </div>
+  </article>
+</BaseLayout>

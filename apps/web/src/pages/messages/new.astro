@@ -1,0 +1,15 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export const prerender = false;
+
+const listingId = Astro.url.searchParams.get('listing');
+if (!listingId) {
+  return Astro.redirect('/messages');
+}
+
+return Astro.redirect(`/contact/landlord?listing=${encodeURIComponent(listingId)}`);
+---
+
+<BaseLayout title="Contact landlord">
+</BaseLayout>

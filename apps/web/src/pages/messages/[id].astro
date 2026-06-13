@@ -1,0 +1,18 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import MessagesShell from '../../components/MessagesShell.tsx';
+
+export const prerender = false;
+
+const { id } = Astro.params;
+---
+
+<BaseLayout title="Conversation — renting.berlin">
+  <MessagesShell client:load conversationId={id!} />
+</BaseLayout>
+
+<style is:global>
+  body:has(.chat-app) footer {
+    display: none;
+  }
+</style>

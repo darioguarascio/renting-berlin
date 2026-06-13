@@ -1,0 +1,15 @@
+---
+import AccountLayout from '../../../layouts/AccountLayout.astro';
+import MyListingsPage from '../../../components/MyListingsPage';
+
+export const prerender = false;
+---
+
+<AccountLayout
+  title="My listings — renting.berlin"
+  heading="My listings"
+  description="Manage your rental offers."
+  currentPath="/account/listings"
+>
+  <MyListingsPage client:load />
+</AccountLayout>

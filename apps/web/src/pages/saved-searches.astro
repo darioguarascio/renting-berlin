@@ -1,0 +1,15 @@
+---
+import AccountLayout from '../layouts/AccountLayout.astro';
+import SavedSearchesPage from '../components/SavedSearchesPage.tsx';
+
+export const prerender = false;
+---
+
+<AccountLayout
+  title="Saved searches — renting.berlin"
+  heading="Saved searches"
+  description="Manage your saved filters and notification alerts for listings and seeker profiles."
+  currentPath="/saved-searches"
+>
+  <SavedSearchesPage client:load />
+</AccountLayout>

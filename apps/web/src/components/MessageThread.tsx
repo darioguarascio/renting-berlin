@@ -1,0 +1,215 @@
+import { useEffect, useRef, useState } from 'react';
+import ConversationContextLink from './ConversationContextLink';
+import MessageComposer, { type ComposerPayload } from './MessageComposer';
+import MessageContent from './MessageContent';
+import MessageReceipt, { receiptStatusFromReadAt } from './MessageReceipt';
+import { otherUserProfileSubtitle } from '../lib/user-profile-display';
+import type { ConversationOtherUser } from '../types/listing';
+import type { MessageAttachment } from '../types/message';
+
+interface Message {
+  id: string;
+  body: string;
+  attachments?: MessageAttachment[];
+  senderId: string;
+  isMine: boolean;
+  createdAt: string;
+  readAt?: string | null;
+}
+
+interface ThreadData {
+  id: string;
+  contextKind: 'listing' | 'seeker';
+  listing: { id: string; title: string; slug: string; photoUrl: string | null } | null;
+  seekerProfile: { id: string; title: string; href: string } | null;
+  otherUser: ConversationOtherUser | null;
+  messages: Message[];
+}
+
+interface Props {
+  conversationId: string;
+  embedded?: boolean;
+  showMobileBack?: boolean;
+}
+
+function withGrouping(messages: Message[]) {
+  return messages.map((msg, index) => {
+    const prev = messages[index - 1];
+    const isGrouped = !!prev && prev.isMine === msg.isMine;
+    return { ...msg, isGrouped };
+  });
+}
+
+export default function MessageThread({ conversationId, embedded = false, showMobileBack = false }: Props) {
+  const [data, setData] = useState<ThreadData | null>(null);
+  const [sending, setSending] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const templateKind =
+    data?.contextKind === 'seeker' ? 'outreach' : data?.contextKind === 'listing' ? 'inquiry' : 'general';
+
+  async function load() {
+    const res = await fetch(`/api/conversations/${conversationId}`);
+    if (res.ok) setData(await res.json());
+  }
+
+  useEffect(() => {
+    load();
+    const interval = setInterval(load, 5000);
+    return () => clearInterval(interval);
+  }, [conversationId]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [data?.messages.length]);
+
+  async function send(payload: ComposerPayload) {
+    if (sending) return;
+    setSending(true);
+    try {
+      const res = await fetch(`/api/conversations/${conversationId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          body: payload.body,
+          attachments: payload.attachments,
+          saveAsTemplate: payload.saveAsTemplate,
+          templateLabel: payload.saveAsTemplate ? payload.templateLabel : undefined,
+        }),
+      });
+      if (res.ok) {
+        const sent = (await res.json()) as Message;
+        setData((prev) =>
+          prev
+            ? {
+                ...prev,
+                messages: [...prev.messages, { ...sent, isMine: true, readAt: null, attachments: sent.attachments ?? [] }],
+              }
+            : prev,
+        );
+      }
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function deleteChat() {
+    if (deleting) return;
+    const confirmed = window.confirm(
+      'Delete this conversation? All messages will be removed and cannot be recovered.',
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/conversations/${conversationId}`, { method: 'DELETE' });
+      if (res.ok || res.status === 204) {
+        window.location.href = '/messages';
+      }
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  if (!data) {
+    return (
+      <div className={`flex flex-1 items-center justify-center ${embedded ? '' : 'py-16'}`}>
+        <p className="text-[#667781]">Loading…</p>
+      </div>
+    );
+  }
+
+  const listingContext = data.listing
+    ? { id: data.listing.id, title: data.listing.title, href: data.listing.slug, photoUrl: data.listing.photoUrl }
+    : null;
+
+  const groupedMessages = withGrouping(data.messages);
+  const profileSubtitle =
+    data.otherUser?.profileHref && data.otherUser.handle
+      ? otherUserProfileSubtitle(data.otherUser)
+      : null;
+
+  const avatar = data.otherUser?.image ? (
+    <img src={data.otherUser.image} alt="" className="chat-thread-header__avatar" />
+  ) : (
+    <span className="chat-thread-header__avatar-fallback">{data.otherUser?.name?.[0] ?? '?'}</span>
+  );
+
+  return (
+    <div className={embedded ? 'flex h-full min-h-0 flex-col' : 'flex h-full flex-col'}>
+      <header className="chat-thread-header">
+        {showMobileBack && (
+          <a href="/messages" className="chat-compose__icon-btn lg:hidden" aria-label="Back to chats">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
+              <path fillRule="evenodd" d="M7.72 12.53a.75.75 0 0 1 0-1.06l7.5-7.5a.75.75 0 1 1 1.06 1.06L9.31 12l6.97 6.97a.75.75 0 1 1-1.06 1.06l-7.5-7.5Z" clipRule="evenodd" />
+            </svg>
+          </a>
+        )}
+
+        {data.otherUser?.profileHref ? (
+          <a href={data.otherUser.profileHref} className="shrink-0" aria-label={`View ${data.otherUser.name}'s profile`}>
+            {avatar}
+          </a>
+        ) : (
+          avatar
+        )}
+
+        <div className="min-w-0 flex-1">
+          {data.otherUser?.profileHref ? (
+            <a
+              href={data.otherUser.profileHref}
+              className="truncate text-base font-medium text-[#111b21] hover:text-[var(--color-brand)] hover:underline"
+            >
+              {data.otherUser.name}
+            </a>
+          ) : (
+            <p className="truncate text-base font-medium text-[#111b21]">{data.otherUser?.name}</p>
+          )}
+          {profileSubtitle && <p className="truncate text-xs text-[#667781]">{profileSubtitle}</p>}
+        </div>
+
+        <button
+          type="button"
+          className="chat-compose__icon-btn text-[#667781] hover:text-red-600"
+          aria-label="Delete conversation"
+          title="Delete conversation"
+          disabled={deleting}
+          onClick={deleteChat}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+          </svg>
+        </button>
+      </header>
+
+      <ConversationContextLink listing={listingContext} seekerProfile={data.seekerProfile} variant="bar" />
+
+      <div className="chat-thread-messages">
+        {groupedMessages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`chat-bubble-wrap ${msg.isMine ? 'chat-bubble-wrap--mine' : 'chat-bubble-wrap--theirs'} ${msg.isGrouped ? '' : 'chat-bubble-wrap--gap'}`}
+          >
+            <div
+              className={`chat-bubble ${msg.isMine ? 'chat-bubble--out' : 'chat-bubble--in'} ${msg.isGrouped ? 'chat-bubble--grouped' : ''}`}
+            >
+              <MessageContent
+                body={msg.body}
+                attachments={msg.attachments ?? []}
+                isMine={msg.isMine}
+              />
+              <span className="chat-bubble__meta">
+                <time>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>
+                {msg.isMine && <MessageReceipt status={receiptStatusFromReadAt(msg.readAt)} />}
+              </span>
+            </div>
+          </div>
+        ))}
+        <div ref={bottomRef} />
+      </div>
+
+      <MessageComposer templateKind={templateKind} onSend={send} sending={sending} variant="chat" />
+    </div>
+  );
+}

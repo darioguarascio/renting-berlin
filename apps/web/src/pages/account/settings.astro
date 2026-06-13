@@ -1,0 +1,15 @@
+---
+import AccountLayout from '../../layouts/AccountLayout.astro';
+import AccountSettings from '../../components/AccountSettings';
+
+export const prerender = false;
+---
+
+<AccountLayout
+  title="Account settings — renting.berlin"
+  heading="Account settings"
+  description="Manage your profile and sign-in."
+  currentPath="/account/settings"
+>
+  <AccountSettings client:load />
+</AccountLayout>

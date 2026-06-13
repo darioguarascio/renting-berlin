@@ -1,0 +1,15 @@
+---
+import GuideLayout from '../../layouts/GuideLayout.astro';
+import { getGuide } from '../../lib/guides';
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+const guide = getGuide(slug!);
+
+if (!guide) {
+  return Astro.redirect('/guides');
+}
+---
+
+<GuideLayout guide={guide} />

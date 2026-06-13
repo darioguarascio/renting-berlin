@@ -1,0 +1,54 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ContactComposeForm from '../../components/ContactComposeForm.tsx';
+import { getTenantRequestByHandle } from '../../lib/tenant-requests';
+import { accountProfileHref } from '../../lib/urls';
+import { formatBudget } from '../../types/tenant-request';
+
+export const prerender = false;
+
+const handle = Astro.url.searchParams.get('handle');
+if (!handle) {
+  return Astro.redirect('/requests');
+}
+
+const session = Astro.locals.session;
+if (!session) {
+  return Astro.redirect(`/login?redirect=${encodeURIComponent(Astro.url.pathname + Astro.url.search)}`);
+}
+
+let profile = null;
+
+try {
+  profile = await getTenantRequestByHandle(handle);
+} catch {
+  // DB unavailable
+}
+
+if (!profile || profile.status !== 'active' || !profile.handle) {
+  return Astro.redirect('/requests');
+}
+
+if (profile.seekerId === session.user.id) {
+  return Astro.redirect(accountProfileHref(profile.handle));
+}
+---
+
+<BaseLayout title={`Contact seeker — @${profile.handle}`}>
+  <div class="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+    <ContactComposeForm
+      client:load
+      templateKind="outreach"
+      submitLabel="Contact seeker"
+      target={{
+        tenantRequestId: profile.id,
+        recipientName: profile.seekerName,
+        contextTitle: profile.title,
+        contextSubtitle: `${formatBudget(profile.budgetMin, profile.budgetMax)}/mo · @${profile.handle}`,
+        contextHref: accountProfileHref(profile.handle),
+        contextImage: profile.photoUrls[0] ?? profile.seekerImage,
+        backHref: accountProfileHref(profile.handle),
+      }}
+    />
+  </div>
+</BaseLayout>

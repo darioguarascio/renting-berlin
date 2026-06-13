@@ -1,0 +1,5 @@
+---
+const param = Astro.params.handle!;
+const handle = param.replace(/^@/, '');
+return Astro.redirect(`/u/${handle}`, 301);
+---

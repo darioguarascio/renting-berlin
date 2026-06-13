@@ -1,0 +1,15 @@
+node_modules/
+dist/
+apps/web/dist/
+.env
+.env.*
+!.env.example
+apps/web/.env
+.astro/
+.DS_Store
+public/uploads/*
+!public/uploads/.gitkeep
+apps/web/public/uploads/*
+!apps/web/public/uploads/.gitkeep
+*.pem
+*.key

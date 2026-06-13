@@ -1,0 +1,10 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AuthForm from '../components/AuthForm.tsx';
+---
+
+<BaseLayout title="Log in — renting.berlin">
+  <div class="hero-mesh min-h-[70vh] px-4 py-16 sm:px-6">
+    <AuthForm client:load mode="login" />
+  </div>
+</BaseLayout>

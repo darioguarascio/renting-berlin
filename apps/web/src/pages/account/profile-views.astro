@@ -1,0 +1,15 @@
+---
+import AccountLayout from '../../layouts/AccountLayout.astro';
+import ProfileViewsPage from '../../components/ProfileViewsPage';
+
+export const prerender = false;
+---
+
+<AccountLayout
+  title="Profile views — renting.berlin"
+  heading="Profile views"
+  description="See who viewed your tenant request profile."
+  currentPath="/account/profile-views"
+>
+  <ProfileViewsPage client:load />
+</AccountLayout>

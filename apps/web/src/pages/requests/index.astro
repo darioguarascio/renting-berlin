@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import RequestsSearchPage from '../../components/RequestsSearchPage.tsx';
+import { searchTenantRequests } from '../../lib/tenant-requests';
+import type { TenantRequestFilters } from '../../lib/tenant-requests';
+
+export const prerender = false;
+
+const params = Astro.url.searchParams;
+const filters: TenantRequestFilters = {
+  category: (params.get('category') as TenantRequestFilters['category']) ?? undefined,
+  rentType: (params.get('rentType') as TenantRequestFilters['rentType']) ?? undefined,
+  neighborhood: params.get('neighborhood') ?? undefined,
+  minBudget: params.get('minBudget') ? Number(params.get('minBudget')) : undefined,
+  maxBudget: params.get('maxBudget') ? Number(params.get('maxBudget')) : undefined,
+  anmeldungNeeded: params.get('anmeldungNeeded') === 'true' ? true : undefined,
+  hasSchufa: params.get('hasSchufa') === 'true' ? true : undefined,
+  page: params.get('page') ? Number(params.get('page')) : 1,
+  limit: 12,
+};
+
+let result = { items: [], total: 0, page: 1, limit: 12, totalPages: 1 };
+try {
+  result = await searchTenantRequests(filters);
+} catch {
+  // DB may not be running
+}
+---
+
+<BaseLayout title="Tenant requests in Berlin — renting.berlin">
+  <RequestsSearchPage
+    client:load
+    initialFilters={filters}
+    result={result}
+    isAuthenticated={!!Astro.locals.session}
+    loginRedirect={Astro.url.pathname + Astro.url.search}
+  />
+</BaseLayout>

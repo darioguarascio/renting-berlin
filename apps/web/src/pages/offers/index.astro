@@ -1,0 +1,50 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SearchPage from '../../components/SearchPage.tsx';
+import { searchListings } from '../../lib/search';
+import type { ListingSearchFilters } from '../../types/listing';
+
+export const prerender = false;
+
+const url = Astro.url;
+const params = url.searchParams;
+
+const filters: ListingSearchFilters = {
+  q: params.get('q') ?? undefined,
+  category: (params.get('category') as ListingSearchFilters['category']) ?? undefined,
+  rentType: (params.get('rentType') as ListingSearchFilters['rentType']) ?? undefined,
+  neighborhood: params.get('neighborhood') ?? undefined,
+  minPrice: params.get('minPrice') ? Number(params.get('minPrice')) : undefined,
+  maxPrice: params.get('maxPrice') ? Number(params.get('maxPrice')) : undefined,
+  minSize: params.get('minSize') ? Number(params.get('minSize')) : undefined,
+  maxSize: params.get('maxSize') ? Number(params.get('maxSize')) : undefined,
+  minRooms: params.get('minRooms') ? Number(params.get('minRooms')) : undefined,
+  maxRooms: params.get('maxRooms') ? Number(params.get('maxRooms')) : undefined,
+  availableFrom: params.get('availableFrom') ?? undefined,
+  availableTo: params.get('availableTo') ?? undefined,
+  anmeldungAvailable: params.get('anmeldungAvailable') === 'true' ? true : undefined,
+  schufaRequired: params.get('schufaRequired') === 'false' ? false : params.get('schufaRequired') === 'true' ? true : undefined,
+  page: params.get('page') ? Number(params.get('page')) : 1,
+  limit: 12,
+};
+
+const view = params.get('view') === 'map' ? 'map' : 'list';
+
+let result = { items: [], total: 0, page: 1, limit: 12, totalPages: 1 };
+try {
+  result = await searchListings(filters);
+} catch {
+  // DB may not be running yet during dev
+}
+---
+
+<BaseLayout title="Apartments for rent in Berlin — renting.berlin">
+  <SearchPage
+    client:load
+    initialFilters={filters}
+    result={result}
+    view={view}
+    isAuthenticated={!!Astro.locals.session}
+    loginRedirect={Astro.url.pathname + Astro.url.search}
+  />
+</BaseLayout>

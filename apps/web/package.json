@@ -1,0 +1,57 @@
+{
+  "name": "apps-web",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "node --env-file=../../.env ./node_modules/.bin/astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "bash ../../scripts/test-integration.sh",
+    "test:integration:run": "vitest run --config vitest.integration.config.ts",
+    "test:all": "npm run test && npm run test:integration",
+    "test:db:setup": "bash ../../scripts/test-db-setup.sh",
+    "test:db:seed": "node ../../node_modules/.bin/tsx src/test/fixtures/seed-cli.ts",
+    "test:db:teardown": "bash ../../scripts/test-db-teardown.sh",
+    "astro": "astro",
+    "db:generate": "node --env-file=../../.env ./node_modules/.bin/drizzle-kit generate",
+    "db:migrate": "node --env-file=../../.env ./node_modules/.bin/drizzle-kit migrate",
+    "db:push": "node --env-file=../../.env ./node_modules/.bin/drizzle-kit push",
+    "db:seed": "node --env-file=../../.env ../../node_modules/.bin/tsx src/db/seed.ts",
+    "db:seed-dev-user": "node --env-file=../../.env ../../node_modules/.bin/tsx src/db/seed-dev-user.ts"
+  },
+  "dependencies": {
+    "@astrojs/node": "^10.1.4",
+    "@astrojs/react": "^5.0.7",
+    "@tailwindcss/vite": "^4.3.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/leaflet": "^1.9.21",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "astro": "^6.4.6",
+    "bcryptjs": "^3.0.3",
+    "better-auth": "^1.6.17",
+    "drizzle-kit": "^0.31.10",
+    "drizzle-orm": "^0.45.2",
+    "ioredis": "^5.11.1",
+    "leaflet": "^1.9.4",
+    "nanoid": "^5.1.11",
+    "postgres": "^3.4.9",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-leaflet": "^5.0.0",
+    "tailwindcss": "^4.3.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "jsdom": "^26.1.0",
+    "tsx": "^4.22.4",
+    "vitest": "^3.2.4"
+  }
+}

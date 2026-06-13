@@ -1,0 +1,17 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ListingForm from '../../components/ListingForm.tsx';
+
+export const prerender = false;
+---
+
+<BaseLayout title="Publish a listing — renting.berlin">
+  <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-brand)]">Angebote · Offers</p>
+    <h1 class="mt-1 font-display text-3xl font-extrabold text-[var(--color-ink)]">Publish a listing</h1>
+    <p class="mt-2 text-[var(--color-ink-muted)]">List your flat or room in Berlin. All fields can be edited after publishing.</p>
+    <div class="mt-8">
+      <ListingForm client:load />
+    </div>
+  </div>
+</BaseLayout>

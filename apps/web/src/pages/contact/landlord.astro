@@ -1,0 +1,61 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ContactComposeForm from '../../components/ContactComposeForm.tsx';
+import { db } from '../../db';
+import { listings, users } from '../../db/schema';
+import { eq } from 'drizzle-orm';
+import { listingHref } from '../../lib/urls';
+
+export const prerender = false;
+
+const listingId = Astro.url.searchParams.get('listing');
+if (!listingId) {
+  return Astro.redirect('/offers');
+}
+
+const session = Astro.locals.session;
+if (!session) {
+  return Astro.redirect(`/login?redirect=${encodeURIComponent(Astro.url.pathname + Astro.url.search)}`);
+}
+
+let listing = null;
+let publisher = null;
+
+try {
+  listing = await db.query.listings.findFirst({ where: eq(listings.id, listingId) });
+  if (listing) {
+    publisher = await db.query.users.findFirst({ where: eq(users.id, listing.publisherId) });
+  }
+} catch {
+  // DB unavailable
+}
+
+if (!listing || listing.status !== 'active') {
+  return Astro.redirect('/offers');
+}
+
+const listingPath = listingHref(listing.slug, listing.shortCode);
+
+if (listing.publisherId === session.user.id) {
+  return Astro.redirect(listingPath);
+}
+---
+
+<BaseLayout title={`Contact landlord — ${listing.title}`}>
+  <div class="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+    <ContactComposeForm
+      client:load
+      templateKind="inquiry"
+      submitLabel="Contact landlord"
+      target={{
+        listingId: listing.id,
+        recipientName: publisher?.name ?? 'Landlord',
+        contextTitle: listing.title,
+        contextSubtitle: listing.neighborhood,
+        contextHref: listingPath,
+        contextImage: listing.photoUrls[0] ?? null,
+        backHref: listingPath,
+      }}
+    />
+  </div>
+</BaseLayout>

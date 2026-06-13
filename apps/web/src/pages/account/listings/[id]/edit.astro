@@ -1,0 +1,20 @@
+---
+import AccountLayout from '../../../../layouts/AccountLayout.astro';
+import ListingForm from '../../../../components/ListingForm';
+
+export const prerender = false;
+
+const { id } = Astro.params;
+if (!id) return Astro.redirect('/account/listings');
+
+const reactivate = Astro.url.searchParams.has('reactivate');
+---
+
+<AccountLayout
+  title={reactivate ? 'Reactivate listing — renting.berlin' : 'Edit listing — renting.berlin'}
+  heading={reactivate ? 'Reactivate listing' : 'Edit listing'}
+  description={reactivate ? 'Review and update your listing before publishing it again.' : 'Update your rental offer.'}
+  currentPath="/account/listings"
+>
+  <ListingForm client:load listingId={id} reactivate={reactivate} />
+</AccountLayout>

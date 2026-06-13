@@ -1,0 +1,121 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.tsx';
+import Logo from '../components/Logo.tsx';
+import { getSession } from '../lib/session';
+import { eq } from 'drizzle-orm';
+import { db } from '../db';
+import { favorites } from '../db/schema';
+import { getUnreadCount } from '../lib/messages';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = 'renting.berlin — Find your place in Berlin', description = 'English-first rental marketplace for Berlin. Search flats and rooms with trust built in.' } = Astro.props;
+
+const siteOrigin = Astro.url.origin;
+const ogImage = `${siteOrigin}/og.svg`;
+
+let initialUser = null;
+let favoriteCount = 0;
+let unreadCount = 0;
+
+try {
+  const session = await getSession(Astro.request);
+  if (session) {
+    initialUser = {
+      id: session.user.id,
+      name: session.user.name,
+      email: session.user.email,
+      image: session.user.image,
+    };
+    const favRows = await db.query.favorites.findMany({
+      where: eq(favorites.userId, session.user.id),
+    });
+    favoriteCount = favRows.length;
+    unreadCount = await getUnreadCount(session.user.id);
+  }
+} catch {
+  // DB unavailable
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#2679a3" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:url" content={Astro.url.href} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <title>{title}</title>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <Header client:load initialUser={initialUser} favoriteCount={favoriteCount} unreadCount={unreadCount} />
+    <main class="flex-1">
+      <slot />
+    </main>
+    <footer class="border-t border-[var(--color-border)] bg-[var(--color-ink)] text-white">
+      <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+        <div class="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <Logo client:load size="md" showTagline variant="light" />
+            <p class="mt-4 max-w-xs text-sm leading-relaxed text-white/60">
+              Born from the Berlin apartment hunt nightmare. Now a full marketplace for the city's international renters.
+            </p>
+          </div>
+          <div class="grid grid-cols-2 gap-8 sm:grid-cols-4">
+            <div>
+              <p class="text-xs font-bold uppercase tracking-widest text-white/40">Search</p>
+              <ul class="mt-3 space-y-2 text-sm text-white/75">
+                <li><a href="/offers" class="hover:text-white">All listings</a></li>
+                <li><a href="/requests" class="hover:text-white">Seeker profiles</a></li>
+                <li><a href="/offers?view=map" class="hover:text-white">Map view</a></li>
+              </ul>
+            </div>
+            <div>
+              <p class="text-xs font-bold uppercase tracking-widest text-white/40">Guides</p>
+              <ul class="mt-3 space-y-2 text-sm text-white/75">
+                <li><a href="/guides" class="hover:text-white">All guides</a></li>
+                <li><a href="/guides/anmeldung" class="hover:text-white">Anmeldung</a></li>
+                <li><a href="/guides/schufa" class="hover:text-white">SCHUFA</a></li>
+                <li><a href="/guides/rent-costs" class="hover:text-white">Rent & deposit</a></li>
+              </ul>
+            </div>
+            <div>
+              <p class="text-xs font-bold uppercase tracking-widest text-white/40">Account</p>
+              <ul class="mt-3 space-y-2 text-sm text-white/75">
+                <li><a href="/signup" class="hover:text-white">Sign up</a></li>
+                <li><a href="/listings/new" class="hover:text-white">List a place</a></li>
+                <li><a href="/dashboard" class="hover:text-white">Dashboard</a></li>
+              </ul>
+            </div>
+            <div>
+              <p class="text-xs font-bold uppercase tracking-widest text-white/40">Berlin</p>
+              <ul class="mt-3 space-y-2 text-sm text-white/75">
+                <li><a href="/rent-in/neukolln" class="hover:text-white">Neukölln</a></li>
+                <li><a href="/rent-in/mitte" class="hover:text-white">Mitte</a></li>
+                <li><a href="/rent-in/friedrichshain" class="hover:text-white">Friedrichshain</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="mt-10 border-t border-white/10 pt-6 text-center text-xs text-white/40 sm:text-left">
+          © {new Date().getFullYear()} renting.berlin — Berlin rentals, built for internationals.
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

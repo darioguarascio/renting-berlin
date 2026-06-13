@@ -1,0 +1,143 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroSection from '../components/HeroSection.tsx';
+---
+
+<BaseLayout>
+  <HeroSection client:load />
+
+  <section id="trust" class="border-y border-[var(--color-border)] bg-[var(--color-paper)] py-14">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6">
+      <div class="mx-auto max-w-3xl text-center">
+        <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-brand)]">Trust & safety</p>
+        <h2 class="mt-1 font-display text-2xl font-extrabold text-[var(--color-ink)] sm:text-3xl">Feedback you can actually trust</h2>
+        <p class="mt-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+          Unlike anonymous classifieds, reviews on renting.berlin only happen after a real rental — and both sides must participate.
+        </p>
+      </div>
+
+      <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { title: 'Verified rentals only', body: 'Reviews unlock after a confirmed rental period ends — not from casual messages or viewings.' },
+          { title: 'Mutual & balanced', body: 'Landlord and tenant both leave feedback. One-sided ratings are not published.' },
+          { title: 'Tied to your account', body: 'Every review links to a real conversation and transaction record — no fake profiles or drive-by stars.' },
+          { title: 'Anti-fraud by design', body: 'New accounts, duplicate listings, and suspicious patterns can be flagged before they harm anyone.' },
+        ].map(({ title, body }) => (
+          <article class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-card)]">
+            <div class="mb-3 flex size-9 items-center justify-center rounded-lg bg-[var(--color-brand-muted)] text-[var(--color-brand)]">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
+                <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <h3 class="font-display text-sm font-bold text-[var(--color-ink)]">{title}</h3>
+            <p class="mt-2 text-xs leading-relaxed text-[var(--color-ink-muted)]">{body}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="border-y border-[var(--color-border)] bg-[var(--color-surface)] py-14">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-brand)]">Why renting.berlin</p>
+          <h2 class="mt-1 font-display text-2xl font-extrabold text-[var(--color-ink)] sm:text-3xl">Better than the old way</h2>
+        </div>
+        <a href="/signup" class="btn-teal text-sm">Create free account</a>
+      </div>
+
+      <div class="mt-10 grid gap-4 sm:grid-cols-3">
+        <article class="feature-row card px-5 py-4">
+          <span class="link-row__icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z"/></svg>
+          </span>
+          <div class="min-w-0">
+            <h3 class="font-display text-base font-bold text-[var(--color-ink)]">Trust built in</h3>
+            <p class="mt-1 text-sm leading-relaxed text-[var(--color-ink-muted)]">Mutual reviews after real rentals — not anonymous classifieds like WG-Gesucht.</p>
+          </div>
+        </article>
+        <article class="feature-row card px-5 py-4">
+          <span class="link-row__icon link-row__icon--accent" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M9 2.25a.75.75 0 0 1 .75.75v1.506a49.384 49.384 0 0 1 5.343.371.75.75 0 1 1-.186 1.489c-.66-.083-1.323-.151-1.99-.206v13.58c.744.282 1.467.618 2.161 1.002a.75.75 0 0 1-.756 1.296A16.502 16.502 0 0 0 12 20.25a16.5 16.5 0 0 0-2.321.298.75.75 0 0 1-.378-1.452c.694-.384 1.417-.72 2.161-1.002V5.161c-.667.055-1.33.123-1.99.206a.75.75 0 0 1-.186-1.489 49.386 49.386 0 0 1 5.343-.371V3A.75.75 0 0 1 15 2.25h-6Zm-3 6.75a.75.75 0 0 0-.75.75v7.5h-.75a.75.75 0 0 0 0 1.5h9a.75.75 0 0 0 0-1.5h-.75v-7.5a.75.75 0 0 0-1.5 0V17.25h-3V9.75a.75.75 0 0 0-.75-.75H6Z" clip-rule="evenodd"/></svg>
+          </span>
+          <div class="min-w-0">
+            <h3 class="font-display text-base font-bold text-[var(--color-ink)]">English-first</h3>
+            <p class="mt-1 text-sm leading-relaxed text-[var(--color-ink-muted)]">Anmeldung, SCHUFA, rent types — explained clearly for internationals.</p>
+          </div>
+        </article>
+        <article class="feature-row card px-5 py-4">
+          <span class="link-row__icon" style="background: var(--color-signal-soft); color: var(--color-signal);" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="m11.54 22.351.07.04.028.016a.76.76 0 0 0 .723 0l.028-.015.071-.041a16.975 16.975 0 0 0 1.144-.742 19.58 19.58 0 0 0 2.683-2.282c1.944-2.079 3.456-4.923 3.456-8.327 0-3.41-2.527-6.273-5.75-6.773A7.5 7.5 0 0 0 4.5 12c0 3.404 1.512 6.248 3.456 8.327a19.58 19.58 0 0 0 2.683 2.282 16.974 16.974 0 0 0 1.144.742ZM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z" clip-rule="evenodd"/></svg>
+          </span>
+          <div class="min-w-0">
+            <h3 class="font-display text-base font-bold text-[var(--color-ink)]">Berlin-focused</h3>
+            <p class="mt-1 text-sm leading-relaxed text-[var(--color-ink-muted)]">Every listing is in Berlin. Smaller pool, faster results, map-first discovery.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-[var(--color-paper)] py-14">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-brand)]">Explore Berlin</p>
+          <h2 class="mt-1 font-display text-2xl font-extrabold text-[var(--color-ink)] sm:text-3xl">Popular neighborhoods</h2>
+        </div>
+        <a href="/offers" class="btn-ghost text-sm">All listings</a>
+      </div>
+      <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          { slug: 'kreuzberg', name: 'Kreuzberg' },
+          { slug: 'neukolln', name: 'Neukölln' },
+          { slug: 'mitte', name: 'Mitte' },
+          { slug: 'friedrichshain', name: 'Friedrichshain' },
+          { slug: 'prenzlauer-berg', name: 'Prenzlauer Berg' },
+          { slug: 'charlottenburg', name: 'Charlottenburg' },
+          { slug: 'wedding', name: 'Wedding' },
+          { slug: 'schoneberg', name: 'Schöneberg' },
+        ].map(({ slug, name }) => (
+          <a href={`/rent-in/${slug}`} class="neighborhood-tile">
+            <span class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-3.5 shrink-0 text-[var(--color-brand)]">
+                <path fill-rule="evenodd" d="m8 14.5 5.5-5A5 5 0 1 0 2.5 9.5l5.5 5Zm0-6.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" clip-rule="evenodd" />
+              </svg>
+              {name}
+            </span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" class="size-3.5 shrink-0 text-[var(--color-ink-muted)]">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m5.75 12.5 4.5-4.5-4.5-4.5" />
+            </svg>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="relative overflow-hidden py-14 text-white" style="background: linear-gradient(135deg, var(--color-brand-deep) 0%, #1a6b9a 40%, var(--color-accent) 100%);">
+    <div class="pointer-events-none absolute inset-0 opacity-10" style="background-image: radial-gradient(ellipse 60% 80% at 80% 50%, white, transparent);" />
+    <div class="relative mx-auto max-w-7xl px-4 sm:px-6">
+      <p class="text-center text-xs font-bold uppercase tracking-widest text-white/60">Free to join</p>
+      <h2 class="mt-1 text-center font-display text-2xl font-extrabold sm:text-3xl">Ready to get started?</h2>
+      <div class="mx-auto mt-8 grid max-w-3xl gap-4 sm:grid-cols-2">
+        <a href="/listings/new" class="group flex flex-col rounded-2xl border border-white/20 bg-white/10 p-6 backdrop-blur transition hover:bg-white/15">
+          <p class="text-xs font-bold uppercase tracking-widest text-white/60">Offers</p>
+          <p class="mt-1 font-display text-lg font-bold">List a place</p>
+          <p class="mt-2 text-sm text-white/75">Have a room or flat? Reach international tenants directly.</p>
+          <span class="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-white group-hover:underline">
+            Publish listing →
+          </span>
+        </a>
+        <a href="/requests/new" class="group flex flex-col rounded-2xl border border-white/20 bg-white/10 p-6 backdrop-blur transition hover:bg-white/15">
+          <p class="text-xs font-bold uppercase tracking-widest text-white/60">Requests</p>
+          <p class="mt-1 font-display text-lg font-bold">Post your profile</p>
+          <p class="mt-2 text-sm text-white/75">Looking for a place? Let landlords find you.</p>
+          <span class="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-white group-hover:underline">
+            Create seeker profile →
+          </span>
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

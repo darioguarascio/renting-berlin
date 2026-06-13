@@ -1,0 +1,111 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AccountProfileHeader from '../../components/AccountProfileHeader.tsx';
+import SeekerProfileView from '../../components/SeekerProfileView.tsx';
+import UserPublicListings from '../../components/UserPublicListings.tsx';
+import { getActiveListingsForPublisher } from '../../lib/listings';
+import { getUserByHandle } from '../../lib/user-handle';
+import { getActiveTenantRequestForUser } from '../../lib/tenant-requests';
+import { getProfileVisitors, recordProfileView } from '../../lib/profile-views';
+import { accountProfileHref, parseAccountHandle } from '../../lib/urls';
+
+export const prerender = false;
+
+const param = Astro.params.handle!;
+const handle = parseAccountHandle(param);
+
+let account = null;
+let profile = null;
+let activeListings = [];
+
+try {
+  account = await getUserByHandle(handle);
+  if (account) {
+    [profile, activeListings] = await Promise.all([
+      getActiveTenantRequestForUser(account.id),
+      getActiveListingsForPublisher(account.id),
+    ]);
+  }
+} catch {
+  // DB unavailable
+}
+
+if (!account) {
+  return Astro.redirect('/requests');
+}
+
+const canonical = accountProfileHref(handle);
+if (param !== handle && param !== `@${handle}`) {
+  return Astro.redirect(canonical, 301);
+}
+
+const session = Astro.locals.session;
+const isOwner = session?.user.id === account.id;
+const isAuthenticated = !!session;
+const hasSeekerProfile = profile?.status === 'active';
+const hasPublicContent = hasSeekerProfile || activeListings.length > 0;
+
+if (session && !isOwner) {
+  try {
+    await recordProfileView(account.id, session.user.id);
+  } catch {
+    // non-critical
+  }
+}
+
+let visitors = [];
+if (isOwner) {
+  try {
+    visitors = await getProfileVisitors(account.id, account.id);
+  } catch {
+    // non-critical
+  }
+}
+---
+
+<BaseLayout title={`@${handle} — renting.berlin`}>
+  <div class={`mx-auto px-4 py-10 sm:px-6 ${activeListings.length > 0 ? 'max-w-5xl' : 'max-w-3xl'}`}>
+    <a href="/requests" class="text-sm font-semibold text-[var(--color-brand)] hover:underline">← All requests</a>
+    <div class="mt-6">
+      {!hasPublicContent ? (
+        <div class="card p-8 text-center">
+          <p class="font-display text-xl font-bold text-[var(--color-accent)]">@{handle}</p>
+          <p class="mt-2 text-sm text-[var(--color-ink-muted)]">
+            {isOwner
+              ? 'You have not published a seeker profile or active listings yet.'
+              : 'This account has no public seeker profile or active listings right now.'}
+          </p>
+          {isOwner && (
+            <div class="mt-5 flex flex-wrap justify-center gap-3">
+              <a href="/requests/new" class="btn-brand inline-flex text-sm">Post seeker profile</a>
+              <a href="/offers/new" class="btn-secondary inline-flex text-sm">Post a listing</a>
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          {!hasSeekerProfile && activeListings.length > 0 && (
+            <AccountProfileHeader
+              client:load
+              name={account.name}
+              handle={handle}
+              image={account.image}
+              activeListingCount={activeListings.length}
+            />
+          )}
+          {hasSeekerProfile && profile && (
+            <SeekerProfileView
+              client:load
+              profile={profile}
+              isAuthenticated={isAuthenticated}
+              isOwner={isOwner}
+              loginRedirect={Astro.url.pathname}
+              visitors={visitors}
+            />
+          )}
+          <UserPublicListings client:load listings={activeListings} handle={handle} />
+        </>
+      )}
+    </div>
+  </div>
+</BaseLayout>

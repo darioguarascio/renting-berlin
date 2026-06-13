@@ -1,0 +1,15 @@
+---
+import AccountLayout from '../../layouts/AccountLayout.astro';
+import NotificationPreferencesForm from '../../components/NotificationPreferencesForm.tsx';
+
+export const prerender = false;
+---
+
+<AccountLayout
+  title="Notifications — renting.berlin"
+  heading="Notifications & contact"
+  description="Choose what you want to hear about, how we should reach you, and when you are open to messages."
+  currentPath="/account/notifications"
+>
+  <NotificationPreferencesForm client:load />
+</AccountLayout>
