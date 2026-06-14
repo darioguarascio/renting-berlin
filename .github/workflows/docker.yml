@@ -79,6 +79,32 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
 
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync compose file
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          source: deploy/docker-compose.server.yml
+          target: ${{ secrets.DEPLOY_PATH }}
+          strip_components: 1
+          overwrite: true
+
+      - name: Install compose file
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          script: |
+            set -euo pipefail
+            cd "${{ secrets.DEPLOY_PATH }}"
+            mv -f docker-compose.server.yml docker-compose.yml
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.2
         with:
