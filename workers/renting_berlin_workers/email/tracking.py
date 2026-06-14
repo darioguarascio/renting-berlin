@@ -39,3 +39,17 @@ def create_email_send(
             (send_id, user_id, to_email, category, subject, json.dumps(links)),
         )
     return send_id
+
+
+def tracking_open_url(send_id: str, site_url: str) -> str:
+    base = site_url.rstrip("/")
+    return f"{base}/e/o/{send_id}.gif"
+
+
+def tracking_click_url(send_id: str, link_index: int, site_url: str) -> str:
+    base = site_url.rstrip("/")
+    return f"{base}/e/c/{send_id}/{link_index}"
+
+
+def wrap_links_for_tracking(send_id: str, links: list[str], site_url: str) -> list[str]:
+    return [tracking_click_url(send_id, index, site_url) for index in range(len(links))]

@@ -1,13 +1,16 @@
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { DEFAULT_EMAIL_FOOTER, EMAIL_BRAND } from './brand';
 import { escapeHtml } from './utils';
 
-const textLayout = readFileSync(
-  join(dirname(fileURLToPath(import.meta.url)), 'text-layout.txt'),
-  'utf8',
-);
+const TEXT_EMAIL_LAYOUT = `renting.berlin
+{{title}}
+
+{{body}}
+
+{{cta_block}}---
+{{footer}}
+
+{{site_url}}
+`;
 
 export type EmailContent = {
   subject: string;
@@ -36,7 +39,7 @@ export function renderTextEmail(
         ? `${content.cta.label}: ${content.cta.href}`
         : '';
 
-  return textLayout
+  return TEXT_EMAIL_LAYOUT
     .replace('{{title}}', content.title)
     .replace('{{body}}', body)
     .replace('{{cta_block}}', ctaBlock ? `${ctaBlock}\n` : '')
