@@ -35,12 +35,6 @@ function toSummary(row: typeof listings.$inferSelect): ListingSummary {
 }
 
 export function matchesListingFilters(item: ListingSummary, filters: ListingSearchFilters): boolean {
-  if (filters.q) {
-    const q = filters.q.toLowerCase();
-    if (!item.title.toLowerCase().includes(q) && !item.neighborhood.toLowerCase().includes(q)) {
-      return false;
-    }
-  }
   if (filters.category && item.category !== filters.category) return false;
   if (filters.rentType && item.rentType !== filters.rentType) return false;
   if (filters.minPrice !== undefined && item.rentPerMonth < filters.minPrice) return false;
@@ -136,12 +130,6 @@ async function searchFromPostgres(filters: ListingSearchFilters): Promise<Listin
   if (filters.maxRooms !== undefined) conditions.push(lte(listings.rooms, filters.maxRooms));
   if (filters.availableFrom) {
     conditions.push(lte(listings.availableFrom, new Date(filters.availableFrom)));
-  }
-  if (filters.q) {
-    const q = `%${filters.q.toLowerCase()}%`;
-    conditions.push(
-      sql`(lower(${listings.title}) like ${q} or lower(${listings.neighborhood}) like ${q})`,
-    );
   }
 
   const rows = await db.query.listings.findMany({

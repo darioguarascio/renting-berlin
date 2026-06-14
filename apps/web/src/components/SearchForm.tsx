@@ -25,17 +25,6 @@ export default function SearchForm({ initial = {}, layout = 'sidebar' }: Props) 
     <form onSubmit={handleSubmit} className={isSidebar ? 'space-y-4' : 'space-y-4'}>
       <div className={isSidebar ? 'space-y-4' : 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'}>
         <label className="block">
-          <span className="field-label">Search</span>
-          <input
-            type="text"
-            placeholder="Neighborhood, keyword..."
-            value={filters.q ?? ''}
-            onChange={(e) => update('q', e.target.value || undefined)}
-            className="field-input"
-          />
-        </label>
-
-        <label className="block">
           <span className="field-label">Category</span>
           <select
             value={filters.category ?? ''}

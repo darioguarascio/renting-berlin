@@ -10,7 +10,6 @@ export const GET: APIRoute = async ({ url, request }) => {
   if (!session) return new Response('Unauthorized', { status: 401 });
 
   const filters: ListingSearchFilters = {
-    q: url.searchParams.get('q') ?? undefined,
     category: (url.searchParams.get('category') as ListingSearchFilters['category']) ?? undefined,
     rentType: (url.searchParams.get('rentType') as ListingSearchFilters['rentType']) ?? undefined,
     neighborhood: url.searchParams.get('neighborhood') ?? undefined,

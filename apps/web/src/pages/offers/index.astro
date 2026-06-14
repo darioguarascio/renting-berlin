@@ -2,15 +2,18 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SearchPage from '../../components/SearchPage.tsx';
 import { searchListings } from '../../lib/search';
+import { authEntryUrl } from '../../lib/public-routes';
+import { countActiveFilters, listingSearchRequiresAuth } from '../../lib/search-url';
+import { resolveSearchView, SEARCH_VIEW_COOKIE } from '../../lib/search-view-preference';
 import type { ListingSearchFilters } from '../../types/listing';
 
 export const prerender = false;
 
 const url = Astro.url;
 const params = url.searchParams;
+const session = Astro.locals.session;
 
 const filters: ListingSearchFilters = {
-  q: params.get('q') ?? undefined,
   category: (params.get('category') as ListingSearchFilters['category']) ?? undefined,
   rentType: (params.get('rentType') as ListingSearchFilters['rentType']) ?? undefined,
   neighborhood: params.get('neighborhood') ?? undefined,
@@ -30,7 +33,12 @@ const filters: ListingSearchFilters = {
 };
 
 const viewParam = params.get('view');
-const view = viewParam === 'map' ? 'map' : viewParam === 'list' ? 'list' : viewParam === 'table' ? 'table' : 'cards';
+const savedView = session ? Astro.cookies.get(SEARCH_VIEW_COOKIE.offers)?.value : undefined;
+const view = resolveSearchView(viewParam, 'offers', savedView);
+
+if (listingSearchRequiresAuth(!!session, filters as Record<string, unknown>)) {
+  return Astro.redirect(authEntryUrl(url.pathname + url.search, 'signup'));
+}
 
 let result = { items: [], total: 0, page: 1, limit: 12, totalPages: 1 };
 try {
@@ -46,7 +54,7 @@ try {
     initialFilters={filters}
     result={result}
     view={view}
-    isAuthenticated={!!Astro.locals.session}
+    isAuthenticated={!!session}
     loginRedirect={Astro.url.pathname + Astro.url.search}
   />
 </BaseLayout>

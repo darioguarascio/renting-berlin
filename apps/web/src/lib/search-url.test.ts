@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appendFiltersToParams, buildSearchUrl, countActiveFilters, normalizeFilters } from './search-url';
+import { appendFiltersToParams, buildSearchUrl, countActiveFilters, listingSearchRequiresAuth, normalizeFilters } from './search-url';
 
 describe('normalizeFilters', () => {
   it('drops empty values and pagination keys', () => {
@@ -7,7 +7,6 @@ describe('normalizeFilters', () => {
       normalizeFilters({
         page: 2,
         limit: 12,
-        q: '',
         neighborhood: 'kreuzberg',
         anmeldungAvailable: false,
         tags: [],
@@ -34,5 +33,21 @@ describe('buildSearchUrl', () => {
 describe('countActiveFilters', () => {
   it('counts normalized filters', () => {
     expect(countActiveFilters({ page: 1, neighborhood: 'mitte', minRooms: 2 })).toBe(2);
+  });
+});
+
+describe('listingSearchRequiresAuth', () => {
+  it('requires auth when guests apply listing filters', () => {
+    expect(listingSearchRequiresAuth(false, { neighborhood: 'mitte' })).toBe(true);
+    expect(listingSearchRequiresAuth(false, { sort: 'updated' })).toBe(true);
+  });
+
+  it('allows guests to browse without filters', () => {
+    expect(listingSearchRequiresAuth(false, { page: 2, view: 'list' })).toBe(false);
+    expect(listingSearchRequiresAuth(false, {})).toBe(false);
+  });
+
+  it('allows authenticated users to filter', () => {
+    expect(listingSearchRequiresAuth(true, { neighborhood: 'mitte' })).toBe(false);
   });
 });

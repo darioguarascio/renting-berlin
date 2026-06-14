@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import SaveSearchButton from './SaveSearchButton';
 import SavedSearchesSidebar from './SavedSearchesSidebar';
 import type { SavedSearchType } from '../lib/saved-searches';
+import { authEntryUrl } from '../lib/public-routes';
 import { countActiveFilters } from '../lib/search-url';
 
 interface Props {
@@ -12,6 +13,29 @@ interface Props {
   loginRedirect: string;
   filterForm: ReactNode;
   clearFiltersHref: string;
+  filtersRequireAuth?: boolean;
+}
+
+function LockedFiltersPanel({ loginRedirect }: { loginRedirect: string }) {
+  return (
+    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-brand-muted)] p-5 text-center">
+      <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-full bg-white text-[var(--color-brand)] shadow-[var(--shadow-card)]">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+          <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
+        </svg>
+      </div>
+      <p className="font-display text-base font-bold text-[var(--color-ink)]">Sign up to filter listings</p>
+      <p className="mt-2 text-sm text-[var(--color-ink-muted)]">
+        Browse all offers for free. Create an account to narrow by neighborhood, budget, and more.
+      </p>
+      <a href={authEntryUrl(loginRedirect, 'signup')} className="btn-brand mt-4 inline-flex w-full justify-center text-sm">
+        Sign up free
+      </a>
+      <a href={authEntryUrl(loginRedirect, 'login')} className="mt-2 block text-sm font-medium text-[var(--color-brand)] hover:underline">
+        Already have an account? Log in
+      </a>
+    </div>
+  );
 }
 
 export default function SearchFilterLayout({
@@ -22,9 +46,11 @@ export default function SearchFilterLayout({
   loginRedirect,
   filterForm,
   clearFiltersHref,
+  filtersRequireAuth = false,
 }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const activeCount = countActiveFilters(filters);
+  const filtersLocked = filtersRequireAuth && !isAuthenticated;
 
   useEffect(() => {
     if (!drawerOpen) return;
@@ -40,7 +66,9 @@ export default function SearchFilterLayout({
     };
   }, [drawerOpen]);
 
-  const sidebarBody = (
+  const sidebarBody = filtersLocked ? (
+    <LockedFiltersPanel loginRedirect={loginRedirect} />
+  ) : (
     <>
       {filterForm}
       <div className="mt-5 border-t border-[var(--color-border)] pt-5">

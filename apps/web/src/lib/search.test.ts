@@ -53,7 +53,7 @@ import {
   toSummary,
   warmListingCache,
 } from './search';
-import type { ListingSummary } from '../types/listing';
+import type { ListingSearchFilters, ListingSummary } from '../types/listing';
 
 const baseItem: ListingSummary = {
   id: 'listing_1',
@@ -126,13 +126,15 @@ describe('matchesListingFilters', () => {
     expect(matchesListingFilters(baseItem, {})).toBe(true);
   });
 
-  it('filters by text query, category, and price range', () => {
-    expect(matchesListingFilters(baseItem, { q: 'kreuzberg' })).toBe(true);
-    expect(matchesListingFilters(baseItem, { q: 'mitte' })).toBe(false);
+  it('filters by category and price range', () => {
     expect(matchesListingFilters(baseItem, { category: 'full_flat' })).toBe(true);
     expect(matchesListingFilters(baseItem, { category: 'shared_room' })).toBe(false);
     expect(matchesListingFilters(baseItem, { minPrice: 1000, maxPrice: 1500 })).toBe(true);
     expect(matchesListingFilters(baseItem, { maxPrice: 1000 })).toBe(false);
+  });
+
+  it('ignores legacy free-text q values', () => {
+    expect(matchesListingFilters(baseItem, { q: 'mitte' } as ListingSearchFilters)).toBe(true);
   });
 
   it('filters by size, rooms, flags, rent type, and neighborhood', () => {
@@ -202,17 +204,6 @@ describe('searchListings', () => {
 
     expect(result.total).toBe(1);
     expect(result.items[0]?.id).toBe('listing_1');
-  });
-
-  it('searches postgres with text queries', async () => {
-    redisGet.mockResolvedValue(null);
-    redisSmembers.mockResolvedValue([]);
-    findMany.mockResolvedValue([mockListingRow]);
-
-    const result = await searchListings({ q: 'kreuzberg' });
-
-    expect(result.total).toBe(1);
-    expect(findMany).toHaveBeenCalledOnce();
   });
 });
 

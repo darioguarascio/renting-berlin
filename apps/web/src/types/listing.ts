@@ -58,7 +58,6 @@ export interface ListingDescriptions {
 }
 
 export interface ListingSearchFilters {
-  q?: string;
   category?: ListingCategory;
   rentType?: RentType;
   minPrice?: number;

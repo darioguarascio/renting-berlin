@@ -36,3 +36,10 @@ export function buildSearchUrl(type: SearchUrlType, filters: Record<string, unkn
 export function countActiveFilters(filters: Record<string, unknown>): number {
   return Object.keys(normalizeFilters(filters)).length;
 }
+
+export function listingSearchRequiresAuth(
+  isAuthenticated: boolean,
+  filters: Record<string, unknown>,
+): boolean {
+  return !isAuthenticated && countActiveFilters(filters) > 0;
+}

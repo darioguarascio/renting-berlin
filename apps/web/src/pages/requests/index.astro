@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import RequestsSearchPage from '../../components/RequestsSearchPage.tsx';
 import { searchTenantRequests, parseHouseholdTypesParam } from '../../lib/tenant-requests';
 import { prepareSeekerDisplayRows } from '../../lib/seeker-profile-visibility';
+import { resolveSearchView, SEARCH_VIEW_COOKIE } from '../../lib/search-view-preference';
 import type { TenantRequestFilters } from '../../lib/tenant-requests';
 
 export const prerender = false;
@@ -23,11 +24,12 @@ const filters: TenantRequestFilters = {
 };
 
 const viewParam = params.get('view');
-const view = viewParam === 'list' ? 'list' : viewParam === 'table' ? 'table' : 'cards';
+const session = Astro.locals.session;
+const savedView = session ? Astro.cookies.get(SEARCH_VIEW_COOKIE.requests)?.value : undefined;
+const view = resolveSearchView(viewParam, 'requests', savedView);
 
 let result = { items: [], total: 0, page: 1, limit: 12, totalPages: 1 };
 let displayRows = [];
-const session = Astro.locals.session;
 
 try {
   result = await searchTenantRequests(filters);

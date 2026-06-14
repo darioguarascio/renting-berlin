@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import SeekerRequestCard from './SeekerRequestCard';
 import SeekerRequestRow from './SeekerRequestRow';
 import SeekerRequestTable from './SeekerRequestTable';
@@ -8,6 +9,7 @@ import type { SeekerDisplayRow } from '../lib/seeker-profile-visibility';
 import type { TenantRequestFull } from '../types/tenant-request';
 import type { TenantRequestFilters } from '../lib/tenant-requests';
 import type { SearchViewMode } from '../types/search-view';
+import { saveSearchViewPreference } from '../lib/search-view-preference';
 import { appendFiltersToParams } from '../lib/search-url';
 
 interface SearchResult {
@@ -43,6 +45,12 @@ export default function RequestsSearchPage({
   loginRedirect,
 }: Props) {
   const hasRestrictedProfiles = result.items.some((item) => item.visibility !== 'everyone');
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      saveSearchViewPreference('requests', view);
+    }
+  }, [view, isAuthenticated]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">

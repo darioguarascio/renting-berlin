@@ -48,10 +48,6 @@ def listing_summary(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def matches_listing_filters(item: dict[str, Any], filters: dict[str, Any]) -> bool:
-    if filters.get("q"):
-        query = filters["q"].lower()
-        if query not in item["title"].lower() and query not in item["neighborhood"].lower():
-            return False
     if filters.get("category") and item["category"] != filters["category"]:
         return False
     if filters.get("rentType") and item["rentType"] != filters["rentType"]:

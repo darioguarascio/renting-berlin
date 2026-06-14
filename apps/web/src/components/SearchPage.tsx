@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import SearchForm from './SearchForm';
 import ListingCard from './ListingCard';
 import ListingRow from './ListingRow';
@@ -7,6 +8,7 @@ import SearchFilterLayout from './SearchFilterLayout';
 import SearchViewSwitcher from './SearchViewSwitcher';
 import type { ListingSearchFilters, SearchResult } from '../types/listing';
 import type { SearchViewMode } from '../types/search-view';
+import { saveSearchViewPreference } from '../lib/search-view-preference';
 
 interface Props {
   initialFilters: ListingSearchFilters;
@@ -28,6 +30,12 @@ function buildPageUrl(filters: ListingSearchFilters, page: number, view: SearchV
 }
 
 export default function SearchPage({ initialFilters, result, view, isAuthenticated, loginRedirect }: Props) {
+  useEffect(() => {
+    if (isAuthenticated) {
+      saveSearchViewPreference('offers', view);
+    }
+  }, [view, isAuthenticated]);
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -36,6 +44,7 @@ export default function SearchPage({ initialFilters, result, view, isAuthenticat
           <h1 className="mt-1 font-display text-3xl font-extrabold text-[var(--color-ink)]">Apartments for rent</h1>
           <p className="mt-1.5 text-sm text-[var(--color-ink-muted)]">
             <strong className="font-semibold text-[var(--color-brand-deep)]">{result.total}</strong> listing{result.total !== 1 ? 's' : ''} found
+            {!isAuthenticated && ' · sign up to filter results'}
           </p>
         </div>
         <SearchViewSwitcher view={view} buildUrl={(v) => buildPageUrl(initialFilters, result.page, v)} />
@@ -47,6 +56,7 @@ export default function SearchPage({ initialFilters, result, view, isAuthenticat
         isAuthenticated={isAuthenticated}
         loginRedirect={loginRedirect}
         clearFiltersHref="/offers"
+        filtersRequireAuth
         filterForm={<SearchForm initial={initialFilters} layout="sidebar" />}
       >
         {view === 'map' ? (
@@ -78,7 +88,7 @@ export default function SearchPage({ initialFilters, result, view, isAuthenticat
                 </div>
                 <p className="font-display text-xl font-bold text-[var(--color-brand-deep)]">No matches found</p>
                 <p className="mt-2 text-sm text-[var(--color-ink-muted)]">
-                  Try broadening your filters or searching a different neighborhood.
+                  Try broadening your filters or browsing all listings.
                 </p>
                 <a href="/offers" className="btn-ghost mt-6">Clear filters</a>
               </div>
