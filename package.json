@@ -23,6 +23,7 @@
     "fredy:logs": "docker compose -f .local/fredy/docker-compose.yml logs -f fredy",
     "fredy:export": "python3 .local/fredy/scripts/export.py",
     "fredy:convert": "python3 .local/fredy/scripts/convert.py",
+    "fredy:push": "bash scripts/fredy-push.sh",
     "worker:profile-views": "cd workers && UPLOADS_DIR=../apps/web/public/uploads python3 -m renting_berlin_workers profile-views",
     "worker:notifications": "cd workers && UPLOADS_DIR=../apps/web/public/uploads python3 -m renting_berlin_workers notifications",
     "worker:emails": "cd workers && python3 -m renting_berlin_workers emails",

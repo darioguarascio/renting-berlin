@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { and, eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-import { db } from '../db';
+import { closeDb, db } from '../db';
 import { listings, users } from '../db/schema';
 import {
   defaultExternalExportPath,
@@ -25,6 +25,19 @@ function resolveExportPath(): string {
       : path.resolve(process.cwd(), process.env.FREDY_EXPORT_PATH);
   }
   return defaultExternalExportPath();
+}
+
+function describeDatabaseTarget(): string {
+  const url = process.env.DATABASE_URL;
+  if (!url) return 'unknown (DATABASE_URL not set)';
+  try {
+    const normalized = url.replace(/^postgres:/, 'postgresql:');
+    const parsed = new URL(normalized);
+    const db = parsed.pathname.replace(/^\//, '') || 'postgres';
+    return `${parsed.hostname}:${parsed.port || '5432'}/${db}`;
+  } catch {
+    return 'unknown (invalid DATABASE_URL)';
+  }
 }
 
 async function ensureExternalPublisher(): Promise<string> {
@@ -116,6 +129,7 @@ async function upsertExternalListing(publisherId: string, item: ExternalListingI
 async function importExternalListings() {
   const exportPath = resolveExportPath();
   const dryRun = process.argv.includes('--dry-run');
+  const target = describeDatabaseTarget();
 
   let raw: unknown;
   try {
@@ -133,6 +147,7 @@ async function importExternalListings() {
 
   if (dryRun) {
     console.log(`Dry run: would import ${parsed.listings.length} listings from ${exportPath}`);
+    console.log(`Target database: ${target}`);
     for (const item of parsed.listings.slice(0, 5)) {
       console.log(`  - [${item.externalProvider}] ${item.title}`);
     }
@@ -141,6 +156,8 @@ async function importExternalListings() {
     }
     return;
   }
+
+  console.log(`Importing into ${target}`);
 
   const publisherId = await ensureExternalPublisher();
   let inserted = 0;
@@ -157,7 +174,11 @@ async function importExternalListings() {
   );
 }
 
-importExternalListings().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+importExternalListings()
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await closeDb();
+  });

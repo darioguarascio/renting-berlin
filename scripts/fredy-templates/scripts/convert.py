@@ -7,7 +7,7 @@ import json
 import math
 import re
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -338,9 +338,9 @@ def convert_row(row: dict) -> dict | None:
 
     created_ms = row.get("created_at")
     if isinstance(created_ms, (int, float)) and created_ms > 0:
-        available_from = datetime.fromtimestamp(created_ms / 1000, tz=UTC).date().isoformat()
+        available_from = datetime.fromtimestamp(created_ms / 1000, tz=timezone.utc).date().isoformat()
     else:
-        available_from = datetime.now(UTC).date().isoformat()
+        available_from = datetime.now(timezone.utc).date().isoformat()
 
     photo_urls = [image] if image else []
 
@@ -393,7 +393,7 @@ def main() -> int:
         converted.append(item)
 
     payload = {
-        "convertedAt": datetime.now(UTC).isoformat(),
+        "convertedAt": datetime.now(timezone.utc).isoformat(),
         "sourceExport": str(IN_PATH),
         "count": len(converted),
         "skipped": skipped,

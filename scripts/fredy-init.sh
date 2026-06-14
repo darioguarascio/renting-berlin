@@ -21,9 +21,16 @@ if [[ ! -f "$LOCAL/export/listings.example.json" ]]; then
   cp "$TEMPLATES/export/listings.example.json" "$LOCAL/export/listings.example.json"
 fi
 
+if [[ ! -f "$ROOT/.local/production.env.example" ]]; then
+  cp "$TEMPLATES/production.env.example" "$ROOT/.local/production.env.example"
+fi
+
 echo "Fredy local infra ready at $LOCAL"
 echo ""
-echo "  npm run fredy:up       # start Fredy on http://localhost:9998 (admin/admin)"
-echo "  npm run fredy:export    # dump Fredy SQLite -> export/raw.json"
-echo "  npm run fredy:convert   # map raw -> export/listings.json"
-echo "  npm run db:import-external  # import listings.json into Postgres"
+echo "  npm run fredy:up          # start Fredy on http://localhost:9998 (admin/admin)"
+echo "  npm run fredy:export       # dump Fredy SQLite -> export/raw.json"
+echo "  npm run fredy:convert      # map raw -> export/listings.json"
+echo "  npm run db:import-external # import into local dev DB (.env)"
+echo ""
+echo "  cp .local/production.env.example .local/production.env  # then set prod URLs"
+echo "  npm run fredy:push         # export + convert + import to production"

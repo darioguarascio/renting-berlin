@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -39,7 +39,7 @@ def main() -> int:
         conn.close()
 
     payload = {
-        "exportedAt": datetime.now(UTC).isoformat(),
+        "exportedAt": datetime.now(timezone.utc).isoformat(),
         "sourceDb": str(DB_PATH),
         "count": len(rows),
         "listings": [dict(row) for row in rows],
