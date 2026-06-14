@@ -36,7 +36,7 @@ vi.mock('./moderation-handlers', () => ({
   requestListingModeration: vi.fn(),
 }));
 
-import { closeListing, createListing, getListingByPath, listingInputSchema, updateListing } from './listings';
+import { closeListing, createListing, getActiveListingsForPublisher, getListingByPath, getListingForPublisher, listingInputSchema, updateListing } from './listings';
 import { indexListing, removeListingFromIndex } from './search';
 import { requestListingModeration } from './moderation-handlers';
 
@@ -146,6 +146,35 @@ describe('listing mutations', () => {
     expect(indexListing).toHaveBeenCalledWith('listing_6');
   });
 
+  it('removes unapproved active listings from search index', async () => {
+    findFirst.mockResolvedValue({
+      id: 'listing_8',
+      status: 'active',
+      publishedAt: new Date(),
+      moderationStatus: 'pending',
+    });
+    updateReturning.mockResolvedValue([{ id: 'listing_8', status: 'active', moderationStatus: 'pending' }]);
+
+    await updateListing('listing_8', 'publisher_1', { title: 'Updated title' });
+
+    expect(removeListingFromIndex).toHaveBeenCalledWith('listing_8');
+    expect(indexListing).not.toHaveBeenCalled();
+  });
+
+  it('removes paused listings from search index', async () => {
+    findFirst.mockResolvedValue({
+      id: 'listing_9',
+      status: 'active',
+      publishedAt: new Date(),
+      moderationStatus: 'approved',
+    });
+    updateReturning.mockResolvedValue([{ id: 'listing_9', status: 'paused', moderationStatus: 'approved' }]);
+
+    await updateListing('listing_9', 'publisher_1', { status: 'paused' });
+
+    expect(removeListingFromIndex).toHaveBeenCalledWith('listing_9');
+  });
+
   it('loads listings by short code', async () => {
     findFirst.mockResolvedValueOnce({ id: 'by-code' });
     expect(await getListingByPath('bright-flat--abc12345')).toEqual({ id: 'by-code' });
@@ -154,5 +183,41 @@ describe('listing mutations', () => {
   it('loads listings by legacy slug', async () => {
     findFirst.mockResolvedValueOnce({ id: 'by-slug' });
     expect(await getListingByPath('legacy-slug')).toEqual({ id: 'by-slug' });
+  });
+
+  it('loads publisher-owned listings', async () => {
+    findFirst.mockResolvedValue({ id: 'listing_owned' });
+    expect(await getListingForPublisher('listing_owned', 'publisher_1')).toEqual({ id: 'listing_owned' });
+  });
+
+  it('lists active approved listings for a publisher', async () => {
+    findMany.mockResolvedValue([
+      {
+        id: 'listing_7',
+        slug: 'bright-flat',
+        shortCode: 'abc12345',
+        title: 'Bright flat',
+        category: 'full_flat',
+        rentType: 'long_term',
+        costs: { rentPerMonth: 1200 },
+        sizeSqm: 55,
+        rooms: 2,
+        floorLevel: 2,
+        neighborhood: 'kreuzberg',
+        availableFrom: new Date('2026-03-01'),
+        availableTo: null,
+        anmeldungAvailable: true,
+        schufaRequired: false,
+        onlineViewingAvailable: true,
+        lat: 52.499,
+        lng: 13.418,
+        approximateLocation: false,
+        photoUrls: [],
+        createdAt: new Date('2026-01-01'),
+      },
+    ]);
+
+    const rows = await getActiveListingsForPublisher('publisher_1');
+    expect(rows[0]?.path).toBe('bright-flat--abc12345');
   });
 });

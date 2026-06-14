@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { clearUser, identifyUser, trackEvent } from './rybbit';
+import { clearUser, identifyUser, setUserTraits, trackEvent } from './rybbit';
 
 describe('rybbit', () => {
   const identify = vi.fn();
@@ -22,6 +22,27 @@ describe('rybbit', () => {
   it('identifies users with traits', () => {
     identifyUser({ id: 'u1', name: 'Alex', email: 'alex@example.com' });
     expect(identify).toHaveBeenCalledWith('u1', { name: 'Alex', email: 'alex@example.com' });
+  });
+
+  it('identifies users without optional traits', () => {
+    identifyUser({ id: 'u1' });
+    expect(identify).toHaveBeenCalledWith('u1', {});
+  });
+
+  it('sets user traits through onReady when needed', () => {
+    const setTraits = vi.fn();
+    vi.stubGlobal('window', {
+      rybbit: {
+        identify,
+        clearUserId,
+        event,
+        onReady: (callback: (client: { setTraits: typeof setTraits }) => void) =>
+          callback({ setTraits }),
+      },
+    });
+
+    setUserTraits({ plan: 'free' });
+    expect(setTraits).toHaveBeenCalledWith({ plan: 'free' });
   });
 
   it('clears the user id', () => {

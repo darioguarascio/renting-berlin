@@ -6,6 +6,13 @@ import {
 } from './neighborhood-stats';
 
 describe('buildNeighborhoodStatsFromRows', () => {
+  it('returns empty stats when there are no listings', () => {
+    const stats = buildNeighborhoodStatsFromRows('mitte', []);
+    expect(stats.totalListings).toBe(0);
+    expect(stats.rent.min).toBeNull();
+    expect(stats.rent.median).toBeNull();
+  });
+
   it('aggregates listing metrics', () => {
     const stats = buildNeighborhoodStatsFromRows('kreuzberg', [
       {
@@ -39,6 +46,43 @@ describe('buildNeighborhoodStatsFromRows', () => {
     expect(stats.byCategory.swap).toBe(0);
     expect(stats.anmeldungAvailableCount).toBe(1);
     expect(stats.noSchufaCount).toBe(1);
+  });
+
+  it('uses the middle value for odd-sized rent samples', () => {
+    const stats = buildNeighborhoodStatsFromRows('mitte', [
+      {
+        category: 'full_flat',
+        rentType: 'long_term',
+        sizeSqm: 40,
+        rooms: 1,
+        anmeldungAvailable: true,
+        schufaRequired: false,
+        onlineViewingAvailable: true,
+        costs: { rentPerMonth: 700 },
+      },
+      {
+        category: 'full_flat',
+        rentType: 'long_term',
+        sizeSqm: 50,
+        rooms: 2,
+        anmeldungAvailable: true,
+        schufaRequired: false,
+        onlineViewingAvailable: true,
+        costs: { rentPerMonth: 900 },
+      },
+      {
+        category: 'full_flat',
+        rentType: 'long_term',
+        sizeSqm: 60,
+        rooms: 2,
+        anmeldungAvailable: true,
+        schufaRequired: false,
+        onlineViewingAvailable: true,
+        costs: { rentPerMonth: 1100 },
+      },
+    ]);
+
+    expect(stats.rent.median).toBe(900);
   });
 });
 

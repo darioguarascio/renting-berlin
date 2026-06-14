@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import AddressMapPicker, { type LocationValue } from './AddressMapPicker';
 import ListingCheckoutModal, { type CheckoutIntent } from './ListingCheckoutModal';
 import FormShell from './forms/FormShell';
@@ -18,7 +18,12 @@ import {
   FLOOR_LEVEL_OPTIONS,
 } from '../types/listing';
 import type { Equipment, FloorLevel, ListingCategory, RentType, RequiredDocument } from '../types/listing';
-import { trackEvent } from '../lib/rybbit';
+import type { ListingFieldErrors } from '../lib/listing-form-validation';
+import {
+  formatListingApiError,
+  pickValidListingPatch,
+  validateListingPayload,
+} from '../lib/listing-form-validation';
 
 interface FormState {
   title: string;
@@ -60,6 +65,10 @@ const SECTIONS = [
   { label: 'Photos' },
 ] as const;
 
+const AUTO_SAVE_DELAY_MS = 800;
+const DRAFT_TITLE_PLACEHOLDER = 'Draft listing';
+const DRAFT_ADDRESS_PLACEHOLDER = 'Berlin, Germany';
+
 const defaultLocation: LocationValue = {
   address: '',
   neighborhood: BERLIN_NEIGHBORHOODS[0],
@@ -91,13 +100,21 @@ const initialState: FormState = {
 
 export default function ListingForm({ listingId, reactivate = false }: { listingId?: string; reactivate?: boolean }) {
   const [form, setForm] = useState<FormState>(initialState);
+  const [savedListingId, setSavedListingId] = useState<string | undefined>(listingId);
   const [currentStatus, setCurrentStatus] = useState<string>('draft');
   const [loadingListing, setLoadingListing] = useState(Boolean(listingId));
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [fieldErrors, setFieldErrors] = useState<ListingFieldErrors>({});
   const [error, setError] = useState('');
   const [showCheckout, setShowCheckout] = useState<CheckoutIntent | null>(null);
   const [copyrightConfirmed, setCopyrightConfirmed] = useState(false);
+  const skipAutoSaveRef = useRef(true);
+  const hasEditedRef = useRef(false);
+  const autoSaveRequestRef = useRef(0);
+
+  const usesAutoSave = !listingId || currentStatus === 'draft';
 
   useEffect(() => {
     if (!listingId) return;
@@ -144,14 +161,44 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
         });
       })
       .catch(() => setError('Could not load listing'))
-      .finally(() => setLoadingListing(false));
+      .finally(() => {
+        setLoadingListing(false);
+        skipAutoSaveRef.current = false;
+      });
   }, [listingId]);
 
+  function clearFieldError(key: string) {
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  }
+
+  function markEdited() {
+    hasEditedRef.current = true;
+    skipAutoSaveRef.current = false;
+  }
+
+  function fieldInputClass(fieldKey: string) {
+    return fieldErrors[fieldKey] ? 'field-input border-red-400' : 'field-input';
+  }
+
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
+    markEdited();
+    clearFieldError(String(key));
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
+  function updateLocation(location: LocationValue) {
+    markEdited();
+    clearFieldError('address');
+    setForm((prev) => ({ ...prev, location }));
+  }
+
   function toggleDoc(doc: RequiredDocument) {
+    markEdited();
     setForm((prev) => ({
       ...prev,
       requiredDocuments: prev.requiredDocuments.includes(doc)
@@ -161,6 +208,7 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
   }
 
   function toggleEquip(item: Equipment) {
+    markEdited();
     setForm((prev) => ({
       ...prev,
       equipment: prev.equipment.includes(item)
@@ -217,16 +265,104 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
     return status ? { ...payload, status } : payload;
   }
 
+  function buildCreateDraftPayload() {
+    const payload = buildPayload('draft');
+    return {
+      ...payload,
+      title: payload.title.length >= 5 ? payload.title : DRAFT_TITLE_PLACEHOLDER,
+      address: payload.address.length >= 5 ? payload.address : DRAFT_ADDRESS_PLACEHOLDER,
+    };
+  }
+
+  function buildAutosaveBody() {
+    if (!savedListingId) {
+      return buildCreateDraftPayload();
+    }
+    return pickValidListingPatch(buildPayload());
+  }
+
+  const autoSaveDraft = useCallback(async () => {
+    if (!usesAutoSave || loadingListing || uploading || submitting) return;
+
+    const body = buildAutosaveBody();
+    if (savedListingId && Object.keys(body).length === 0) {
+      setAutoSaveStatus('idle');
+      return;
+    }
+
+    const requestId = ++autoSaveRequestRef.current;
+    setAutoSaveStatus('saving');
+
+    try {
+      const res = savedListingId
+        ? await fetch(`/api/listings/${savedListingId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          })
+        : await fetch('/api/listings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+
+      if (!res.ok) throw new Error(formatListingApiError(await res.text()));
+
+      const data: { id: string; path: string; status: string } = await res.json();
+      if (requestId !== autoSaveRequestRef.current) return;
+
+      if (!savedListingId) {
+        setSavedListingId(data.id);
+        setCurrentStatus(data.status);
+        trackEvent('Listing Draft Saved', { category: form.category, rent_type: form.rentType });
+        if (!listingId) {
+          window.history.replaceState(null, '', `/account/listings/${data.id}/edit`);
+        }
+      }
+
+      setAutoSaveStatus('saved');
+    } catch {
+      if (requestId === autoSaveRequestRef.current) {
+        setAutoSaveStatus('error');
+      }
+    }
+  }, [form, loadingListing, uploading, submitting, savedListingId, usesAutoSave, listingId]);
+
+  useEffect(() => {
+    if (!usesAutoSave || skipAutoSaveRef.current || !hasEditedRef.current || loadingListing || uploading || submitting) {
+      return;
+    }
+
+    setAutoSaveStatus((status) => (status === 'saving' ? status : 'idle'));
+    const timer = window.setTimeout(() => {
+      void autoSaveDraft();
+    }, AUTO_SAVE_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [form, usesAutoSave, loadingListing, uploading, submitting, autoSaveDraft]);
+
   async function saveChanges(status?: 'draft' | 'active') {
+    const id = savedListingId ?? listingId;
+    if (!id) return;
+
+    const payload = buildPayload(status);
+    const validation = validateListingPayload(payload, { partial: true });
+    if (!validation.success) {
+      setFieldErrors(validation.fieldErrors);
+      setError(validation.message);
+      return;
+    }
+
     setSubmitting(true);
     setError('');
+    setFieldErrors({});
     try {
-      const res = await fetch(`/api/listings/${listingId}`, {
+      const res = await fetch(`/api/listings/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildPayload(status)),
+        body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) throw new Error(formatListingApiError(await res.text()));
       const data: { path: string; status: string } = await res.json();
       if (status === 'active' && currentStatus === 'paused') {
         trackEvent('Listing Reactivated', { category: form.category, rent_type: form.rentType });
@@ -245,36 +381,58 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
     }
   }
 
-  async function submit(status: 'draft' | 'active') {
-    if (listingId) {
-      await saveChanges();
+  async function publishListing() {
+    const id = savedListingId ?? listingId;
+    const payload = buildPayload('active');
+    const validation = validateListingPayload(payload);
+    if (!validation.success) {
+      setFieldErrors(validation.fieldErrors);
+      setError(validation.message);
       return;
     }
+
     setSubmitting(true);
     setError('');
+    setFieldErrors({});
     try {
-      const res = await fetch('/api/listings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildPayload(status)),
-      });
-      if (!res.ok) throw new Error(await res.text());
+      const res = id
+        ? await fetch(`/api/listings/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+        : await fetch('/api/listings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+      if (!res.ok) throw new Error(formatListingApiError(await res.text()));
       const data: { path: string; status: string } = await res.json();
-      trackEvent(status === 'active' ? 'Listing Published' : 'Listing Draft Saved', {
-        category: form.category,
-        rent_type: form.rentType,
-      });
-      window.location.href = status === 'active' ? `/listings/${data.path}` : '/account/listings';
+      trackEvent('Listing Published', { category: form.category, rent_type: form.rentType });
+      window.location.href = `/listings/${data.path}`;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save listing');
+      setError(err instanceof Error ? err.message : 'Failed to publish listing');
     } finally {
       setSubmitting(false);
     }
   }
 
-  const canPublish = form.title.length >= 5 && form.location.address.length >= 5;
-  const needsCopyrightConfirm = !listingId || currentStatus === 'paused';
-  const canPublishListing = canPublish && (!needsCopyrightConfirm || copyrightConfirmed);
+  async function submit() {
+    await publishListing();
+  }
+
+  const canPublish = validateListingPayload(buildPayload('active')).success;
+  const needsCopyrightConfirm = !savedListingId || currentStatus === 'paused';
+  const autoSaveLabel =
+    autoSaveStatus === 'saving'
+      ? 'Saving draft…'
+      : autoSaveStatus === 'saved'
+        ? 'Draft saved'
+        : autoSaveStatus === 'error'
+          ? 'Draft not saved'
+          : usesAutoSave
+            ? 'Draft saves automatically'
+            : null;
 
   if (loadingListing) {
     return <p className="text-sm text-[var(--color-ink-muted)]">Loading listing…</p>;
@@ -282,9 +440,9 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
 
   return (
     <>
-      {showCheckout && listingId && (
+      {showCheckout && savedListingId && (
         <ListingCheckoutModal
-          listingId={listingId}
+          listingId={savedListingId}
           listingTitle={form.title}
           intent={showCheckout}
           onComplete={(status) => {
@@ -311,18 +469,18 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
         }
         onSubmit={(e) => {
           e.preventDefault();
-          if (!listingId && !canPublishListing) return;
-          submit('active');
+          if (needsCopyrightConfirm && !copyrightConfirmed) return;
+          void submit();
         }}
         footer={
-          listingId ? (
+          listingId && currentStatus !== 'draft' ? (
             <FormActions className="form-actions--end">
               {currentStatus === 'paused' ? (
                 <>
                   <button
                     type="button"
                     onClick={() => saveChanges('active')}
-                    disabled={submitting || uploading || !canPublishListing}
+                    disabled={submitting || uploading || (needsCopyrightConfirm && !copyrightConfirmed)}
                     className="btn-brand"
                   >
                     {submitting ? 'Reactivating…' : 'Reactivate listing'}
@@ -350,17 +508,23 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
             </FormActions>
           ) : (
             <FormActions className="form-actions--split">
-              <button type="button" onClick={() => submit('draft')} disabled={submitting || uploading} className="btn-ghost">
-                {submitting ? 'Saving…' : 'Save draft'}
-              </button>
-              <button type="submit" disabled={submitting || uploading || !canPublishListing} className="btn-brand">
+              {autoSaveLabel && (
+                <p className="text-sm text-[var(--color-ink-muted)]" aria-live="polite">
+                  {autoSaveLabel}
+                </p>
+              )}
+              <button
+                type="submit"
+                disabled={submitting || uploading || (needsCopyrightConfirm && !copyrightConfirmed)}
+                className="btn-brand"
+              >
                 {submitting ? 'Publishing…' : 'Publish listing'}
               </button>
             </FormActions>
           )
         }
         extra={
-          listingId && currentStatus !== 'closed' ? (
+          savedListingId && currentStatus !== 'closed' ? (
             <section className="form-danger-section">
               <p className="form-danger-section__title">Close permanently</p>
               <p className="form-danger-section__body">
@@ -385,13 +549,20 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
                 <input
                   id="title"
                   type="text"
-                  className="field-input"
+                  className={fieldInputClass('title')}
                   value={form.title}
                   onChange={(e) => update('title', e.target.value)}
                   placeholder="Bright 2-room flat in Kreuzberg"
                   required
                   minLength={5}
+                  aria-invalid={Boolean(fieldErrors.title)}
+                  aria-describedby={fieldErrors.title ? 'title-error' : undefined}
                 />
+                {fieldErrors.title && (
+                  <p id="title-error" className="mt-1 text-xs text-red-600">
+                    {fieldErrors.title}
+                  </p>
+                )}
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
@@ -420,7 +591,11 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
           </FormSection>
 
           <FormSection title={SECTIONS[1].label} step={2} className="space-y-0">
-            <AddressMapPicker value={form.location} onChange={(loc) => update('location', loc)} />
+            <AddressMapPicker
+              value={form.location}
+              onChange={updateLocation}
+              addressError={fieldErrors.address}
+            />
           </FormSection>
 
           <FormSection title={SECTIONS[2].label} step={3}>

@@ -166,6 +166,11 @@ export const NEIGHBORHOOD_LABELS: Record<BerlinNeighborhood, string> = {
   koepenick: 'Köpenick',
 };
 
+/** Berlin neighborhoods sorted alphabetically by display label (for selects and checkboxes). */
+export const BERLIN_NEIGHBORHOODS_SORTED: BerlinNeighborhood[] = [...BERLIN_NEIGHBORHOODS].sort((a, b) =>
+  NEIGHBORHOOD_LABELS[a].localeCompare(NEIGHBORHOOD_LABELS[b], 'de'),
+);
+
 export const CATEGORY_LABELS: Record<ListingCategory, string> = {
   full_flat: 'Full flat',
   shared_room: 'Shared room',

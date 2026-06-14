@@ -38,6 +38,8 @@ describe('isStaticAsset', () => {
     expect(isStaticAsset('/favicon.ico')).toBe(true);
     expect(isStaticAsset('/favicon.svg')).toBe(true);
     expect(isStaticAsset('/_astro/page.js')).toBe(true);
+    expect(isStaticAsset('/uploads/listing.jpg')).toBe(true);
+    expect(isStaticAsset('/robots.txt')).toBe(true);
   });
 });
 

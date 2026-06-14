@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { findFirst, insertReturning, deleteReturning } = vi.hoisted(() => ({
+const { findFirst, findMany, insertReturning, deleteReturning } = vi.hoisted(() => ({
   findFirst: vi.fn(),
+  findMany: vi.fn(),
   insertReturning: vi.fn(),
   deleteReturning: vi.fn(),
 }));
@@ -9,7 +10,7 @@ const { findFirst, insertReturning, deleteReturning } = vi.hoisted(() => ({
 vi.mock('../db', () => ({
   db: {
     query: {
-      messageTemplates: { findMany: vi.fn() },
+      messageTemplates: { findMany, findFirst },
       userNotificationPreferences: { findFirst },
     },
     insert: vi.fn(() => ({
@@ -38,6 +39,7 @@ vi.mock('../db', () => ({
 import {
   createMessageTemplate,
   deleteMessageTemplate,
+  listMessageTemplates,
   saveMessageAsTemplate,
 } from './message-templates';
 import { shouldNotifyEmail, shouldNotifyInApp } from './notification-preferences';
@@ -54,6 +56,43 @@ describe('message templates', () => {
     await expect(createMessageTemplate('user_1', { label: 'Intro', body: ' ' })).rejects.toThrow(
       /body is required/i,
     );
+  });
+
+  it('lists templates for all kinds or a filtered kind', async () => {
+    const now = new Date('2026-01-01T00:00:00.000Z');
+    findMany.mockResolvedValue([
+      {
+        id: 'tmpl_1',
+        label: 'Intro',
+        body: 'Hello there',
+        kind: 'inquiry',
+        createdAt: now,
+        updatedAt: now,
+      },
+    ]);
+
+    await expect(listMessageTemplates('user_1')).resolves.toHaveLength(1);
+    await expect(listMessageTemplates('user_1', 'inquiry')).resolves.toHaveLength(1);
+  });
+
+  it('saves trimmed messages as templates with generated labels', async () => {
+    insertReturning.mockResolvedValue([
+      {
+        id: 'tmpl_2',
+        label: 'Hello there',
+        body: 'Hello there',
+        kind: 'outreach',
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+    ]);
+
+    const template = await saveMessageAsTemplate('user_1', ' Hello there ', {
+      saveAsTemplate: true,
+      kind: 'outreach',
+    });
+
+    expect(template?.kind).toBe('outreach');
   });
 
   it('creates templates with trimmed values', async () => {

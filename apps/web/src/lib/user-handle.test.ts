@@ -24,8 +24,55 @@ vi.mock('../db', () => ({
   },
 }));
 
-import { getUserHandle, isHandleAvailable, setUserHandle } from './user-handle';
+import { getUserByHandle, getUserHandle, isHandleAvailable, requireUserHandle, setUserHandle } from './user-handle';
 import { HANDLE_MIN_LENGTH } from './urls';
+
+describe('getUserHandle', () => {
+  beforeEach(() => {
+    findFirstUser.mockReset();
+  });
+
+  it('returns stored handle', async () => {
+    findFirstUser.mockResolvedValue({ handle: 'my_handle' });
+    await expect(getUserHandle('user_1')).resolves.toBe('my_handle');
+  });
+
+  it('returns null when unset', async () => {
+    findFirstUser.mockResolvedValue({ handle: null });
+    await expect(getUserHandle('user_1')).resolves.toBeNull();
+  });
+});
+
+describe('getUserByHandle', () => {
+  beforeEach(() => {
+    findFirstUser.mockReset();
+  });
+
+  it('returns null for invalid handles', async () => {
+    await expect(getUserByHandle('ab')).resolves.toBeNull();
+  });
+
+  it('loads users by normalized handle', async () => {
+    findFirstUser.mockResolvedValue({ id: 'user_1', handle: 'my_handle' });
+    await expect(getUserByHandle('@My_Handle')).resolves.toMatchObject({ id: 'user_1' });
+  });
+});
+
+describe('requireUserHandle', () => {
+  beforeEach(() => {
+    findFirstUser.mockReset();
+  });
+
+  it('throws when handle is missing', async () => {
+    findFirstUser.mockResolvedValue({ handle: null });
+    await expect(requireUserHandle('user_1')).rejects.toThrow('Set your account handle');
+  });
+
+  it('returns the handle when set', async () => {
+    findFirstUser.mockResolvedValue({ handle: 'my_handle' });
+    await expect(requireUserHandle('user_1')).resolves.toBe('my_handle');
+  });
+});
 
 describe('isHandleAvailable', () => {
   beforeEach(() => {

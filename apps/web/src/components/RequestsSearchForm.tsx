@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { TenantRequestFilters } from '../lib/tenant-requests';
 import { buildSearchUrl } from '../lib/search-url';
-import { BERLIN_NEIGHBORHOODS, NEIGHBORHOOD_LABELS, CATEGORY_LABELS, LISTING_CATEGORIES, RENT_TYPE_LABELS, RENT_TYPES } from '../types/listing';
+import { BERLIN_NEIGHBORHOODS_SORTED, NEIGHBORHOOD_LABELS, CATEGORY_LABELS, LISTING_CATEGORIES, RENT_TYPE_LABELS, RENT_TYPES } from '../types/listing';
 import { HOUSEHOLD_LABELS, HOUSEHOLD_TYPES } from '../types/tenant-request';
 
 interface Props {
@@ -66,7 +66,7 @@ export default function RequestsSearchForm({ initial = {} }: Props) {
           className="field-input"
         >
           <option value="">All Berlin</option>
-          {BERLIN_NEIGHBORHOODS.map((n) => (
+          {BERLIN_NEIGHBORHOODS_SORTED.map((n) => (
             <option key={n} value={n}>{NEIGHBORHOOD_LABELS[n]}</option>
           ))}
         </select>

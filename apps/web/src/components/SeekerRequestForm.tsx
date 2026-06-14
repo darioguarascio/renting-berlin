@@ -4,7 +4,7 @@ import FormSections, { FormActions, FormSection } from './forms/FormSections';
 import PhotoUploadField, { uploadPhotosToApi } from './forms/PhotoUploadField';
 import CurrencyField from './forms/CurrencyField';
 import {
-  BERLIN_NEIGHBORHOODS,
+  BERLIN_NEIGHBORHOODS_SORTED,
   CATEGORY_LABELS,
   LISTING_CATEGORIES,
   NEIGHBORHOOD_LABELS,
@@ -287,7 +287,7 @@ export default function SeekerRequestForm() {
           <div>
             <label className="field-label">Desired areas</label>
             <div className="mt-2 flex flex-wrap gap-2">
-              {BERLIN_NEIGHBORHOODS.map((slug) => (
+              {BERLIN_NEIGHBORHOODS_SORTED.map((slug) => (
                 <button key={slug} type="button" onClick={() => toggleNeighborhood(slug)} className={`chip ${neighborhoods.includes(slug) ? 'chip-active' : ''}`}>
                   {NEIGHBORHOOD_LABELS[slug]}
                 </button>

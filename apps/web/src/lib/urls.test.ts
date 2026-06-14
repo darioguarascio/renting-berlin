@@ -4,12 +4,15 @@ import {
   buildListingPath,
   getHandleValidationError,
   isValidHandle,
+  listingHref,
   normalizeHandle,
   parseAccountHandle,
   parseListingPath,
   sanitizeHandleInput,
+  seekerProfileHref,
   seoSlug,
   suggestHandleFromName,
+  suggestHandleFromTitle,
 } from './urls';
 
 describe('seoSlug', () => {
@@ -76,8 +79,19 @@ describe('account handles', () => {
     expect(getHandleValidationError('marco-berlin')).toBeNull();
   });
 
+  it('rejects invalid handles', () => {
+    expect(getHandleValidationError('a'.repeat(31))).toMatch(/Maximum/i);
+    expect(getHandleValidationError('bad!')).toMatch(/Only lowercase/i);
+  });
+
   it('suggests handles from display names', () => {
     expect(suggestHandleFromName('Marco Silva')).toBe('marco_silva');
     expect(isValidHandle(suggestHandleFromName('Marco Silva'))).toBe(true);
+    expect(suggestHandleFromTitle('Looking in Kreuzberg')).toMatch(/^looking_in/);
+  });
+
+  it('builds listing and profile hrefs', () => {
+    expect(listingHref('bright-flat', 'abc12345')).toBe('/listings/bright-flat--abc12345');
+    expect(seekerProfileHref('seeker_handle')).toBe('/u/seeker_handle');
   });
 });

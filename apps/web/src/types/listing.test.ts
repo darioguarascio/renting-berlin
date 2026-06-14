@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { floorLevelLabel } from './listing';
+import { BERLIN_NEIGHBORHOODS_SORTED, NEIGHBORHOOD_LABELS, floorLevelLabel } from './listing';
+
+describe('BERLIN_NEIGHBORHOODS_SORTED', () => {
+  it('is sorted alphabetically by display label', () => {
+    const labels = BERLIN_NEIGHBORHOODS_SORTED.map((slug) => NEIGHBORHOOD_LABELS[slug]);
+    expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b, 'de')));
+  });
+});
 
 describe('floorLevelLabel', () => {
   it('returns labels for known floor values', () => {

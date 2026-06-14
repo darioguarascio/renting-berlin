@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { BERLIN_NEIGHBORHOODS, NEIGHBORHOOD_LABELS } from '../types/listing';
+import { BERLIN_NEIGHBORHOODS_SORTED, NEIGHBORHOOD_LABELS } from '../types/listing';
 import type { BerlinNeighborhood } from '../types/listing';
 import 'leaflet/dist/leaflet.css';
 
@@ -14,6 +14,7 @@ export interface LocationValue {
 interface Props {
   value: LocationValue;
   onChange: (value: LocationValue) => void;
+  addressError?: string;
 }
 
 interface NominatimResult {
@@ -24,7 +25,7 @@ interface NominatimResult {
 
 const BERLIN_CENTER: [number, number] = [52.52, 13.405];
 
-export default function AddressMapPicker({ value, onChange }: Props) {
+export default function AddressMapPicker({ value, onChange, addressError }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMap = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
@@ -100,6 +101,10 @@ export default function AddressMapPicker({ value, onChange }: Props) {
     }
   }, [value.lat, value.lng, updateMarker]);
 
+  useEffect(() => {
+    setQuery(value.address);
+  }, [value.address]);
+
   async function searchAddress(q: string) {
     if (q.length < 3) {
       setSuggestions([]);
@@ -134,12 +139,22 @@ export default function AddressMapPicker({ value, onChange }: Props) {
           type="text"
           value={query}
           onChange={(e) => {
-            setQuery(e.target.value);
-            searchAddress(e.target.value);
+            const next = e.target.value;
+            setQuery(next);
+            onChange({ ...value, address: next });
+            searchAddress(next);
           }}
           placeholder="Start typing an address in Berlin..."
-          className="field-input"
+          minLength={5}
+          className={addressError ? 'field-input border-red-400' : 'field-input'}
+          aria-invalid={Boolean(addressError)}
+          aria-describedby={addressError ? 'address-error' : undefined}
         />
+        {addressError && (
+          <p id="address-error" className="mt-1 text-xs text-red-600">
+            {addressError}
+          </p>
+        )}
         {searching && <p className="mt-1 text-xs text-[var(--color-ink-muted)]">Searching…</p>}
         {suggestions.length > 0 && (
           <ul className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-[var(--color-border)] bg-white shadow-lg">
@@ -166,7 +181,7 @@ export default function AddressMapPicker({ value, onChange }: Props) {
           onChange={(e) => onChange({ ...value, neighborhood: e.target.value as BerlinNeighborhood })}
           className="field-input"
         >
-          {BERLIN_NEIGHBORHOODS.map((n) => (
+          {BERLIN_NEIGHBORHOODS_SORTED.map((n) => (
             <option key={n} value={n}>{NEIGHBORHOOD_LABELS[n]}</option>
           ))}
         </select>

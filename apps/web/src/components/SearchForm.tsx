@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ListingSearchFilters } from '../types/listing';
-import { BERLIN_NEIGHBORHOODS, NEIGHBORHOOD_LABELS, CATEGORY_LABELS, RENT_TYPE_LABELS } from '../types/listing';
+import { BERLIN_NEIGHBORHOODS_SORTED, NEIGHBORHOOD_LABELS, CATEGORY_LABELS, RENT_TYPE_LABELS } from '../types/listing';
 import { buildSearchUrl } from '../lib/search-url';
 
 interface Props {
@@ -71,7 +71,7 @@ export default function SearchForm({ initial = {}, layout = 'sidebar' }: Props) 
             className="field-input"
           >
             <option value="">All Berlin</option>
-            {BERLIN_NEIGHBORHOODS.map((n) => (
+            {BERLIN_NEIGHBORHOODS_SORTED.map((n) => (
               <option key={n} value={n}>{NEIGHBORHOOD_LABELS[n]}</option>
             ))}
           </select>
