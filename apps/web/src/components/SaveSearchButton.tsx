@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { SavedSearchType } from '../lib/saved-searches';
+import { authEntryUrl } from '../lib/public-routes';
 import { trackEvent } from '../lib/rybbit';
 
 interface Props {
@@ -21,7 +22,7 @@ export default function SaveSearchButton({ type, filters, isAuthenticated, login
 
   async function handleSave() {
     if (!isAuthenticated) {
-      window.location.href = `/login?redirect=${encodeURIComponent(loginRedirect)}`;
+      window.location.href = authEntryUrl(loginRedirect, 'signup');
       return;
     }
 

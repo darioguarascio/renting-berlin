@@ -72,14 +72,15 @@ export default function Header({
 
   const isPathActive = (href: string) => path === href || path.startsWith(`${href}/`);
 
-  const explorePaths = ['/', '/offers', '/requests', '/guides'];
+  const explorePaths = ['/', '/offers', '/requests', '/guides', '/for-landlords'];
   const isExploreActive = explorePaths.some((prefix) => isPathActive(prefix));
 
   const exploreLinks: MobileNavAccordionLink[] = [
-    { href: user ? '/offers' : authEntryUrl('/offers'), label: 'Offers', active: isPathActive('/offers') },
+    { href: '/offers', label: 'Offers', active: isPathActive('/offers') },
     { href: user ? '/requests' : authEntryUrl('/requests'), label: 'Requests', active: isPathActive('/requests') },
     ...(user ? [{ href: '/offers?view=map', label: 'Map view', active: path.startsWith('/offers') && path.includes('view=map') }] : []),
     { href: '/guides', label: 'Guides', active: isPathActive('/guides') },
+    { href: '/for-landlords', label: 'For landlords', active: isPathActive('/for-landlords') },
   ];
 
   const accountLinks: MobileNavAccordionLink[] = [
@@ -161,34 +162,21 @@ export default function Header({
           </a>
 
           <nav className="hidden items-center gap-1 md:flex">
-            {user ? (
-              <>
-                <a href="/offers" className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-brand-muted)] hover:text-[var(--color-brand-deep)]">
-                  Offers
-                </a>
-                <a href="/requests" className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)]">
-                  Requests
-                </a>
-                <a href="/offers?view=map" className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-brand-muted)] hover:text-[var(--color-brand-deep)]">
-                  Map
-                </a>
-                <a href="/guides" className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-brand-muted)] hover:text-[var(--color-brand-deep)]">
-                  Guides
-                </a>
-              </>
-            ) : (
-              <>
-                <a href={authEntryUrl('/offers')} className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-brand-muted)] hover:text-[var(--color-brand-deep)]">
-                  Offers
-                </a>
-                <a href={authEntryUrl('/requests')} className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)]">
-                  Requests
-                </a>
-                <a href="/guides" className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-brand-muted)] hover:text-[var(--color-brand-deep)]">
-                  Guides
-                </a>
-              </>
-            )}
+            <a href="/offers" className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-brand-muted)] hover:text-[var(--color-brand-deep)]">
+              Offers
+            </a>
+            <a href={user ? '/requests' : authEntryUrl('/requests')} className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)]">
+              Requests
+            </a>
+            <a href="/offers?view=map" className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-brand-muted)] hover:text-[var(--color-brand-deep)]">
+              Map
+            </a>
+            <a href="/guides" className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-brand-muted)] hover:text-[var(--color-brand-deep)]">
+              Guides
+            </a>
+            <a href="/for-landlords" className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:bg-[var(--color-brand-muted)] hover:text-[var(--color-brand-deep)]">
+              For landlords
+            </a>
           </nav>
 
           <div className="flex items-center gap-2">

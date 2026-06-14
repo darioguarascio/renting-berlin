@@ -1,48 +1,51 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { clearUser, identifyUser, setUserTraits, trackEvent } from './rybbit';
+import { clearUser, identifyUser, trackEvent } from './rybbit';
 
 describe('rybbit', () => {
   const identify = vi.fn();
   const clearUserId = vi.fn();
   const event = vi.fn();
+  const pageview = vi.fn();
 
   beforeEach(() => {
+    vi.useRealTimers();
     vi.stubGlobal('window', {
-      rybbit: { identify, clearUserId, event },
+      rybbit: { identify, clearUserId, event, pageview },
     });
     identify.mockClear();
     clearUserId.mockClear();
     event.mockClear();
+    pageview.mockClear();
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 
-  it('identifies users with traits', () => {
+  it('identifies users by id only', () => {
     identifyUser({ id: 'u1', name: 'Alex', email: 'alex@example.com' });
-    expect(identify).toHaveBeenCalledWith('u1', { name: 'Alex', email: 'alex@example.com' });
+    expect(identify).toHaveBeenCalledWith('u1');
+    expect(pageview).toHaveBeenCalled();
   });
 
-  it('identifies users without optional traits', () => {
+  it('waits for rybbit to load', () => {
+    vi.useFakeTimers();
+    const win = {
+      rybbit: undefined as typeof window.rybbit,
+      setInterval: (...args: Parameters<typeof setInterval>) => setInterval(...args),
+      clearInterval: (...args: Parameters<typeof clearInterval>) => clearInterval(...args),
+    };
+    vi.stubGlobal('window', win);
+
     identifyUser({ id: 'u1' });
-    expect(identify).toHaveBeenCalledWith('u1', {});
-  });
+    expect(identify).not.toHaveBeenCalled();
 
-  it('sets user traits through onReady when needed', () => {
-    const setTraits = vi.fn();
-    vi.stubGlobal('window', {
-      rybbit: {
-        identify,
-        clearUserId,
-        event,
-        onReady: (callback: (client: { setTraits: typeof setTraits }) => void) =>
-          callback({ setTraits }),
-      },
-    });
+    win.rybbit = { identify, clearUserId, event, pageview };
+    vi.advanceTimersByTime(100);
 
-    setUserTraits({ plan: 'free' });
-    expect(setTraits).toHaveBeenCalledWith({ plan: 'free' });
+    expect(identify).toHaveBeenCalledWith('u1');
+    expect(pageview).toHaveBeenCalled();
   });
 
   it('clears the user id', () => {
@@ -55,11 +58,19 @@ describe('rybbit', () => {
     expect(event).toHaveBeenCalledWith('User Login', { method: 'email' });
   });
 
-  it('no-ops when rybbit is unavailable', () => {
-    vi.stubGlobal('window', {});
+  it('no-ops when rybbit never loads', () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('window', {
+      setInterval: (...args: Parameters<typeof setInterval>) => setInterval(...args),
+      clearInterval: (...args: Parameters<typeof clearInterval>) => clearInterval(...args),
+    });
+
     identifyUser({ id: 'u1' });
     trackEvent('Test');
     clearUser();
+
+    vi.advanceTimersByTime(5000);
+
     expect(identify).not.toHaveBeenCalled();
     expect(event).not.toHaveBeenCalled();
     expect(clearUserId).not.toHaveBeenCalled();

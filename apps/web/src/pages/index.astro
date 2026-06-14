@@ -88,7 +88,7 @@ const isAuthenticated = !!session;
       <p class="text-center text-xs font-bold uppercase tracking-widest text-white/60">Explore</p>
       <h2 class="mt-1 text-center font-display text-2xl font-extrabold sm:text-3xl">Find what you need</h2>
       <div class="mx-auto mt-8 grid max-w-3xl gap-4 sm:grid-cols-2">
-        <a href={isAuthenticated ? '/offers' : '/signup?redirect=%2Foffers'} class="explore-card explore-card--offers group" data-reveal data-reveal-delay="1">
+        <a href="/offers" class="explore-card explore-card--offers group" data-reveal data-reveal-delay="1">
           <p class="text-xs font-bold uppercase tracking-widest text-white/60">Offers</p>
           <p class="mt-1 font-display text-lg font-bold">Browse listings</p>
           <p class="mt-2 text-sm text-white/75">Flats and rooms for rent across Berlin.</p>
@@ -114,6 +114,19 @@ const isAuthenticated = !!session;
             </span>
           </span>
         </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="border-b border-[var(--color-border)] bg-[var(--color-paper)] py-14" data-reveal>
+    <div class="mx-auto max-w-7xl px-4 sm:px-6">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-brand)]">Landlords</p>
+          <h2 class="mt-1 font-display text-2xl font-extrabold text-[var(--color-ink)] sm:text-3xl">Have a flat or room to rent?</h2>
+          <p class="mt-2 max-w-xl text-sm text-[var(--color-ink-muted)]">List for free, message tenants directly, and build a verified reputation.</p>
+        </div>
+        <a href="/for-landlords" class="btn-brand text-sm">For landlords</a>
       </div>
     </div>
   </section>

@@ -7,39 +7,46 @@ export interface RybbitUser {
 export type RybbitEventProperties = Record<string, string | number>;
 
 interface RybbitClient {
+  pageview: () => void;
   event: (name: string, properties?: Record<string, string | number>) => void;
-  identify: (userId: string, traits?: Record<string, unknown>) => void;
-  setTraits: (traits: Record<string, unknown>) => void;
+  identify: (userId: string) => void;
   clearUserId: () => void;
-  onReady: (callback: (rybbit: RybbitClient) => void) => void;
 }
+
+const RYB_BIT_POLL_MS = 100;
+const RYB_BIT_MAX_WAIT_MS = 5000;
 
 function withRybbit(fn: (rybbit: RybbitClient) => void): void {
   if (typeof window === 'undefined') return;
-  const rybbit = window.rybbit;
-  if (!rybbit) return;
-  if (typeof rybbit.onReady === 'function') {
-    rybbit.onReady(fn);
-  } else {
+
+  const attempt = () => {
+    const rybbit = window.rybbit;
+    if (!rybbit) return false;
     fn(rybbit);
-  }
+    return true;
+  };
+
+  if (attempt()) return;
+
+  const deadline = Date.now() + RYB_BIT_MAX_WAIT_MS;
+  const timer = window.setInterval(() => {
+    if (attempt() || Date.now() >= deadline) {
+      window.clearInterval(timer);
+    }
+  }, RYB_BIT_POLL_MS);
 }
 
 export function identifyUser(user: RybbitUser): void {
   withRybbit((rybbit) => {
-    rybbit.identify(user.id, {
-      ...(user.name ? { name: user.name } : {}),
-      ...(user.email ? { email: user.email } : {}),
-    });
+    rybbit.identify(user.id);
+    // Rybbit stores user_id locally and only attaches it to subsequent /track
+    // requests — re-send pageview so the identified session shows up immediately.
+    rybbit.pageview();
   });
 }
 
 export function clearUser(): void {
   withRybbit((rybbit) => rybbit.clearUserId());
-}
-
-export function setUserTraits(traits: Record<string, unknown>): void {
-  withRybbit((rybbit) => rybbit.setTraits(traits));
 }
 
 export function trackEvent(name: string, properties?: RybbitEventProperties): void {

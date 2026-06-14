@@ -29,6 +29,18 @@ export function externalProviderLabel(provider: string | null | undefined): stri
   return EXTERNAL_PROVIDER_LABELS[provider] ?? provider;
 }
 
+export function isExternalListing(sourceType: string): boolean {
+  return sourceType === 'external';
+}
+
+export function externalListingApplyUrl(listing: {
+  sourceType: string;
+  externalUrl: string | null;
+}): string | null {
+  if (!isExternalListing(listing.sourceType)) return null;
+  return listing.externalUrl;
+}
+
 export const externalListingImportSchema = z.object({
   externalProvider: z.string().min(1),
   externalSourceId: z.string().min(1),

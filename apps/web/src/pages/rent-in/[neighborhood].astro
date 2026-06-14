@@ -53,10 +53,10 @@ const description = buildNeighborhoodSeoDescription(label, stats);
             Aggregated rental market data for {label}: <strong class="font-semibold text-[var(--color-brand-deep)]">{stats.totalListings}</strong> active
             {stats.totalListings === 1 ? ' listing' : ' listings'}
             {stats.rent.median != null && <> · median rent <strong class="font-semibold text-[var(--color-brand-deep)]">€{stats.rent.median}/mo</strong></>}.
-            Sign up to browse individual listings with photos and contact landlords.
+            <a href={`/offers?neighborhood=${neighborhood}`} class="font-semibold text-[var(--color-brand)] hover:underline">Browse live listings</a> or read our <a href="/guides" class="font-semibold text-[var(--color-brand)] hover:underline">rental guides</a>.
           </>
         ) : (
-          <>Market overview for {label}. Sign up free to browse live listings as they are published.</>
+          <>Market overview for {label}. <a href={`/offers?neighborhood=${neighborhood}`} class="font-semibold text-[var(--color-brand)] hover:underline">Browse listings</a> as they are published.</>
         )}
       </p>
     </div>

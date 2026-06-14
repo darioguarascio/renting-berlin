@@ -8,9 +8,16 @@ import { recordListingView } from '../../lib/listing-views';
 import { getPublishedListingFeedback, type ListingFeedbackSummary } from '../../lib/feedback';
 import { buildListingPath, listingHref } from '../../lib/urls';
 import { externalProviderLabel } from '../../lib/external-listings';
-import { CATEGORY_LABELS, RENT_TYPE_LABELS, NEIGHBORHOOD_LABELS, floorLevelLabel } from '../../types/listing';
+import {
+  buildListingBreadcrumbJsonLd,
+  buildListingDescription,
+  buildListingJsonLd,
+  listingPageUrl,
+} from '../../lib/listing-seo';
+import { CATEGORY_LABELS, RENT_TYPE_LABELS, NEIGHBORHOOD_LABELS, floorLevelLabel, type BerlinNeighborhood } from '../../types/listing';
 import FavoriteButton from '../../components/FavoriteButton.tsx';
 import ContactButton from '../../components/ContactButton.tsx';
+import ExternalListingAlertCTA from '../../components/ExternalListingAlertCTA.tsx';
 import ListingGallery from '../../components/ListingGallery.tsx';
 import ListingFeedbackSection from '../../components/ListingFeedbackSection.tsx';
 import MapView from '../../components/MapView.tsx';
@@ -88,14 +95,66 @@ const neighborhoodLabel = NEIGHBORHOOD_LABELS[listing.neighborhood as keyof type
 const floorLabel = floorLevelLabel(listing.floorLevel);
 const isExternal = listing.sourceType === 'external';
 const externalLabel = externalProviderLabel(listing.externalProvider);
+const isAuthenticated = !!session;
+const pageTitle = `${listing.title} — renting.berlin`;
+const pageDescription = buildListingDescription({
+  title: listing.title,
+  neighborhood: listing.neighborhood,
+  rentPerMonth: listing.costs.rentPerMonth,
+  sizeSqm: listing.sizeSqm,
+  rooms: listing.rooms,
+  category: listing.category,
+  rentType: listing.rentType,
+  anmeldungAvailable: listing.anmeldungAvailable,
+});
+const canonical = listingPageUrl(listing.slug, listing.shortCode);
+const listingJsonLd = buildListingJsonLd({
+  title: listing.title,
+  slug: listing.slug,
+  shortCode: listing.shortCode,
+  neighborhood: listing.neighborhood,
+  rentPerMonth: listing.costs.rentPerMonth,
+  sizeSqm: listing.sizeSqm,
+  rooms: listing.rooms,
+  category: listing.category,
+  rentType: listing.rentType,
+  anmeldungAvailable: listing.anmeldungAvailable,
+  lat: listing.lat,
+  lng: listing.lng,
+  photoUrls: listing.photoUrls,
+  updatedAt: listing.updatedAt,
+  publishedAt: listing.publishedAt,
+});
+const breadcrumbJsonLd = buildListingBreadcrumbJsonLd({
+  title: listing.title,
+  slug: listing.slug,
+  shortCode: listing.shortCode,
+  neighborhood: listing.neighborhood,
+});
 ---
 
-<BaseLayout title={`${listing.title} — renting.berlin`}>
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={canonical}
+  jsonLd={[listingJsonLd, breadcrumbJsonLd]}
+>
   <article class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
     {isExternal && (
-      <p class="mb-6 rounded-xl border border-[var(--color-brand)]/20 bg-[var(--color-brand)]/5 px-4 py-3 text-sm text-[var(--color-ink-muted)]">
-        Aggregated listing from {externalLabel}. Apply on the original post — messaging and reviews are not available here.
-      </p>
+      <>
+        <ExternalListingAlertCTA
+          client:load
+          neighborhood={listing.neighborhood as BerlinNeighborhood}
+          category={listing.category}
+          rentType={listing.rentType}
+          rentPerMonth={listing.costs.rentPerMonth}
+          anmeldungAvailable={listing.anmeldungAvailable}
+          isAuthenticated={isAuthenticated}
+        />
+        <p class="mb-6 rounded-xl border border-[var(--color-brand)]/20 bg-[var(--color-brand)]/5 px-4 py-3 text-sm text-[var(--color-ink-muted)]">
+          Aggregated listing from {externalLabel}. Apply on the original post — messaging and reviews are not available here.
+        </p>
+      </>
     )}
     <div class="grid gap-8 lg:grid-cols-5">
       <div class="lg:col-span-3">
@@ -185,8 +244,11 @@ const externalLabel = externalProviderLabel(listing.externalProvider);
             client:load
             listingId={listing.id}
             publisherName={publisher?.name ?? 'landlord'}
+            sourceType={listing.sourceType}
             externalUrl={listing.externalUrl}
             externalProvider={listing.externalProvider}
+            isAuthenticated={isAuthenticated}
+            loginRedirect={canonicalPath}
           />
         </div>
 

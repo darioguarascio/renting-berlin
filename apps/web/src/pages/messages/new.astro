@@ -1,5 +1,9 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import { eq } from 'drizzle-orm';
+import { db } from '../../db';
+import { listings } from '../../db/schema';
+import { externalListingApplyUrl } from '../../lib/external-listings';
+import { listingHref } from '../../lib/urls';
 
 export const prerender = false;
 
@@ -8,8 +12,22 @@ if (!listingId) {
   return Astro.redirect('/messages');
 }
 
+let listing = null;
+try {
+  listing = await db.query.listings.findFirst({ where: eq(listings.id, listingId) });
+} catch {
+  // DB unavailable
+}
+
+if (listing) {
+  const externalApplyUrl = externalListingApplyUrl(listing);
+  if (externalApplyUrl) {
+    return Astro.redirect(externalApplyUrl);
+  }
+  if (listing.sourceType === 'external') {
+    return Astro.redirect(listingHref(listing.slug, listing.shortCode));
+  }
+}
+
 return Astro.redirect(`/contact/landlord?listing=${encodeURIComponent(listingId)}`);
 ---
-
-<BaseLayout title="Contact landlord">
-</BaseLayout>

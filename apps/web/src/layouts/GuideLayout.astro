@@ -9,6 +9,7 @@ import {
   sectionAnchorId,
   toIsoDateTime,
 } from '../lib/guide-seo';
+import { NEIGHBORHOOD_LABELS, type BerlinNeighborhood } from '../types/listing';
 
 interface Props {
   guide: Guide;
@@ -145,15 +146,30 @@ const pageTitle = `${guide.title} — renting.berlin`;
         )}
         <div class="mt-4 rounded-2xl bg-gradient-to-br from-[var(--color-brand)] to-[var(--color-brand-deep)] p-5 text-white">
           <p class="font-display font-bold">Ready to search?</p>
-          <p class="mt-2 text-sm text-white/85">Browse offers or post your seeker profile.</p>
+          <p class="mt-2 text-sm text-white/85">Browse offers publicly — sign up to contact landlords or save alerts.</p>
           <div class="mt-4 flex flex-col gap-2">
             <a href="/offers" class="rounded-full bg-white px-4 py-2 text-center text-sm font-semibold text-[var(--color-brand-deep)]">
               Browse offers
             </a>
-            <a href="/requests/new" class="rounded-full border border-white/40 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-white/10">
-              Post seeker profile
+            <a href="/for-landlords" class="rounded-full border border-white/40 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-white/10">
+              List your flat
             </a>
           </div>
+        </div>
+        <div class="mt-4 rounded-2xl border border-[var(--color-border)] bg-white p-5">
+          <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-ink-muted)]">By neighborhood</p>
+          <ul class="mt-3 space-y-2">
+            {(['kreuzberg', 'neukolln', 'prenzlauer-berg', 'friedrichshain'] as BerlinNeighborhood[]).map((slug) => (
+              <li>
+                <a href={`/rent-in/${slug}`} class="text-sm font-medium text-[var(--color-brand)] hover:underline">
+                  Rent in {NEIGHBORHOOD_LABELS[slug]}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <a href="/guides" class="mt-3 inline-block text-xs font-semibold text-[var(--color-brand)] hover:underline">
+            All guides →
+          </a>
         </div>
       </aside>
     </div>

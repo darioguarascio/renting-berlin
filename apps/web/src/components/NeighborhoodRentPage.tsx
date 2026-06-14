@@ -30,8 +30,8 @@ function StatCard({ label, value, hint }: { label: string; value: string; hint?:
 
 export default function NeighborhoodRentPage({ neighborhood, label, stats }: Props) {
   const browseTarget = `/offers?neighborhood=${neighborhood}`;
-  const offersHref = authEntryUrl(browseTarget, 'signup');
-  const loginHref = authEntryUrl(browseTarget);
+  const signupHref = authEntryUrl(browseTarget, 'signup');
+
   const otherNeighborhoods = BERLIN_NEIGHBORHOODS.filter((slug) => slug !== neighborhood).slice(0, 8);
 
   return (
@@ -116,22 +116,41 @@ export default function NeighborhoodRentPage({ neighborhood, label, stats }: Pro
 
       <section className="mt-10 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-gradient-to-br from-[var(--color-brand-muted)] to-white p-8 sm:p-10">
         <div className="max-w-2xl">
-          <p className="text-xs font-bold uppercase tracking-widest text-[var(--color-brand-deep)]">Members only</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-[var(--color-brand-deep)]">Live listings</p>
           <h2 className="mt-2 font-display text-2xl font-extrabold text-[var(--color-ink)] sm:text-3xl">
-            Browse live listings in {label}
+            Browse apartments in {label}
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
-            Individual apartments and rooms — with photos, maps, and direct landlord contact — are available to
-            registered members. This page shows aggregated market data only.
+            Search flats and rooms with photos, maps, and filters. Sign up free to contact landlords, save searches, and get email alerts.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <a href={offersHref} className="btn-brand text-sm">
-              Sign up free to browse
+            <a href={browseTarget} className="btn-brand text-sm">
+              Browse listings in {label}
             </a>
-            <a href={loginHref} className="btn-ghost text-sm">
-              Log in
+            <a href={signupHref} className="btn-ghost text-sm">
+              Sign up for alerts
             </a>
           </div>
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">Rental guides</h2>
+        <div className="mt-4 flex flex-wrap gap-3">
+          {[
+            { href: '/guides/anmeldung', label: 'Anmeldung' },
+            { href: '/guides/wg-rooms', label: 'WG rooms' },
+            { href: '/guides/saved-search-alerts', label: 'Search alerts' },
+            { href: '/guides/finding-a-flat', label: 'Finding a flat' },
+          ].map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="rounded-full border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--color-ink-muted)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+            >
+              {link.label}
+            </a>
+          ))}
         </div>
       </section>
 

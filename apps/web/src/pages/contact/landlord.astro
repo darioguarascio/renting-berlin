@@ -4,6 +4,7 @@ import ContactComposeForm from '../../components/ContactComposeForm.tsx';
 import { db } from '../../db';
 import { listings, users } from '../../db/schema';
 import { eq } from 'drizzle-orm';
+import { externalListingApplyUrl } from '../../lib/external-listings';
 import { listingHref } from '../../lib/urls';
 
 export const prerender = false;
@@ -35,6 +36,15 @@ if (!listing || listing.status !== 'active') {
 }
 
 const listingPath = listingHref(listing.slug, listing.shortCode);
+const externalApplyUrl = externalListingApplyUrl(listing);
+
+if (externalApplyUrl) {
+  return Astro.redirect(externalApplyUrl);
+}
+
+if (listing.sourceType === 'external') {
+  return Astro.redirect(listingPath);
+}
 
 if (listing.publisherId === session.user.id) {
   return Astro.redirect(listingPath);

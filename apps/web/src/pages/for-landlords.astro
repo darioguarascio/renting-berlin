@@ -1,0 +1,114 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { authEntryUrl } from '../lib/public-routes';
+import { getSiteUrl } from '../lib/site-url';
+
+const session = Astro.locals.session;
+const listHref = session ? '/listings/new' : authEntryUrl('/listings/new', 'signup');
+const browseRequestsHref = session ? '/requests' : authEntryUrl('/requests', 'signup');
+const pageTitle = 'List your flat or room — renting.berlin';
+const pageDescription =
+  'Free listings for Berlin landlords and WG hosts. Message tenants directly, build a public profile, and earn verified reviews after rentals.';
+---
+
+<BaseLayout title={pageTitle} description={pageDescription} canonical={`${getSiteUrl()}/for-landlords`}>
+  <section class="hero-mesh grid-berlin relative overflow-hidden border-b border-[var(--color-border)] py-14">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6">
+      <div class="max-w-2xl">
+        <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-brand)]">For landlords & WG hosts</p>
+        <h1 class="mt-2 font-display text-4xl font-extrabold leading-tight text-[var(--color-ink)] sm:text-5xl">
+          List your flat or room in Berlin
+        </h1>
+        <p class="mt-4 text-base leading-relaxed text-[var(--color-ink-muted)]">
+          Post for free during beta. Message applicants directly, browse seeker profiles, and build trust with verified feedback after real rentals.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href={listHref} class="btn-brand">Post a listing</a>
+          <a href="/guides/listing-your-flat" class="btn-ghost">How to write a good listing</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {[
+        {
+          title: 'Free to list',
+          body: 'No commission, no broker fees. Post your offer and reach tenants searching across Berlin.',
+        },
+        {
+          title: 'Direct messaging',
+          body: 'Talk to applicants in-app. Share documents when you are ready — no public phone number required.',
+        },
+        {
+          title: 'Browse seeker profiles',
+          body: 'Filter tenants by budget, move-in date, Anmeldung needs, and documents. Message the ones who fit.',
+        },
+        {
+          title: 'Public profile',
+          body: 'Every account gets a permanent @handle and profile URL. Tenants see who they are dealing with.',
+        },
+        {
+          title: 'Verified reviews',
+          body: 'After a confirmed rental ends, both sides leave feedback. Good history makes the next vacancy easier.',
+        },
+        {
+          title: 'Berlin-only focus',
+          body: 'Smaller pool than ImmoScout, but every visitor is looking specifically in Berlin.',
+        },
+      ].map(({ title, body }) => (
+        <article class="card p-6">
+          <h2 class="font-display text-lg font-bold text-[var(--color-ink)]">{title}</h2>
+          <p class="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">{body}</p>
+        </article>
+      ))}
+    </div>
+
+    <section class="mt-14 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-gradient-to-br from-[var(--color-brand-muted)] to-white p-8 sm:p-10">
+      <div class="grid gap-8 lg:grid-cols-2 lg:items-center">
+        <div>
+          <h2 class="font-display text-2xl font-extrabold text-[var(--color-ink)]">How it works</h2>
+          <ol class="mt-5 space-y-4 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+            <li class="flex gap-3">
+              <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand)] text-xs font-bold text-white">1</span>
+              <span>Sign up and choose your @handle — your public profile URL.</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand)] text-xs font-bold text-white">2</span>
+              <span>Create a listing with photos, neighborhood, rent, and requirements (Anmeldung, SCHUFA, etc.).</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand)] text-xs font-bold text-white">3</span>
+              <span>Receive messages from interested tenants — or browse Requests and contact seekers yourself.</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand)] text-xs font-bold text-white">4</span>
+              <span>After a rental completes, both sides leave verified feedback on your profile.</span>
+            </li>
+          </ol>
+        </div>
+        <div class="rounded-2xl border border-[var(--color-border)] bg-white p-6">
+          <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-brand)]">WG main tenants</p>
+          <p class="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+            Have a room to fill in your shared flat? List it as a shared room. Tenants filter specifically for WGs, and you can browse seeker profiles to find someone who fits your household.
+          </p>
+          <a href={browseRequestsHref} class="mt-4 inline-block text-sm font-semibold text-[var(--color-brand)] hover:underline">
+            Browse seeker profiles →
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="mt-14 text-center">
+      <h2 class="font-display text-2xl font-extrabold text-[var(--color-ink)]">Ready to post?</h2>
+      <p class="mx-auto mt-3 max-w-lg text-sm text-[var(--color-ink-muted)]">
+        Listing takes about ten minutes. Need help? Read the landlord guide or contact us after signing up.
+      </p>
+      <div class="mt-6 flex flex-wrap justify-center gap-3">
+        <a href={listHref} class="btn-brand">Post a listing</a>
+        <a href="/offers" class="btn-ghost">See what tenants browse</a>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

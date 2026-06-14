@@ -7,6 +7,10 @@ describe('isPublicPage', () => {
     expect(isPublicPage('/login')).toBe(true);
     expect(isPublicPage('/signup')).toBe(true);
     expect(isPublicPage('/signup/handle')).toBe(true);
+    expect(isPublicPage('/for-landlords')).toBe(true);
+    expect(isPublicPage('/offers')).toBe(true);
+    expect(isPublicPage('/sitemap.xml')).toBe(true);
+    expect(isPublicPage('/robots.txt')).toBe(true);
   });
 
   it('allows neighborhood SEO pages', () => {
@@ -19,10 +23,14 @@ describe('isPublicPage', () => {
     expect(isPublicPage('/guides/schufa')).toBe(true);
   });
 
-  it('blocks app pages', () => {
-    expect(isPublicPage('/offers')).toBe(false);
+  it('allows public listing detail pages', () => {
+    expect(isPublicPage('/listings/2-room-flat-neukolln--abc12345')).toBe(true);
+  });
+
+  it('blocks app pages that require auth', () => {
     expect(isPublicPage('/requests')).toBe(false);
-    expect(isPublicPage('/listings/foo--abc')).toBe(false);
+    expect(isPublicPage('/dashboard')).toBe(false);
+    expect(isPublicPage('/messages')).toBe(false);
   });
 });
 
@@ -39,7 +47,11 @@ describe('isStaticAsset', () => {
     expect(isStaticAsset('/favicon.svg')).toBe(true);
     expect(isStaticAsset('/_astro/page.js')).toBe(true);
     expect(isStaticAsset('/uploads/listing.jpg')).toBe(true);
-    expect(isStaticAsset('/robots.txt')).toBe(true);
+  });
+
+  it('does not treat sitemap or robots as static assets', () => {
+    expect(isStaticAsset('/robots.txt')).toBe(false);
+    expect(isStaticAsset('/sitemap.xml')).toBe(false);
   });
 });
 

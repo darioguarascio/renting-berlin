@@ -57,11 +57,13 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.9",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@vitest/coverage-v8": "^3.2.6",
     "jsdom": "^26.1.0",
     "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
     "vitest": "^3.2.4"
   }
 }

@@ -6,12 +6,16 @@ import type { MessageAttachment } from '../types/message';
 import type { MessageTemplateKind } from '../types/message-template';
 import { saveMessageAsTemplate } from './message-templates';
 import { getNotificationPreferences } from './notification-preferences';
+import { isExternalListing } from './external-listings';
 import { accountProfileHref, listingHref } from './urls';
 import { getUserPublicProfileInfos } from './user-public-profile';
 
 export async function getOrCreateListingConversation(listingId: string, inquirerId: string) {
   const listing = await db.query.listings.findFirst({ where: eq(listings.id, listingId) });
   if (!listing) throw new Error('Listing not found');
+  if (isExternalListing(listing.sourceType)) {
+    throw new Error('This listing is aggregated from an external site — apply on the original post');
+  }
   if (listing.publisherId === inquirerId) throw new Error('Cannot message your own listing');
 
   const publisherPrefs = await getNotificationPreferences(listing.publisherId);

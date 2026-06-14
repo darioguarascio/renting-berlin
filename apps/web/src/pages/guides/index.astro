@@ -2,8 +2,10 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { GUIDES, GUIDE_CATEGORIES } from '../../lib/guides';
 import { buildGuidesIndexJsonLd, guidesIndexUrl } from '../../lib/guide-seo';
+import { BERLIN_NEIGHBORHOODS, NEIGHBORHOOD_LABELS, type BerlinNeighborhood } from '../../types/listing';
 
 const categories = Object.entries(GUIDE_CATEGORIES) as [keyof typeof GUIDE_CATEGORIES, string][];
+const featuredNeighborhoods: BerlinNeighborhood[] = ['kreuzberg', 'neukolln', 'prenzlauer-berg', 'friedrichshain', 'mitte', 'charlottenburg'];
 const pageTitle = 'Berlin rental guides — renting.berlin';
 const pageDescription =
   'Practical guides on Anmeldung, SCHUFA, rent costs, tenant rights, and finding a flat in Berlin.';
@@ -53,6 +55,26 @@ const pageDescription =
         </section>
       );
     })}
+
+    <section class="mb-12">
+      <h2 class="font-display text-lg font-bold text-[var(--color-ink)]">Rent by neighborhood</h2>
+      <p class="mt-1 text-sm text-[var(--color-ink-muted)]">Market stats and live listings for Berlin Kieze.</p>
+      <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {featuredNeighborhoods.map((slug) => (
+          <a
+            href={`/rent-in/${slug}`}
+            class="card group flex items-center justify-between px-5 py-4 transition hover:-translate-y-0.5 hover:border-[var(--color-brand)]"
+          >
+            <span class="font-display font-bold text-[var(--color-ink)] group-hover:text-[var(--color-brand-deep)]">
+              Rent in {NEIGHBORHOOD_LABELS[slug]}
+            </span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" class="size-4 text-[var(--color-ink-muted)]">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m5.75 12.5 4.5-4.5-4.5-4.5" />
+            </svg>
+          </a>
+        ))}
+      </div>
+    </section>
 
     <div class="rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-paper)] px-6 py-8 text-center">
       <p class="text-sm text-[var(--color-ink-muted)]">

@@ -1,5 +1,15 @@
-const PUBLIC_PAGES = new Set(['/', '/login', '/signup', '/signup/handle', '/guides']);
-const PUBLIC_PAGE_PREFIXES = ['/rent-in/', '/guides/', '/e/'];
+const PUBLIC_PAGES = new Set([
+  '/',
+  '/login',
+  '/signup',
+  '/signup/handle',
+  '/guides',
+  '/offers',
+  '/for-landlords',
+  '/sitemap.xml',
+  '/robots.txt',
+]);
+const PUBLIC_PAGE_PREFIXES = ['/rent-in/', '/guides/', '/e/', '/listings/'];
 
 export function isPublicPage(path: string): boolean {
   if (PUBLIC_PAGES.has(path)) return true;
@@ -17,8 +27,7 @@ export function isStaticAsset(path: string): boolean {
     path.startsWith('/email/') ||
     path === '/favicon.ico' ||
     path === '/favicon.svg' ||
-    path === '/og.svg' ||
-    path === '/robots.txt'
+    path === '/og.svg'
   );
 }
 

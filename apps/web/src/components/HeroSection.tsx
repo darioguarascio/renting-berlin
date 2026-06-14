@@ -26,7 +26,7 @@ export default function HeroSection() {
       title: 'Looking for an apartment',
       description: 'Browse flats and rooms for rent across Berlin. Filter by neighborhood, budget, Anmeldung, and more.',
       cta: 'Browse offers',
-      href: user ? '/offers' : authEntryUrl('/offers', 'signup'),
+      href: '/offers',
       accent: 'from-[var(--color-brand)] to-[#1a8fc4]',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
