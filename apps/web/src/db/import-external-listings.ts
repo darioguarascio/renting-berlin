@@ -20,14 +20,14 @@ function parseDate(value: string): Date {
 
 function defaultExternalExportPath(): string {
   const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
-  return path.join(repoRoot, '.local/fredy/export/listings.json');
+  return path.join(repoRoot, 'export/listings.json');
 }
 
 function resolveExportPath(): string {
-  if (process.env.FREDY_EXPORT_PATH) {
-    return path.isAbsolute(process.env.FREDY_EXPORT_PATH)
-      ? process.env.FREDY_EXPORT_PATH
-      : path.resolve(process.cwd(), process.env.FREDY_EXPORT_PATH);
+  if (process.env.EXTERNAL_LISTINGS_EXPORT_PATH) {
+    return path.isAbsolute(process.env.EXTERNAL_LISTINGS_EXPORT_PATH)
+      ? process.env.EXTERNAL_LISTINGS_EXPORT_PATH
+      : path.resolve(process.cwd(), process.env.EXTERNAL_LISTINGS_EXPORT_PATH);
   }
   return defaultExternalExportPath();
 }

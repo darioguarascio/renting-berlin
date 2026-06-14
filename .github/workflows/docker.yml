@@ -93,10 +93,6 @@ jobs:
             export DOCKER_IMAGE_TAG=dev
             cd "${{ secrets.DEPLOY_PATH }}"
 
-            if ! grep -q '^FREDY_SYNC_SECRET=' .env 2>/dev/null; then
-              echo "FREDY_SYNC_SECRET=${{ secrets.FREDY_SYNC_SECRET }}" >> .env
-            fi
-
             compose() {
               if [ -x "${HOME}/bin/docker-compose" ]; then
                 "${HOME}/bin/docker-compose" "$@"
