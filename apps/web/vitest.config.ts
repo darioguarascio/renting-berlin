@@ -44,6 +44,10 @@ export default defineConfig({
         'src/lib/feedback.ts',
         'src/lib/rental-checkout.ts',
         'src/lib/profile-views.ts',
+        'src/lib/analytics/**',
+        'src/lib/clickhouse/**',
+        'src/lib/email/send.ts',
+        'src/lib/email/tracking.ts',
       ],
       thresholds: {
         lines: 80,

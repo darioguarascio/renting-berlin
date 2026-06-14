@@ -70,4 +70,32 @@ describe('formatListingApiError', () => {
 
     expect(message).toBe('Title must be at least 5 characters');
   });
+
+  it('returns plain text errors unchanged', () => {
+    expect(formatListingApiError('Something went wrong')).toBe('Something went wrong');
+  });
+
+  it('returns original body for invalid JSON arrays', () => {
+    expect(formatListingApiError('[not-json')).toBe('[not-json');
+  });
+});
+
+describe('validateListingPayload partial mode', () => {
+  it('accepts partial patches', () => {
+    const result = validateListingPayload({ title: 'Updated listing title' }, { partial: true });
+    expect(result.success).toBe(true);
+  });
+
+  it('labels nested cost and description fields', () => {
+    const result = validateListingPayload({
+      ...validListing,
+      costs: { rentPerMonth: -1 },
+      descriptions: { apartment: 'x'.repeat(5001) },
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.fieldErrors['costs.rentPerMonth']).toContain('at least');
+    expect(result.fieldErrors['descriptions.apartment']).toContain('at most');
+  });
 });
