@@ -49,11 +49,16 @@ export async function recordEmailClick(
   const target = send.links[linkIndex];
   if (!target) return null;
 
-  await recordEmailEvent({
-    sendId,
-    type: 'click',
-    linkIndex,
-    ...requestMeta(request),
-  });
+  try {
+    await recordEmailEvent({
+      sendId,
+      type: 'click',
+      linkIndex,
+      ...requestMeta(request),
+    });
+  } catch (error) {
+    console.warn('[email] click tracking failed, redirecting anyway:', error);
+  }
+
   return target;
 }

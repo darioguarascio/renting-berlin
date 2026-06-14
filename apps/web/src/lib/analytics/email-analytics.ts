@@ -9,14 +9,16 @@ type EmailSendRecord = {
   links: string[];
 };
 
-async function createEmailSendPg(input: {
-  toEmail: string;
-  userId?: string | null;
-  category: string;
-  subject: string;
-  links: string[];
-}): Promise<string> {
-  const id = nanoid();
+async function createEmailSendPg(
+  input: {
+    toEmail: string;
+    userId?: string | null;
+    category: string;
+    subject: string;
+    links: string[];
+  },
+  id = nanoid(),
+): Promise<string> {
   await db.insert(emailSends).values({
     id,
     userId: input.userId ?? null,
@@ -26,6 +28,31 @@ async function createEmailSendPg(input: {
     links: input.links,
   });
   return id;
+}
+
+async function getEmailSendCh(sendId: string): Promise<EmailSendRecord | null> {
+  if (!clickhouseConfigured()) return null;
+
+  try {
+    const ch = await getClickHouse();
+    if (!ch) return null;
+
+    const result = await ch.query({
+      query: `
+        SELECT id, links
+        FROM email_sends
+        WHERE id = {sendId:String}
+        LIMIT 1
+      `,
+      query_params: { sendId },
+      format: 'JSONEachRow',
+    });
+    const rows = await result.json<{ id: string; links: string[] }>();
+    return rows[0] ?? null;
+  } catch (error) {
+    console.warn('[email] ClickHouse send lookup failed:', error);
+    return null;
+  }
 }
 
 async function getEmailSendPg(sendId: string): Promise<EmailSendRecord | null> {
@@ -59,6 +86,7 @@ export async function createEmailSend(input: {
   links: string[];
 }): Promise<string> {
   const id = nanoid();
+  await createEmailSendPg(input, id);
 
   if (clickhouseConfigured()) {
     try {
@@ -79,34 +107,20 @@ export async function createEmailSend(input: {
           ],
           format: 'JSONEachRow',
         });
-        return id;
       }
     } catch (error) {
-      console.warn('[email] ClickHouse unavailable, falling back to Postgres:', error);
+      console.warn('[email] ClickHouse send mirror failed:', error);
     }
   }
 
-  return createEmailSendPg(input);
+  return id;
 }
 
 export async function getEmailSend(sendId: string): Promise<EmailSendRecord | null> {
-  const ch = await getClickHouse();
-  if (ch) {
-    const result = await ch.query({
-      query: `
-        SELECT id, links
-        FROM email_sends
-        WHERE id = {sendId:String}
-        LIMIT 1
-      `,
-      query_params: { sendId },
-      format: 'JSONEachRow',
-    });
-    const rows = await result.json<{ id: string; links: string[] }>();
-    return rows[0] ?? null;
-  }
+  const pg = await getEmailSendPg(sendId);
+  if (pg) return pg;
 
-  return getEmailSendPg(sendId);
+  return getEmailSendCh(sendId);
 }
 
 export async function recordEmailEvent(input: {
@@ -116,24 +130,30 @@ export async function recordEmailEvent(input: {
   userAgent: string | null;
   ipAddress: string | null;
 }): Promise<void> {
-  const ch = await getClickHouse();
-  if (ch) {
-    await ch.insert({
-      table: 'email_events',
-      values: [
-        {
-          id: nanoid(),
-          send_id: input.sendId,
-          event_type: input.type,
-          link_index: input.linkIndex ?? null,
-          user_agent: input.userAgent,
-          ip_address: input.ipAddress,
-          created_at: new Date(),
-        },
-      ],
-      format: 'JSONEachRow',
-    });
-    return;
+  if (clickhouseConfigured()) {
+    try {
+      const ch = await getClickHouse();
+      if (ch) {
+        await ch.insert({
+          table: 'email_events',
+          values: [
+            {
+              id: nanoid(),
+              send_id: input.sendId,
+              event_type: input.type,
+              link_index: input.linkIndex ?? null,
+              user_agent: input.userAgent,
+              ip_address: input.ipAddress,
+              created_at: new Date(),
+            },
+          ],
+          format: 'JSONEachRow',
+        });
+        return;
+      }
+    } catch (error) {
+      console.warn('[email] ClickHouse event mirror failed:', error);
+    }
   }
 
   await recordEmailEventPg(input);
