@@ -1,6 +1,5 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { and, eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { closeDb, db } from '../db';
@@ -18,18 +17,26 @@ function parseDate(value: string): Date {
   return value.includes('T') ? new Date(value) : new Date(`${value}T12:00:00.000Z`);
 }
 
-function defaultExternalExportPath(): string {
-  const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
-  return path.join(repoRoot, 'export/listings.json');
-}
-
 function resolveExportPath(): string {
+  const fileFlagIndex = process.argv.indexOf('--file');
+  if (fileFlagIndex !== -1) {
+    const fromCli = process.argv[fileFlagIndex + 1];
+    if (!fromCli || fromCli.startsWith('-')) {
+      throw new Error('Missing path after --file');
+    }
+    return path.isAbsolute(fromCli) ? fromCli : path.resolve(process.cwd(), fromCli);
+  }
+
   if (process.env.EXTERNAL_LISTINGS_EXPORT_PATH) {
     return path.isAbsolute(process.env.EXTERNAL_LISTINGS_EXPORT_PATH)
       ? process.env.EXTERNAL_LISTINGS_EXPORT_PATH
       : path.resolve(process.cwd(), process.env.EXTERNAL_LISTINGS_EXPORT_PATH);
   }
-  return defaultExternalExportPath();
+
+  throw new Error(
+    'Export file required. Pass --file <path> or set EXTERNAL_LISTINGS_EXPORT_PATH. ' +
+      'Third-party exporters (e.g. a local Fredy instance) run this import against production DATABASE_URL.',
+  );
 }
 
 function describeDatabaseTarget(): string {

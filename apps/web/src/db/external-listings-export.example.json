@@ -1,0 +1,41 @@
+{
+  "convertedAt": "2026-06-14T12:00:00.000Z",
+  "sourceExport": "third-party-scraper",
+  "count": 1,
+  "skipped": 0,
+  "listings": [
+    {
+      "externalProvider": "immoscout",
+      "externalSourceId": "123456789",
+      "externalUrl": "https://www.immobilienscout24.de/expose/123456789",
+      "title": "Bright 2-room flat in Prenzlauer Berg",
+      "category": "apartment",
+      "rentType": "long_term",
+      "availableFrom": "2026-07-01",
+      "availableTo": null,
+      "sizeSqm": 58,
+      "rooms": 2,
+      "onlineViewingAvailable": false,
+      "anmeldungAvailable": true,
+      "schufaRequired": true,
+      "address": "Example Street 1, 10405 Berlin",
+      "neighborhood": "prenzlauer_berg",
+      "lat": 52.5388,
+      "lng": 13.4241,
+      "approximateLocation": false,
+      "costs": {
+        "rentPerMonth": 1200,
+        "utilities": 200,
+        "deposit": 3600
+      },
+      "descriptions": {
+        "apartment": "Recently renovated Altbau with balcony.",
+        "location": "Close to U2."
+      },
+      "requiredDocuments": [],
+      "equipment": ["balcony", "elevator"],
+      "photoUrls": ["https://example.com/photo.jpg"],
+      "status": "active"
+    }
+  ]
+}
