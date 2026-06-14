@@ -11,6 +11,16 @@ export default defineConfig({
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['src/**/*.integration.test.ts'],
     clearMocks: true,
+    // Serial execution — one file at a time, one worker process (easier on CPU/RAM).
+    fileParallelism: false,
+    maxWorkers: 1,
+    minWorkers: 1,
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary', 'json', 'lcov'],

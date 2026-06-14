@@ -16,9 +16,12 @@ export default defineConfig({
     globalTeardown: './src/test/integration/global-teardown.ts',
     include: ['src/**/*.integration.test.ts'],
     fileParallelism: false,
+    maxWorkers: 1,
+    minWorkers: 1,
+    pool: 'forks',
     poolOptions: {
-      threads: {
-        singleThread: true,
+      forks: {
+        singleFork: true,
       },
     },
     hookTimeout: 30_000,
