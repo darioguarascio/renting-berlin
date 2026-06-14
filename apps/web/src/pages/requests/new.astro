@@ -1,19 +1,30 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import SeekerRequestForm from '../../components/SeekerRequestForm.tsx';
+import { buildAccountBreadcrumbs } from '../../lib/breadcrumbs';
 
 export const prerender = false;
+
+const breadcrumbItems = buildAccountBreadcrumbs({
+  currentPath: '/requests/new',
+  heading: 'Post seeker profile',
+});
 ---
 
 <BaseLayout title="Post seeker profile — renting.berlin">
-  <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-    <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-accent)]">Gesuche · Requests</p>
-    <h1 class="mt-1 font-display text-3xl font-extrabold text-[var(--color-ink)]">Post your seeker profile</h1>
-    <p class="mt-2 text-[var(--color-ink-muted)]">
-      Let landlords find you. All details are optional — the more you share, the better for owners reviewing your profile.
-    </p>
-    <div class="mt-8">
-      <SeekerRequestForm client:load />
+  <div class="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+    <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+      <Breadcrumbs items={breadcrumbItems} />
+      <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-accent)]">Gesuche · Requests</p>
+      <h1 class="mt-1 font-display text-2xl font-bold text-[var(--color-ink)] sm:text-3xl">Post your seeker profile</h1>
+      <p class="mt-1.5 text-sm text-[var(--color-ink-muted)]">
+        Let landlords find you. All details are optional — the more you share, the better for owners reviewing your profile.
+      </p>
     </div>
+  </div>
+
+  <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <SeekerRequestForm client:load />
   </div>
 </BaseLayout>

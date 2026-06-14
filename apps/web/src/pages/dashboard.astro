@@ -1,16 +1,22 @@
 ---
 import AccountLayout from '../layouts/AccountLayout.astro';
+import { getUserHandle } from '../lib/user-handle';
 
 export const prerender = false;
 
 const session = Astro.locals.session;
 const firstName = session?.user?.name?.split(' ')[0] ?? '';
+const handle = session?.user?.id ? await getUserHandle(session.user.id) : null;
 const heading = firstName ? `Good to see you, ${firstName}` : 'My account';
+const description = handle
+  ? `@${handle} — your account overview.`
+  : 'Your account overview.';
 
 const sections = [
   {
     heading: 'Your content',
     links: [
+      { href: '/listings/new', title: 'New listing', desc: 'Publish an offer', icon: 'listings' },
       { href: '/account/listings', title: 'My listings', desc: 'Edit, deactivate, or publish offers', icon: 'listings' },
       { href: '/requests/new', title: 'Post seeker profile', desc: 'Let landlords find you', icon: 'requests' },
       { href: '/account/profile-views', title: 'Profile views', desc: 'Who viewed your seeker profile', icon: 'profile-views' },
@@ -48,19 +54,9 @@ const icons: Record<string, string> = {
 <AccountLayout
   title="Dashboard — renting.berlin"
   heading={heading}
-  description="Your account overview."
+  description={description}
   currentPath="/dashboard"
 >
-  <div class="mb-8 flex flex-wrap items-center gap-3">
-    <a href="/listings/new" class="btn-brand">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
-        <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-      </svg>
-      New listing
-    </a>
-    <a href="/requests/new" class="btn-ghost">Post seeker profile</a>
-  </div>
-
   <div class="space-y-10">
     {sections.map((section) => (
       <section>

@@ -125,7 +125,7 @@ type SeekerSeed = {
   title: string;
   userName: string;
   userEmail: string;
-  category: 'full_flat' | 'shared_room';
+  category: 'full_flat' | 'shared_room' | 'swap';
   rentType: 'long_term' | 'short_term';
   budgetMin: number;
   budgetMax: number;

@@ -19,15 +19,29 @@
     {
       "idx": 2,
       "version": "7",
-      "when": 1781355004359,
+      "when": 1781373584689,
       "tag": "0002_seeker_visibility",
       "breakpoints": true
     },
     {
-      "idx": 3,
+      "idx": 4,
       "version": "7",
-      "when": 1781355004360,
-      "tag": "0003_workers_moderation",
+      "when": 1781373584691,
+      "tag": "0004_floor_level",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1781373584692,
+      "tag": "0005_listing_category_swap",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781373584693,
+      "tag": "0006_required_documents_other",
       "breakpoints": true
     }
   ]

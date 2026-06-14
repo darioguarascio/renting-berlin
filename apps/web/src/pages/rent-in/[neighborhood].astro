@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import NeighborhoodRentPage from '../../components/NeighborhoodRentPage.tsx';
-import { NEIGHBORHOOD_LABELS, type BerlinNeighborhood } from '../../types/listing';
+import { NEIGHBORHOOD_LABELS, LISTING_CATEGORIES, type BerlinNeighborhood, type ListingCategory } from '../../types/listing';
 import {
   buildNeighborhoodSeoDescription,
   type NeighborhoodListingStats,
@@ -18,7 +18,7 @@ const emptyStats: NeighborhoodListingStats = {
   totalListings: 0,
   rent: { min: null, max: null, median: null, average: null },
   size: { averageSqm: null, averageRooms: null },
-  byCategory: { full_flat: 0, shared_room: 0 },
+  byCategory: Object.fromEntries(LISTING_CATEGORIES.map((category) => [category, 0])) as Record<ListingCategory, number>,
   byRentType: { long_term: 0, short_term: 0, overnight: 0 },
   anmeldungAvailableCount: 0,
   noSchufaCount: 0,

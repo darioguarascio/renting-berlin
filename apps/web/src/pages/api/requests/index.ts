@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import type { ListingCategory } from '../../../types/listing';
 import { createTenantRequest, parseHouseholdTypesParam, searchTenantRequests, tenantRequestInputSchema } from '../../../lib/tenant-requests';
 import { getUserHandle } from '../../../lib/user-handle';
 import { getSession } from '../../../lib/session';
@@ -10,7 +11,7 @@ export const GET: APIRoute = async ({ request }) => {
   const params = url.searchParams;
 
   const result = await searchTenantRequests({
-    category: (params.get('category') as 'full_flat' | 'shared_room') ?? undefined,
+    category: (params.get('category') as ListingCategory) ?? undefined,
     rentType: (params.get('rentType') as 'long_term' | 'short_term' | 'overnight') ?? undefined,
     neighborhood: params.get('neighborhood') ?? undefined,
     minBudget: params.get('minBudget') ? Number(params.get('minBudget')) : undefined,

@@ -1,4 +1,4 @@
-export const LISTING_CATEGORIES = ['full_flat', 'shared_room'] as const;
+export const LISTING_CATEGORIES = ['full_flat', 'shared_room', 'swap'] as const;
 export const RENT_TYPES = ['long_term', 'short_term', 'overnight'] as const;
 export const LISTING_STATUSES = ['draft', 'active', 'paused', 'closed'] as const;
 
@@ -13,7 +13,6 @@ export const REQUIRED_DOCUMENTS = [
   'household_contents_insurance',
   'liability_insurance',
   'loss_of_rent_insurance',
-  'other',
 ] as const;
 
 export const EQUIPMENT = [
@@ -87,6 +86,7 @@ export interface ListingSummary {
   rentPerMonth: number;
   sizeSqm: number;
   rooms: number;
+  floorLevel: FloorLevel | null;
   neighborhood: string;
   availableFrom: string;
   availableTo: string | null;
@@ -105,6 +105,7 @@ export interface ListingDetail extends ListingSummary {
   descriptions: ListingDescriptions;
   costs: ListingCosts;
   requiredDocuments: RequiredDocument[];
+  requiredDocumentsOther: string | null;
   equipment: Equipment[];
   photoUrls: string[];
   publisherId: string;
@@ -168,6 +169,7 @@ export const NEIGHBORHOOD_LABELS: Record<BerlinNeighborhood, string> = {
 export const CATEGORY_LABELS: Record<ListingCategory, string> = {
   full_flat: 'Full flat',
   shared_room: 'Shared room',
+  swap: 'Swap',
 };
 
 export const RENT_TYPE_LABELS: Record<RentType, string> = {
@@ -175,6 +177,29 @@ export const RENT_TYPE_LABELS: Record<RentType, string> = {
   short_term: 'Short term',
   overnight: 'Overnight',
 };
+
+export const FLOOR_LEVEL_OPTIONS = [
+  { value: 8, label: 'Cellar' },
+  { value: 9, label: 'Basement' },
+  { value: 1, label: 'Ground floor' },
+  { value: 10, label: 'Raised ground floor / Mezzanine' },
+  { value: 2, label: '1st floor' },
+  { value: 3, label: '2nd floor' },
+  { value: 4, label: '3rd floor' },
+  { value: 5, label: '4th floor' },
+  { value: 6, label: '5th floor' },
+  { value: 7, label: 'Higher than the 5th floor' },
+  { value: 11, label: 'Loft / Attic' },
+] as const;
+
+export type FloorLevel = (typeof FLOOR_LEVEL_OPTIONS)[number]['value'];
+
+export const FLOOR_LEVEL_VALUES = FLOOR_LEVEL_OPTIONS.map((option) => option.value);
+
+export function floorLevelLabel(value: FloorLevel | null | undefined): string | null {
+  if (value == null) return null;
+  return FLOOR_LEVEL_OPTIONS.find((option) => option.value === value)?.label ?? null;
+}
 
 export const DOCUMENT_LABELS: Record<RequiredDocument, string> = {
   schufa: 'SCHUFA',
@@ -187,7 +212,6 @@ export const DOCUMENT_LABELS: Record<RequiredDocument, string> = {
   household_contents_insurance: 'Household contents insurance',
   liability_insurance: 'Liability insurance',
   loss_of_rent_insurance: 'Loss of rent insurance',
-  other: 'Other',
 };
 
 export const EQUIPMENT_LABELS: Record<Equipment, string> = {
