@@ -65,6 +65,29 @@ describe('notifyNewMessageEmail', () => {
     );
     expect(deliverEmailJob).toHaveBeenCalledOnce();
   });
+
+  it('uses a default preview and truncates long messages', async () => {
+    await notifyNewMessageEmail({
+      recipientId: 'user_2',
+      senderName: 'Alex',
+      conversationId: 'conv_1',
+      preview: '   ',
+    });
+    expect(buildNotificationEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ body: 'New message' }),
+    );
+
+    const longPreview = 'x'.repeat(200);
+    await notifyNewMessageEmail({
+      recipientId: 'user_2',
+      senderName: 'Alex',
+      conversationId: 'conv_1',
+      preview: longPreview,
+    });
+    expect(buildNotificationEmail).toHaveBeenLastCalledWith(
+      expect.objectContaining({ body: `${'x'.repeat(177)}…` }),
+    );
+  });
 });
 
 describe('notifyProfileViewEmail', () => {
@@ -101,6 +124,28 @@ describe('notifyProfileViewEmail', () => {
     findFirstUser.mockResolvedValueOnce({ handle: null }).mockResolvedValueOnce({ name: 'Landlord', handle: null });
 
     await notifyProfileViewEmail({ profileUserId: 'seeker_1', viewerId: 'landlord_1' });
+
+    expect(buildNotificationEmail).not.toHaveBeenCalled();
+  });
+
+  it('uses the viewer name when no handle is available', async () => {
+    findFirstUser
+      .mockResolvedValueOnce({ handle: 'seeker_1' })
+      .mockResolvedValueOnce({ name: 'Landlord Name', handle: null });
+
+    await notifyProfileViewEmail({ profileUserId: 'seeker_1', viewerId: 'landlord_1' });
+
+    expect(buildNotificationEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: 'Landlord Name viewed your profile.',
+      }),
+    );
+  });
+
+  it('skips when the viewer no longer exists', async () => {
+    findFirstUser.mockResolvedValueOnce({ handle: 'seeker_1' }).mockResolvedValueOnce(null);
+
+    await notifyProfileViewEmail({ profileUserId: 'seeker_1', viewerId: 'missing' });
 
     expect(buildNotificationEmail).not.toHaveBeenCalled();
   });
@@ -163,6 +208,21 @@ describe('notifyProductNewsEmail', () => {
       expect.objectContaining({
         category: 'product_news',
         link: '/dashboard',
+      }),
+    );
+  });
+
+  it('uses a custom product news link when provided', async () => {
+    await notifyProductNewsEmail({
+      userId: 'user_1',
+      title: 'New feature',
+      body: 'Try saved searches.',
+      link: '/offers',
+    });
+
+    expect(buildNotificationEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        link: '/offers',
       }),
     );
   });

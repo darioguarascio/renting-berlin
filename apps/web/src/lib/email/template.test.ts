@@ -37,4 +37,17 @@ describe('email template', () => {
     expect(text).toContain('---');
     expect(text).toContain('https://renting.berlin');
   });
+
+  it('falls back to the raw CTA href when tracking links are missing', () => {
+    const text = renderTextEmail(content, { siteUrl: 'https://renting.berlin/' });
+    expect(text).toContain('View listing: https://renting.berlin/listings/test--abc');
+  });
+
+  it('omits the CTA block when no button is configured', () => {
+    const text = renderTextEmail(
+      { ...content, cta: undefined },
+      { siteUrl: 'https://renting.berlin' },
+    );
+    expect(text).not.toContain('View listing:');
+  });
 });

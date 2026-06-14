@@ -46,6 +46,54 @@ const basePrefs: NotificationPreferences = {
 };
 
 describe('isInQuietHours', () => {
+  it('returns false when quiet hours are disabled', () => {
+    expect(isInQuietHours(basePrefs)).toBe(false);
+  });
+
+  it('returns false for invalid quiet-hour times', () => {
+    const prefs = {
+      ...basePrefs,
+      quietHoursEnabled: true,
+      quietHoursStart: 'invalid',
+      quietHoursEnd: '08:00',
+    };
+    expect(isInQuietHours(prefs)).toBe(false);
+  });
+
+  it('returns false when the quiet-hour end time is invalid', () => {
+    const prefs = {
+      ...basePrefs,
+      quietHoursEnabled: true,
+      quietHoursStart: '22:00',
+      quietHoursEnd: 'bad',
+    };
+    expect(isInQuietHours(prefs)).toBe(false);
+  });
+
+  it('treats identical start and end as always quiet', () => {
+    const prefs = {
+      ...basePrefs,
+      quietHoursEnabled: true,
+      quietHoursStart: '12:00',
+      quietHoursEnd: '12:00',
+    };
+    expect(isInQuietHours(prefs, new Date('2026-06-14T10:00:00.000Z'))).toBe(true);
+  });
+
+  it('detects daytime quiet windows', () => {
+    const prefs = {
+      ...basePrefs,
+      quietHoursEnabled: true,
+      quietHoursStart: '12:00',
+      quietHoursEnd: '14:00',
+    };
+    const inside = new Date('2026-06-14T10:30:00.000Z'); // 12:30 Berlin (CEST)
+    const outside = new Date('2026-06-14T08:00:00.000Z'); // 10:00 Berlin
+
+    expect(isInQuietHours(prefs, inside)).toBe(true);
+    expect(isInQuietHours(prefs, outside)).toBe(false);
+  });
+
   it('detects overnight quiet windows in Berlin time', () => {
     const prefs = {
       ...basePrefs,
@@ -81,6 +129,18 @@ describe('shouldBufferEmail', () => {
       emailDigest: 'daily',
     };
     expect(shouldBufferEmail(prefs, 'saved_searches')).toBe(true);
+  });
+
+  it('buffers instant emails during quiet hours', () => {
+    const prefs = {
+      ...basePrefs,
+      quietHoursEnabled: true,
+      quietHoursStart: '22:00',
+      quietHoursEnd: '08:00',
+    };
+    const late = new Date('2026-06-14T21:00:00.000Z'); // 23:00 Berlin
+
+    expect(shouldBufferEmail(prefs, 'saved_searches', late)).toBe(true);
   });
 });
 

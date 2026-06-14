@@ -52,4 +52,9 @@ describe('rybbit', () => {
 
     expect(event).not.toHaveBeenCalled();
   });
+
+  it('no-ops during SSR when window is undefined', () => {
+    vi.stubGlobal('window', undefined);
+    expect(() => trackEvent('SSR')).not.toThrow();
+  });
 });
