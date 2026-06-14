@@ -1,5 +1,3 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import {
   BERLIN_NEIGHBORHOODS,
@@ -89,11 +87,3 @@ export const externalListingExportSchema = z.object({
 });
 
 export type ExternalListingExport = z.infer<typeof externalListingExportSchema>;
-
-export function defaultExternalExportPath(): string {
-  if (process.env.FREDY_EXPORT_PATH) {
-    return process.env.FREDY_EXPORT_PATH;
-  }
-  const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
-  return path.join(repoRoot, '.local/fredy/export/listings.json');
-}

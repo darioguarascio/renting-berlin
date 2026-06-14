@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-import { db } from '../db';
-import { emailSends, emailTrackingEvents } from '../db/schema';
+import { db } from '../../db';
+import { emailSends, emailTrackingEvents } from '../../db/schema';
 import { clickhouseConfigured, getClickHouse } from '../clickhouse/client';
 
 type EmailSendRecord = {

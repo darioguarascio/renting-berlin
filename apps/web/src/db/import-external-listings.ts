@@ -1,11 +1,11 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { and, eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { closeDb, db } from '../db';
 import { listings, users } from '../db/schema';
 import {
-  defaultExternalExportPath,
   EXTERNAL_PUBLISHER,
   externalListingExportSchema,
   type ExternalListingImport,
@@ -16,6 +16,11 @@ import { generateShortCode, seoSlug } from '../lib/urls';
 
 function parseDate(value: string): Date {
   return value.includes('T') ? new Date(value) : new Date(`${value}T12:00:00.000Z`);
+}
+
+function defaultExternalExportPath(): string {
+  const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
+  return path.join(repoRoot, '.local/fredy/export/listings.json');
 }
 
 function resolveExportPath(): string {

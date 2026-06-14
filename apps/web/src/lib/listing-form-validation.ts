@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { listingInputSchema, type ListingInput } from './listings';
+import { listingInputSchema, type ListingInput } from './listing-input-schema';
 
 const FIELD_LABELS: Record<string, string> = {
   title: 'Title',

@@ -53,6 +53,8 @@ docker compose -f "$INSTALL_DIR/docker-compose.yml" pull
 
 docker compose -f "$INSTALL_DIR/docker-compose.yml" up -d
 
+chmod +x "$INSTALL_DIR/setup-proxy.sh" 2>/dev/null || true
+"$INSTALL_DIR/setup-proxy.sh" || echo "Proxy setup skipped or failed"
 "$INSTALL_DIR/setup-jobs.sh"
 
 if [[ -d /etc/systemd/system ]] && sudo -n true 2>/dev/null; then
@@ -66,7 +68,7 @@ if [[ -d /etc/systemd/system ]] && sudo -n true 2>/dev/null; then
   sudo systemctl enable --now renting-berlin-fredy-sync.timer
   echo "Systemd units enabled"
 else
-  CRON_LINE="*/30 * * * * FREDY_ENV=$INSTALL_DIR/.env $INSTALL_DIR/sync.sh >> $INSTALL_DIR/sync.log 2>&1"
+  CRON_LINE="*/30 * * * * PATH=$HOME/bin:/usr/bin:/bin FREDY_ENV=$INSTALL_DIR/.env DOCKER_HOST=unix:///run/user/$(id -u)/docker.sock $INSTALL_DIR/sync.sh >> $INSTALL_DIR/sync.log 2>&1"
   (crontab -l 2>/dev/null | grep -Fv "$INSTALL_DIR/sync.sh"; echo "$CRON_LINE") | crontab -
   echo "Cron job installed (every 30 minutes)"
 fi

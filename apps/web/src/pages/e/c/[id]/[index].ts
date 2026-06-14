@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { recordEmailClick } from '../../../lib/email/tracking';
+import { recordEmailClick } from '../../../../lib/email/tracking';
 
 export const prerender = false;
 

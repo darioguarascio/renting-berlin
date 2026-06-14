@@ -1,7 +1,7 @@
 import { and, inArray } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-import { db } from '../db';
-import { listingViews, profileViews } from '../db/schema';
+import { db } from '../../db';
+import { listingViews, profileViews } from '../../db/schema';
 import { clickhouseConfigured, getClickHouse } from '../clickhouse/client';
 
 export type ViewEntityType = 'profile' | 'listing';
