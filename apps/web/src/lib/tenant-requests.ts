@@ -92,6 +92,7 @@ export interface TenantRequestFilters {
   householdTypes?: HouseholdType[];
   page?: number;
   limit?: number;
+  sort?: 'updated';
 }
 
 function parseDate(value: string): Date {
@@ -217,6 +218,11 @@ export async function searchTenantRequests(filters: TenantRequestFilters = {}) {
 
   const where = and(...conditions);
 
+  const orderBy =
+    filters.sort === 'updated'
+      ? [desc(tenantRequests.updatedAt)]
+      : [desc(tenantRequests.publishedAt), desc(tenantRequests.createdAt)];
+
   const rows = await db
     .select({
       request: tenantRequests,
@@ -228,7 +234,7 @@ export async function searchTenantRequests(filters: TenantRequestFilters = {}) {
     .from(tenantRequests)
     .innerJoin(users, eq(tenantRequests.seekerId, users.id))
     .where(where)
-    .orderBy(desc(tenantRequests.publishedAt), desc(tenantRequests.createdAt))
+    .orderBy(...orderBy)
     .limit(limit)
     .offset(offset);
 

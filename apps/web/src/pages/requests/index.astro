@@ -19,6 +19,7 @@ const filters: TenantRequestFilters = {
   householdTypes: parseHouseholdTypesParam(params),
   page: params.get('page') ? Number(params.get('page')) : 1,
   limit: 12,
+  sort: params.get('sort') === 'updated' ? 'updated' : undefined,
 };
 
 const viewParam = params.get('view');

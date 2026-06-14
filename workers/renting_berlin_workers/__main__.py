@@ -14,7 +14,7 @@ from .services.email import process_email_job
 from .services.moderation_handler import process_moderation_job
 from .services.notifications import process_notification_job
 from .services.profile_views import process_profile_view_job
-from .services.telegram import process_telegram_job
+from .services.telegram import process_telegram_job, run_telegram_worker
 from .stream_worker import run_stream_worker
 
 WORKERS = {
@@ -48,6 +48,7 @@ WORKERS = {
         "group": REDIS_KEYS["telegram_workers"],
         "handler": lambda _id, data: process_telegram_job(data),
         "env_name": "TELEGRAM_WORKER_NAME",
+        "runner": "telegram",
     },
 }
 
@@ -69,13 +70,21 @@ def main(argv: list[str] | None = None) -> int:
     config = WORKERS[args.worker]
 
     try:
-        run_stream_worker(
-            config["stream"],
-            config["group"],
-            config["handler"],
-            batch_size=config.get("batch_size", 10),
-            consumer_name=os.environ.get(config["env_name"]),
-        )
+        if config.get("runner") == "telegram":
+            run_telegram_worker(
+                config["stream"],
+                config["group"],
+                batch_size=config.get("batch_size", 10),
+                consumer_name=os.environ.get(config["env_name"]),
+            )
+        else:
+            run_stream_worker(
+                config["stream"],
+                config["group"],
+                config["handler"],
+                batch_size=config.get("batch_size", 10),
+                consumer_name=os.environ.get(config["env_name"]),
+            )
     finally:
         close_connection()
 

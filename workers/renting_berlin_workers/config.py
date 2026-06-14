@@ -24,6 +24,7 @@ EMAIL_FROM = os.environ.get("EMAIL_FROM", "")
 
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+TELEGRAM_DIGEST_INTERVAL_HOURS = int(os.environ.get("TELEGRAM_DIGEST_INTERVAL_HOURS", "6"))
 
 REDIS_KEYS = {
     "profile_view_events": "profile_views:events",
@@ -36,6 +37,9 @@ REDIS_KEYS = {
     "moderation_workers": "moderation-workers",
     "telegram_events": "telegram:events",
     "telegram_workers": "telegram-workers",
+    "telegram_pending_listings": "telegram:pending:listings",
+    "telegram_pending_seekers": "telegram:pending:seekers",
+    "telegram_last_digest_at": "telegram:last_digest_at",
     "listings_index": "listings:active",
     "geo_index": "listings:geo",
 }

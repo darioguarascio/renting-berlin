@@ -74,6 +74,7 @@ export interface ListingSearchFilters {
   neighborhood?: string;
   page?: number;
   limit?: number;
+  sort?: 'updated';
 }
 
 export interface ListingSummary {
@@ -100,6 +101,7 @@ export interface ListingSummary {
   approximateLocation: boolean;
   primaryPhotoUrl: string | null;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface ListingDetail extends ListingSummary {

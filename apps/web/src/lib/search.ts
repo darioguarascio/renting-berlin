@@ -30,6 +30,7 @@ function toSummary(row: typeof listings.$inferSelect): ListingSummary {
     approximateLocation: row.approximateLocation,
     primaryPhotoUrl: row.photoUrls[0] ?? null,
     createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   };
 }
 
@@ -145,7 +146,10 @@ async function searchFromPostgres(filters: ListingSearchFilters): Promise<Listin
 
   const rows = await db.query.listings.findMany({
     where: and(...conditions),
-    orderBy: (table, { desc }) => [desc(table.publishedAt), desc(table.createdAt)],
+    orderBy: (table, { desc }) =>
+      filters.sort === 'updated'
+        ? [desc(table.updatedAt)]
+        : [desc(table.publishedAt), desc(table.createdAt)],
   });
 
   return rows.map(toSummary).filter((item) => matchesListingFilters(item, filters));
@@ -166,7 +170,14 @@ export async function searchListings(filters: ListingSearchFilters = {}): Promis
   }
 
   let items = (await searchFromRedis(filters)) ?? (await searchFromPostgres(filters));
-  items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  if (filters.sort === 'updated') {
+    items.sort(
+      (a, b) =>
+        new Date(b.updatedAt ?? b.createdAt).getTime() - new Date(a.updatedAt ?? a.createdAt).getTime(),
+    );
+  } else {
+    items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
 
   const total = items.length;
   const totalPages = Math.max(1, Math.ceil(total / limit));

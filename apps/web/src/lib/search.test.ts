@@ -78,6 +78,7 @@ const baseItem: ListingSummary = {
   approximateLocation: false,
   primaryPhotoUrl: '/uploads/a.jpg',
   createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-02T00:00:00.000Z',
 };
 
 const mockListingRow = {
@@ -102,6 +103,7 @@ const mockListingRow = {
   approximateLocation: false,
   photoUrls: ['/uploads/a.jpg'],
   createdAt: new Date('2026-01-01'),
+  updatedAt: new Date('2026-01-02'),
   status: 'active',
   moderationStatus: 'approved',
   publishedAt: new Date('2026-01-01'),
