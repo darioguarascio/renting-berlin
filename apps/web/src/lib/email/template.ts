@@ -1,6 +1,13 @@
-import textLayout from './text-layout.txt?raw';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { DEFAULT_EMAIL_FOOTER, EMAIL_BRAND } from './brand';
 import { escapeHtml } from './utils';
+
+const textLayout = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), 'text-layout.txt'),
+  'utf8',
+);
 
 export type EmailContent = {
   subject: string;
