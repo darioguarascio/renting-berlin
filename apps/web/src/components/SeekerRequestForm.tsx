@@ -27,6 +27,7 @@ import {
   type SeekerVisibility,
 } from '../lib/seeker-profile-access';
 import { accountProfileHref } from '../lib/urls';
+import { trackEvent } from '../lib/rybbit';
 
 const defaultNeighborhoods = ['kreuzberg', 'neukolln', 'friedrichshain'];
 
@@ -136,6 +137,7 @@ export default function SeekerRequestForm() {
       }
 
       const data: { handle: string } = await res.json();
+      trackEvent('Seeker Profile Published', { category, rent_type: rentType });
       window.location.href = accountProfileHref(data.handle);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');

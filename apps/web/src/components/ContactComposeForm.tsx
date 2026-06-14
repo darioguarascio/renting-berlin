@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { MessageTemplateKind } from '../types/message-template';
+import { trackEvent } from '../lib/rybbit';
 import MessageComposer, { type ComposerPayload } from './MessageComposer';
 
 export interface ContactTarget {
@@ -49,6 +50,9 @@ export default function ContactComposeForm({ target, templateKind, submitLabel }
       }
 
       const data = (await res.json()) as { id: string };
+      trackEvent('Conversation Started', {
+        context: target.listingId ? 'listing' : 'seeker',
+      });
       window.location.href = `/messages/${data.id}`;
     } catch {
       setError('Could not send message');

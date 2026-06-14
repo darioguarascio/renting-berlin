@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { authClient } from '../lib/auth-client';
+import { trackEvent } from '../lib/rybbit';
 
 interface Props {
   listingId: string;
@@ -32,7 +33,10 @@ export default function FavoriteButton({ listingId }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ listingId }),
       });
-      if (res.ok) setFavorited(!favorited);
+      if (res.ok) {
+        setFavorited(!favorited);
+        trackEvent(favorited ? 'Listing Unfavorited' : 'Listing Favorited', { listing_id: listingId });
+      }
     } finally {
       setLoading(false);
     }

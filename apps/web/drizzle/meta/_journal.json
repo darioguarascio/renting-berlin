@@ -19,8 +19,15 @@
     {
       "idx": 2,
       "version": "7",
-      "when": 1781373584689,
+      "when": 1781355004359,
       "tag": "0002_seeker_visibility",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781355004360,
+      "tag": "0003_workers_moderation",
       "breakpoints": true
     },
     {

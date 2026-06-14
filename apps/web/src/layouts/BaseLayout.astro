@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import Header from '../components/Header.tsx';
 import Logo from '../components/Logo.tsx';
+import RybbitIdentify from '../components/RybbitIdentify.tsx';
 import { getSession } from '../lib/session';
 import { authEntryUrl } from '../lib/public-routes';
 import { getSiteUrl } from '../lib/site-url';
@@ -38,7 +39,12 @@ const ogImage = `${siteUrl}/og.svg`;
 const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 const githubUrl = 'https://github.com/darioguarascio/renting-berlin';
 
-let initialUser = null;
+let initialUser: {
+  id: string;
+  name: string;
+  email: string;
+  image?: string | null;
+} | null = null;
 let favoriteCount = 0;
 let unreadCount = 0;
 
@@ -97,6 +103,10 @@ const isAuthenticated = !!initialUser;
     <script is:inline src="https://t.surl.it/api/script.js" data-site-id="5" defer></script>
   </head>
   <body class="min-h-screen flex flex-col">
+    <RybbitIdentify
+      client:load
+      initialUser={initialUser ? { id: initialUser.id, name: initialUser.name, email: initialUser.email } : null}
+    />
     <Header client:load initialUser={initialUser} favoriteCount={favoriteCount} unreadCount={unreadCount} currentPath={Astro.url.pathname} />
     <main class="flex-1">
       <slot />

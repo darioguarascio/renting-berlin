@@ -18,6 +18,7 @@ import {
   FLOOR_LEVEL_OPTIONS,
 } from '../types/listing';
 import type { Equipment, FloorLevel, ListingCategory, RentType, RequiredDocument } from '../types/listing';
+import { trackEvent } from '../lib/rybbit';
 
 interface FormState {
   title: string;
@@ -227,6 +228,11 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
       });
       if (!res.ok) throw new Error(await res.text());
       const data: { path: string; status: string } = await res.json();
+      if (status === 'active' && currentStatus === 'paused') {
+        trackEvent('Listing Reactivated', { category: form.category, rent_type: form.rentType });
+      } else {
+        trackEvent('Listing Updated', { category: form.category, rent_type: form.rentType });
+      }
       if (status === 'active') {
         window.location.href = `/listings/${data.path}`;
       } else {
@@ -254,6 +260,10 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
       });
       if (!res.ok) throw new Error(await res.text());
       const data: { path: string; status: string } = await res.json();
+      trackEvent(status === 'active' ? 'Listing Published' : 'Listing Draft Saved', {
+        category: form.category,
+        rent_type: form.rentType,
+      });
       window.location.href = status === 'active' ? `/listings/${data.path}` : '/account/listings';
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save listing');

@@ -8,6 +8,7 @@ import {
   normalizeHandle,
   sanitizeHandleInput,
 } from '../lib/urls';
+import { setUserTraits, trackEvent } from '../lib/rybbit';
 
 function HandleRule({ ok, label }: { ok: boolean; label: string }) {
   return (
@@ -80,6 +81,8 @@ export default function AccountHandleForm({
       setHandle(data.handle);
       setInitial(data.handle);
       setSaved(true);
+      trackEvent('Handle Set');
+      setUserTraits({ username: data.handle });
       if (redirectTo) {
         window.location.href = redirectTo;
         return;

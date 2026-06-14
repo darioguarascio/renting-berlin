@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { trackEvent } from '../lib/rybbit';
 
 interface CheckoutListing {
   id: string;
@@ -101,6 +102,7 @@ export default function ListingCheckoutModal({
       });
       if (!res.ok) throw new Error(await res.text());
       const data: { status: string } = await res.json();
+      trackEvent(closing ? 'Listing Closed' : 'Listing Deactivated');
       onComplete(data.status);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Checkout failed');

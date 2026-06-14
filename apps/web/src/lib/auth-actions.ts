@@ -1,4 +1,5 @@
 import { authClient } from '../lib/auth-client';
+import { clearUser, trackEvent } from './rybbit';
 
 export { authClient };
 
@@ -30,6 +31,7 @@ function getSignupCallbackUrl(): string {
 
 export async function signInWithProvider(provider: 'google' | 'github'): Promise<void> {
   setLastUsedProvider(provider);
+  trackEvent('User Login Started', { method: provider });
   await authClient.signIn.social({
     provider,
     callbackURL: getCallbackUrl(),
@@ -43,6 +45,7 @@ export async function signInWithEmail(email: string, password: string): Promise<
   if (error) {
     throw new Error(error.message ?? 'Sign in failed');
   }
+  trackEvent('User Login', { method: 'email' });
   if (data?.url && typeof window !== 'undefined') {
     window.location.href = data.url;
   }
@@ -59,11 +62,14 @@ export async function signUpWithEmail(
   if (error) {
     throw new Error(error.message ?? 'Sign up failed');
   }
+  trackEvent('User Signup', { method: 'email' });
   if (data?.url && typeof window !== 'undefined') {
     window.location.href = data.url;
   }
 }
 
 export async function signOut(): Promise<void> {
+  trackEvent('User Logout');
+  clearUser();
   await authClient.signOut();
 }

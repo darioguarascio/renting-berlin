@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { SavedSearchType } from '../lib/saved-searches';
+import { trackEvent } from '../lib/rybbit';
 
 interface Props {
   type: SavedSearchType;
@@ -34,6 +35,9 @@ export default function SaveSearchButton({ type, filters, isAuthenticated, login
       });
       if (!res.ok) throw new Error(await res.text());
       const data: { created: boolean } = await res.json();
+      if (data.created) {
+        trackEvent('Search Saved', { type });
+      }
       setStatus(data.created ? 'saved' : 'exists');
       setMessage(data.created ? 'Search saved — we\'ll notify you of new matches.' : 'You already saved this search.');
     } catch (err) {

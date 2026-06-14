@@ -3,6 +3,7 @@ import ConversationContextLink from './ConversationContextLink';
 import MessageComposer, { type ComposerPayload } from './MessageComposer';
 import MessageContent from './MessageContent';
 import MessageReceipt, { receiptStatusFromReadAt } from './MessageReceipt';
+import { trackEvent } from '../lib/rybbit';
 import { otherUserProfileSubtitle } from '../lib/user-profile-display';
 import type { ConversationOtherUser } from '../types/listing';
 import type { MessageAttachment } from '../types/message';
@@ -80,6 +81,7 @@ export default function MessageThread({ conversationId, embedded = false, showMo
       });
       if (res.ok) {
         const sent = (await res.json()) as Message;
+        trackEvent('Message Sent', { context: templateKind });
         setData((prev) =>
           prev
             ? {
