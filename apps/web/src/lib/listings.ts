@@ -5,7 +5,8 @@ import { listings } from '../db/schema';
 import type { ListingSummary } from '../types/listing';
 import { listingInputSchema, type ListingInput } from './listing-input-schema';
 import { indexListing, removeListingFromIndex } from './search';
-import { buildListingPath, generateShortCode, parseListingPath, seoSlug } from './urls';
+import { buildListingPath, generateShortCode, parseListingPath, seoSlug, listingHref } from './urls';
+import { notifyListingActivityEmail } from './user-notifications';
 
 export { listingInputSchema, type ListingInput } from './listing-input-schema';
 
@@ -128,7 +129,44 @@ export async function updateListing(
     await removeListingFromIndex(listingId);
   }
 
+  if ('status' in data && data.status && data.status !== existing.status) {
+    void notifyListingStatusChange(row, existing.status).catch(() => {});
+  }
+
   return row;
+}
+
+async function notifyListingStatusChange(
+  row: typeof listings.$inferSelect,
+  previousStatus: typeof listings.$inferSelect.status,
+) {
+  const link = listingHref(row.slug, row.shortCode);
+  if (row.status === 'paused') {
+    await notifyListingActivityEmail({
+      publisherId: row.publisherId,
+      title: 'Listing paused',
+      body: `${row.title} is no longer visible in search.`,
+      link,
+    });
+    return;
+  }
+  if (row.status === 'closed') {
+    await notifyListingActivityEmail({
+      publisherId: row.publisherId,
+      title: 'Listing closed',
+      body: `${row.title} has been marked as closed.`,
+      link,
+    });
+    return;
+  }
+  if (row.status === 'active' && previousStatus !== 'active' && row.moderationStatus === 'approved') {
+    await notifyListingActivityEmail({
+      publisherId: row.publisherId,
+      title: 'Listing is live',
+      body: `${row.title} is now visible in search.`,
+      link,
+    });
+  }
 }
 
 export async function closeListing(listingId: string, publisherId: string) {
@@ -147,6 +185,7 @@ export async function closeListing(listingId: string, publisherId: string) {
     .returning();
 
   await removeListingFromIndex(listingId);
+  void notifyListingStatusChange(row, existing.status).catch(() => {});
   return row;
 }
 

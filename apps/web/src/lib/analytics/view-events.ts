@@ -12,13 +12,44 @@ export type ViewVisitorStat = {
   lastViewedAt: Date;
 };
 
+async function isNewProfileView(profileUserId: string, viewerId: string): Promise<boolean> {
+  const ch = await getClickHouse();
+  if (ch) {
+    const result = await ch.query({
+      query: `
+        SELECT 1
+        FROM view_events
+        WHERE entity_type = {entityType:String}
+          AND entity_id = {entityId:String}
+          AND viewer_id = {viewerId:String}
+        LIMIT 1
+      `,
+      query_params: {
+        entityType: 'profile',
+        entityId: profileUserId,
+        viewerId,
+      },
+      format: 'JSONEachRow',
+    });
+    const rows = await result.json<{ '1': number }>();
+    return rows.length === 0;
+  }
+
+  const existing = await db.query.profileViews.findFirst({
+    where: (table, { and, eq }) =>
+      and(eq(table.profileUserId, profileUserId), eq(table.viewerId, viewerId)),
+  });
+  return !existing;
+}
+
 async function insertViewEventPg(
   entityType: ViewEntityType,
   entityId: string,
   viewerId: string,
   viewedAt: Date,
-): Promise<void> {
+): Promise<boolean> {
   if (entityType === 'profile') {
+    const isNew = await isNewProfileView(entityId, viewerId);
     await db
       .insert(profileViews)
       .values({
@@ -32,7 +63,7 @@ async function insertViewEventPg(
         target: [profileViews.profileUserId, profileViews.viewerId],
         set: { lastViewedAt: viewedAt },
       });
-    return;
+    return isNew;
   }
 
   await db
@@ -48,6 +79,7 @@ async function insertViewEventPg(
       target: [listingViews.listingId, listingViews.viewerId],
       set: { lastViewedAt: viewedAt },
     });
+  return false;
 }
 
 export async function recordViewEvent(
@@ -55,9 +87,10 @@ export async function recordViewEvent(
   entityId: string,
   viewerId: string,
   viewedAt: Date = new Date(),
-): Promise<void> {
+): Promise<boolean> {
   const ch = await getClickHouse();
   if (ch) {
+    const isNew = entityType === 'profile' ? await isNewProfileView(entityId, viewerId) : false;
     await ch.insert({
       table: 'view_events',
       values: [
@@ -71,10 +104,10 @@ export async function recordViewEvent(
       ],
       format: 'JSONEachRow',
     });
-    return;
+    return isNew;
   }
 
-  await insertViewEventPg(entityType, entityId, viewerId, viewedAt);
+  return insertViewEventPg(entityType, entityId, viewerId, viewedAt);
 }
 
 export async function getProfileVisitorStats(profileUserId: string): Promise<ViewVisitorStat[]> {

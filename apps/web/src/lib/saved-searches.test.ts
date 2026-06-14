@@ -12,6 +12,7 @@ const {
   searchListings,
   searchTenantRequests,
   shouldNotifyInApp,
+  shouldNotifyEmail,
   enqueueEmailJob,
   findFirstListing,
   findFirstRequest,
@@ -28,6 +29,7 @@ const {
   searchListings: vi.fn(),
   searchTenantRequests: vi.fn(),
   shouldNotifyInApp: vi.fn(),
+  shouldNotifyEmail: vi.fn(),
   enqueueEmailJob: vi.fn(),
   findFirstListing: vi.fn(),
   findFirstRequest: vi.fn(),
@@ -84,6 +86,7 @@ vi.mock('./tenant-requests', () => ({
 
 vi.mock('./notification-preferences', () => ({
   shouldNotifyInApp,
+  shouldNotifyEmail,
 }));
 
 vi.mock('./email-events', () => ({
@@ -308,6 +311,7 @@ describe('notifyNewListing', () => {
       { ...savedSearchRow, userId: 'user_2', lastKnownIds: [], filters: {} },
     ]);
     shouldNotifyInApp.mockResolvedValue(true);
+    shouldNotifyEmail.mockResolvedValue(true);
     enqueueEmailJob.mockResolvedValue(undefined);
     insertReturning.mockResolvedValue([{ id: 'note_1' }]);
     updateReturning.mockResolvedValue([]);
@@ -315,6 +319,16 @@ describe('notifyNewListing', () => {
 
   it('creates notifications for matching saved searches', async () => {
     await notifyNewListing('listing_1');
+    expect(enqueueEmailJob).toHaveBeenCalledOnce();
+  });
+
+  it('can email without creating in-app notifications', async () => {
+    shouldNotifyInApp.mockResolvedValue(false);
+    shouldNotifyEmail.mockResolvedValue(true);
+
+    await notifyNewListing('listing_1');
+
+    expect(insertReturning).not.toHaveBeenCalled();
     expect(enqueueEmailJob).toHaveBeenCalledOnce();
   });
 
@@ -338,6 +352,7 @@ describe('notifyNewListing', () => {
       { ...savedSearchRow, userId: 'user_2', lastKnownIds: [], filters: {} },
     ]);
     shouldNotifyInApp.mockResolvedValue(true);
+    shouldNotifyEmail.mockResolvedValue(true);
     enqueueEmailJob.mockResolvedValue(undefined);
     insertReturning.mockRejectedValue(new Error('duplicate'));
     updateReturning.mockResolvedValue([]);
@@ -361,6 +376,7 @@ describe('notifyNewTenantRequest', () => {
       { ...savedSearchRow, type: 'tenant_requests', userId: 'user_2', lastKnownIds: [], filters: {} },
     ]);
     shouldNotifyInApp.mockResolvedValue(true);
+    shouldNotifyEmail.mockResolvedValue(true);
     enqueueEmailJob.mockResolvedValue(undefined);
     insertReturning.mockResolvedValue([{ id: 'note_1' }]);
     updateReturning.mockResolvedValue([]);

@@ -2,8 +2,6 @@ import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { users } from '../db/schema';
 import type { EmailJob } from './email-events';
-import { shouldNotifyEmail } from './notification-preferences';
-import type { NotificationEvent } from './notification-preferences';
 import { buildNotificationEmail } from './email/send';
 
 function smtpConfigured(): boolean {
@@ -37,9 +35,6 @@ export async function sendEmail(to: string, subject: string, text: string, html:
 }
 
 export async function sendEmailToUser(job: EmailJob): Promise<void> {
-  const event = job.event as NotificationEvent;
-  if (!(await shouldNotifyEmail(job.userId, event))) return;
-
   let to = job.to;
   if (!to) {
     const user = await db.query.users.findFirst({

@@ -161,7 +161,7 @@ const breadcrumbJsonLd = buildListingBreadcrumbJsonLd({
       </>
     )}
     <div class="grid gap-8 lg:grid-cols-5">
-      <div class="lg:col-span-3">
+      <div class="relative z-[1] lg:col-span-3">
         {listing.photoUrls.length > 0 ? (
           <ListingGallery client:load photos={listing.photoUrls} title={listing.title} />
         ) : (
@@ -194,8 +194,8 @@ const breadcrumbJsonLd = buildListingBreadcrumbJsonLd({
         </div>
       </div>
 
-      <aside class="lg:col-span-2">
-        <div class="card sticky top-24 overflow-hidden p-6">
+      <aside class="relative z-0 lg:col-span-2">
+        <div class="card sticky top-24 z-10 overflow-hidden p-6">
           <div class="flex items-start justify-between gap-3">
             <div>
               <p class="flex items-center gap-1.5 text-sm text-[var(--color-ink-muted)]">

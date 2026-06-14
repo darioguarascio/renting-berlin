@@ -16,8 +16,8 @@ function emailsSyncEnabled(): boolean {
 
 export async function enqueueEmailJob(job: Omit<EmailJob, 'to'> & { to?: string }): Promise<void> {
   if (emailsSyncEnabled()) {
-    const { sendEmailToUser } = await import('./email');
-    await sendEmailToUser(job);
+    const { deliverEmailJob } = await import('./email-delivery');
+    await deliverEmailJob(job as EmailJob);
     return;
   }
 
@@ -38,6 +38,6 @@ export function parseEmailJob(data: Record<string, string>): EmailJob | null {
 }
 
 export async function processEmailJob(job: EmailJob): Promise<void> {
-  const { sendEmailToUser } = await import('./email');
-  await sendEmailToUser(job);
+  const { deliverEmailJob } = await import('./email-delivery');
+  await deliverEmailJob(job);
 }

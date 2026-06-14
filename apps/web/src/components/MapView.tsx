@@ -74,14 +74,24 @@ export default function MapView({ listings, height = '500px' }: Props) {
 
   if (listings.length === 0) {
     return (
-      <div
-        className="flex items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-paper-warm)] text-sm text-[var(--color-ink-muted)]"
-        style={{ height }}
-      >
-        No listings to show on the map
+      <div className="map-view-root">
+        <div
+          className="flex items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-paper-warm)] text-sm text-[var(--color-ink-muted)]"
+          style={{ height }}
+        >
+          No listings to show on the map
+        </div>
       </div>
     );
   }
 
-  return <div ref={containerRef} className="w-full overflow-hidden rounded-xl border border-[var(--color-border)]" style={{ height }} />;
+  return (
+    <div className="map-view-root">
+      <div
+        ref={containerRef}
+        className="w-full overflow-hidden rounded-xl border border-[var(--color-border)]"
+        style={{ height }}
+      />
+    </div>
+  );
 }

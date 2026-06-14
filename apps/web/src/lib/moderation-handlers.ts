@@ -5,6 +5,8 @@ import { listings, moderationResults, tenantRequests } from '../db/schema';
 import type { ModerationJob } from './moderation-events';
 import { enqueueNotificationJob } from './notification-events';
 import { enqueueTelegramJob } from './telegram-events';
+import { notifyListingActivityEmail } from './user-notifications';
+import { listingHref } from './urls';
 import { moderateImageUrl } from './moderation/image-scorer';
 import { moderateText } from './moderation/text-scorer';
 import { indexListing, removeListingFromIndex } from './search';
@@ -83,6 +85,14 @@ async function moderateListing(listingId: string): Promise<void> {
     await indexListing(listingId);
     await enqueueNotificationJob('new_listing', listingId);
     await enqueueTelegramJob('new_listing', listingId);
+    if (row.moderationStatus !== 'approved') {
+      void notifyListingActivityEmail({
+        publisherId: row.publisherId,
+        title: 'Your listing is live',
+        body: `${row.title} passed review and is now visible in search.`,
+        link: listingHref(row.slug, row.shortCode),
+      }).catch(() => {});
+    }
     return;
   }
 
@@ -179,6 +189,12 @@ export async function requestListingModeration(listingId: string): Promise<void>
     await indexListing(listingId);
     await enqueueNotificationJob('new_listing', listingId);
     await enqueueTelegramJob('new_listing', listingId);
+    void notifyListingActivityEmail({
+      publisherId: row.publisherId,
+      title: 'Your listing is live',
+      body: `${row.title} is now visible in search.`,
+      link: listingHref(row.slug, row.shortCode),
+    }).catch(() => {});
     return;
   }
 

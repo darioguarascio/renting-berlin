@@ -78,9 +78,6 @@ def process_email_job(data: dict[str, str]) -> None:
     if not user_id or not subject or not text or not html or not event:
         return
 
-    if not should_notify_email(user_id, event):
-        return
-
     to = data.get("to") or ""
     if not to:
         with cursor() as cur:
@@ -90,7 +87,18 @@ def process_email_job(data: dict[str, str]) -> None:
             return
         to = row["email"]
 
-    send_email(to, subject, text, html)
+    from .email_delivery import deliver_email_job
+
+    deliver_email_job(
+        {
+            "userId": user_id,
+            "to": to,
+            "subject": subject,
+            "text": text,
+            "html": html,
+            "event": event,
+        }
+    )
 
 
 def build_saved_search_email(user_id: str, title: str, body: str, link: str) -> dict[str, str]:

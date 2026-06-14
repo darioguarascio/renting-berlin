@@ -9,6 +9,7 @@ import { getNotificationPreferences } from './notification-preferences';
 import { isExternalListing } from './external-listings';
 import { accountProfileHref, listingHref } from './urls';
 import { getUserPublicProfileInfos } from './user-public-profile';
+import { notifyListingActivityEmail, notifyNewMessageEmail } from './user-notifications';
 
 export async function getOrCreateListingConversation(listingId: string, inquirerId: string) {
   const listing = await db.query.listings.findFirst({ where: eq(listings.id, listingId) });
@@ -341,7 +342,54 @@ export async function sendMessage(
     });
   }
 
+  void notifyMessageRecipients({
+    conversation: conv,
+    senderId,
+    preview: previewMessage(trimmed, attachments) ?? trimmed,
+  }).catch(() => {});
+
   return message;
+}
+
+async function notifyMessageRecipients(input: {
+  conversation: typeof conversations.$inferSelect;
+  senderId: string;
+  preview: string;
+}) {
+  const { conversation: conv, senderId, preview } = input;
+  const recipientId = conv.publisherId === senderId ? conv.inquirerId : conv.publisherId;
+  if (recipientId === senderId) return;
+
+  const priorCount = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(messages)
+    .where(eq(messages.conversationId, conv.id));
+  const isFirstMessage = (priorCount[0]?.count ?? 0) <= 1;
+
+  const sender = await db.query.users.findFirst({
+    where: eq(users.id, senderId),
+    columns: { name: true },
+  });
+  const senderName = sender?.name ?? 'Someone';
+
+  if (conv.listingId && recipientId === conv.publisherId && isFirstMessage) {
+    const listing = await db.query.listings.findFirst({ where: eq(listings.id, conv.listingId) });
+    if (!listing) return;
+    await notifyListingActivityEmail({
+      publisherId: recipientId,
+      title: `New inquiry on ${listing.title}`,
+      body: preview,
+      link: listingHref(listing.slug, listing.shortCode),
+    });
+    return;
+  }
+
+  await notifyNewMessageEmail({
+    recipientId,
+    senderName,
+    conversationId: conv.id,
+    preview,
+  });
 }
 
 export async function deleteConversation(conversationId: string, userId: string) {

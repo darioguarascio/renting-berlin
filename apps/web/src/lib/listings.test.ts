@@ -36,6 +36,14 @@ vi.mock('./moderation-handlers', () => ({
   requestListingModeration: vi.fn(),
 }));
 
+const { notifyListingActivityEmail } = vi.hoisted(() => ({
+  notifyListingActivityEmail: vi.fn(),
+}));
+
+vi.mock('./user-notifications', () => ({
+  notifyListingActivityEmail,
+}));
+
 import { closeListing, createListing, getActiveListingsForPublisher, getListingByPath, getListingForPublisher, listingInputSchema, updateListing } from './listings';
 import { indexListing, removeListingFromIndex } from './search';
 import { requestListingModeration } from './moderation-handlers';
@@ -119,12 +127,29 @@ describe('listing mutations', () => {
 
   it('closes listings and removes them from search', async () => {
     findFirst.mockResolvedValue({ id: 'listing_4', status: 'active' });
-    updateReturning.mockResolvedValue([{ id: 'listing_4', status: 'closed' }]);
+    updateReturning.mockResolvedValue([
+      {
+        id: 'listing_4',
+        status: 'closed',
+        publisherId: 'publisher_1',
+        title: 'Bright flat',
+        slug: 'bright-flat',
+        shortCode: 'abc12345',
+      },
+    ]);
 
     const row = await closeListing('listing_4', 'publisher_1');
 
     expect(row?.status).toBe('closed');
     expect(removeListingFromIndex).toHaveBeenCalledWith('listing_4');
+    await vi.waitFor(() => {
+      expect(notifyListingActivityEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          publisherId: 'publisher_1',
+          title: 'Listing closed',
+        }),
+      );
+    });
   });
 
   it('throws when closing an already closed listing', async () => {
@@ -168,11 +193,28 @@ describe('listing mutations', () => {
       publishedAt: new Date(),
       moderationStatus: 'approved',
     });
-    updateReturning.mockResolvedValue([{ id: 'listing_9', status: 'paused', moderationStatus: 'approved' }]);
+    updateReturning.mockResolvedValue([
+      {
+        id: 'listing_9',
+        status: 'paused',
+        moderationStatus: 'approved',
+        publisherId: 'publisher_1',
+        title: 'Bright flat',
+        slug: 'bright-flat',
+        shortCode: 'abc12345',
+      },
+    ]);
 
     await updateListing('listing_9', 'publisher_1', { status: 'paused' });
 
     expect(removeListingFromIndex).toHaveBeenCalledWith('listing_9');
+    await vi.waitFor(() => {
+      expect(notifyListingActivityEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Listing paused',
+        }),
+      );
+    });
   });
 
   it('loads listings by short code', async () => {

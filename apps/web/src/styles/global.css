@@ -2341,7 +2341,40 @@ body:has(.chat-app) > header {
 .leaflet-container {
   font-family: var(--font-body);
   border-radius: 1rem;
+}
+
+.map-view-root {
+  position: relative;
   z-index: 0;
+  isolation: isolate;
+}
+
+.map-view-root .leaflet-tile-pane {
+  z-index: 1 !important;
+}
+
+.map-view-root .leaflet-overlay-pane {
+  z-index: 2 !important;
+}
+
+.map-view-root .leaflet-shadow-pane {
+  z-index: 3 !important;
+}
+
+.map-view-root .leaflet-marker-pane {
+  z-index: 4 !important;
+}
+
+.map-view-root .leaflet-tooltip-pane {
+  z-index: 5 !important;
+}
+
+.map-view-root .leaflet-popup-pane {
+  z-index: 6 !important;
+}
+
+.map-view-root .leaflet-control-container {
+  z-index: 7 !important;
 }
 
 input[type="number"]::-webkit-inner-spin-button,

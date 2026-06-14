@@ -17,6 +17,7 @@
     "db:seed": "npm run db:seed -w apps/web",
     "db:seed-dev-user": "npm run db:seed-dev-user -w apps/web",
     "db:import-external": "npm run db:import-external -w apps/web",
+    "db:send-product-news": "npm run db:send-product-news -w apps/web",
     "worker:profile-views": "cd workers && UPLOADS_DIR=../apps/web/public/uploads python3 -m renting_berlin_workers profile-views",
     "worker:telegram": "cd workers && python3 -m renting_berlin_workers telegram",
     "worker:notifications": "cd workers && UPLOADS_DIR=../apps/web/public/uploads python3 -m renting_berlin_workers notifications",

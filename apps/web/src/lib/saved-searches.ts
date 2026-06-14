@@ -10,7 +10,7 @@ import type { TenantRequestFilters } from './tenant-requests';
 import { CATEGORY_LABELS, NEIGHBORHOOD_LABELS, RENT_TYPE_LABELS } from '../types/listing';
 import { HOUSEHOLD_LABELS } from '../types/tenant-request';
 import { seekerProfileHref } from './urls';
-import { shouldNotifyInApp } from './notification-preferences';
+import { shouldNotifyInApp, shouldNotifyEmail } from './notification-preferences';
 import { buildSearchUrl, normalizeFilters } from './search-url';
 import { enqueueEmailJob } from './email-events';
 import { buildSavedSearchEmail } from './email';
@@ -206,26 +206,34 @@ export async function notifyNewListing(listingId: string) {
     if (!matchesListingFilters(item, filters)) continue;
     if (search.lastKnownIds.includes(item.id)) continue;
     if (search.userId === row.publisherId) continue;
-    if (!(await shouldNotifyInApp(search.userId, 'saved_searches'))) continue;
 
-    await createSearchNotification({
-      userId: search.userId,
-      savedSearchId: search.id,
-      searchType: 'listings',
-      itemId: item.id,
-      title: 'New listing matches your search',
-      body: item.title,
-      link: `/listings/${item.path}`,
-    });
-    await enqueueEmailJob(
-      await buildSavedSearchEmail({
+    const link = `/listings/${item.path}`;
+    const notifyInApp = await shouldNotifyInApp(search.userId, 'saved_searches');
+    const notifyEmail = await shouldNotifyEmail(search.userId, 'saved_searches');
+    if (!notifyInApp && !notifyEmail) continue;
+
+    if (notifyInApp) {
+      await createSearchNotification({
         userId: search.userId,
+        savedSearchId: search.id,
+        searchType: 'listings',
+        itemId: item.id,
         title: 'New listing matches your search',
         body: item.title,
-        link: `/listings/${item.path}`,
-        siteUrl: getSiteUrl(),
-      }),
-    ).catch(() => {});
+        link,
+      });
+    }
+    if (notifyEmail) {
+      await enqueueEmailJob(
+        await buildSavedSearchEmail({
+          userId: search.userId,
+          title: 'New listing matches your search',
+          body: item.title,
+          link,
+          siteUrl: getSiteUrl(),
+        }),
+      ).catch(() => {});
+    }
     await appendKnownId(search.id, item.id, search.lastKnownIds);
   }
 }
@@ -249,26 +257,34 @@ export async function notifyNewTenantRequest(requestId: string) {
     if (!matchesTenantRequestFilters(row, filters)) continue;
     if (search.lastKnownIds.includes(row.id)) continue;
     if (search.userId === row.seekerId) continue;
-    if (!(await shouldNotifyInApp(search.userId, 'saved_searches'))) continue;
 
-    await createSearchNotification({
-      userId: search.userId,
-      savedSearchId: search.id,
-      searchType: 'tenant_requests',
-      itemId: row.id,
-      title: 'New seeker matches your search',
-      body: row.title,
-      link: seekerProfileHref(seeker.handle),
-    });
-    await enqueueEmailJob(
-      await buildSavedSearchEmail({
+    const link = seekerProfileHref(seeker.handle);
+    const notifyInApp = await shouldNotifyInApp(search.userId, 'saved_searches');
+    const notifyEmail = await shouldNotifyEmail(search.userId, 'saved_searches');
+    if (!notifyInApp && !notifyEmail) continue;
+
+    if (notifyInApp) {
+      await createSearchNotification({
         userId: search.userId,
+        savedSearchId: search.id,
+        searchType: 'tenant_requests',
+        itemId: row.id,
         title: 'New seeker matches your search',
         body: row.title,
-        link: seekerProfileHref(seeker.handle),
-        siteUrl: getSiteUrl(),
-      }),
-    ).catch(() => {});
+        link,
+      });
+    }
+    if (notifyEmail) {
+      await enqueueEmailJob(
+        await buildSavedSearchEmail({
+          userId: search.userId,
+          title: 'New seeker matches your search',
+          body: row.title,
+          link,
+          siteUrl: getSiteUrl(),
+        }),
+      ).catch(() => {});
+    }
     await appendKnownId(search.id, row.id, search.lastKnownIds);
   }
 }

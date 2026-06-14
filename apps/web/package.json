@@ -25,7 +25,8 @@
     "db:push": "node --env-file=../../.env ./node_modules/.bin/drizzle-kit push",
     "db:seed": "node --env-file=../../.env ../../node_modules/.bin/tsx src/db/seed.ts",
     "db:seed-dev-user": "node --env-file=../../.env ../../node_modules/.bin/tsx src/db/seed-dev-user.ts",
-    "db:import-external": "node --env-file=../../.env ../../node_modules/.bin/tsx src/db/import-external-listings.ts"
+    "db:import-external": "node --env-file=../../.env ../../node_modules/.bin/tsx src/db/import-external-listings.ts",
+    "db:send-product-news": "node --env-file=../../.env ../../node_modules/.bin/tsx src/db/send-product-news.ts"
   },
   "dependencies": {
     "@astrojs/node": "^10.1.4",

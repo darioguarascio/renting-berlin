@@ -14,18 +14,26 @@ function profileViewsSyncEnabled(): boolean {
   return process.env.PROFILE_VIEWS_SYNC === '1';
 }
 
+import { notifyProfileViewEmail } from './user-notifications';
+
 export async function recordProfileView(profileUserId: string, viewerId: string) {
   if (viewerId === profileUserId) return;
 
   if (profileViewsSyncEnabled()) {
-    await recordViewEvent('profile', profileUserId, viewerId);
+    const isNew = await recordViewEvent('profile', profileUserId, viewerId);
+    if (isNew) {
+      void notifyProfileViewEmail({ profileUserId, viewerId }).catch(() => {});
+    }
     return;
   }
 
   try {
     await enqueueProfileViewEvent(profileUserId, viewerId);
   } catch {
-    await recordViewEvent('profile', profileUserId, viewerId);
+    const isNew = await recordViewEvent('profile', profileUserId, viewerId);
+    if (isNew) {
+      void notifyProfileViewEmail({ profileUserId, viewerId }).catch(() => {});
+    }
   }
 }
 

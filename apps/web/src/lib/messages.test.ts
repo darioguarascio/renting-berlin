@@ -10,6 +10,7 @@ const {
   findManyListings,
   findManyRequests,
   findManyUsers,
+  findFirstUser,
   insertReturning,
   updateWhere,
   deleteWhere,
@@ -18,6 +19,8 @@ const {
   getNotificationPreferences,
   saveMessageAsTemplate,
   getUserPublicProfileInfos,
+  notifyListingActivityEmail,
+  notifyNewMessageEmail,
 } = vi.hoisted(() => ({
   findFirstListing: vi.fn(),
   findFirstConversation: vi.fn(),
@@ -28,6 +31,7 @@ const {
   findManyListings: vi.fn(),
   findManyRequests: vi.fn(),
   findManyUsers: vi.fn(),
+  findFirstUser: vi.fn(),
   insertReturning: vi.fn(),
   updateWhere: vi.fn(),
   deleteWhere: vi.fn(),
@@ -36,6 +40,8 @@ const {
   getNotificationPreferences: vi.fn(),
   saveMessageAsTemplate: vi.fn(),
   getUserPublicProfileInfos: vi.fn(),
+  notifyListingActivityEmail: vi.fn(),
+  notifyNewMessageEmail: vi.fn(),
 }));
 
 vi.mock('../db', () => ({
@@ -45,7 +51,7 @@ vi.mock('../db', () => ({
       conversations: { findFirst: findFirstConversation, findMany: findManyConversations },
       tenantRequests: { findFirst: findFirstRequest, findMany: findManyRequests },
       messages: { findFirst: findFirstMessage, findMany: findManyMessages },
-      users: { findMany: findManyUsers, findFirst: vi.fn() },
+      users: { findMany: findManyUsers, findFirst: findFirstUser },
     },
     insert: vi.fn(() => ({
       values: vi.fn(() => ({
@@ -83,6 +89,11 @@ vi.mock('./message-templates', () => ({
 
 vi.mock('./user-public-profile', () => ({
   getUserPublicProfileInfos,
+}));
+
+vi.mock('./user-notifications', () => ({
+  notifyListingActivityEmail,
+  notifyNewMessageEmail,
 }));
 
 import {
@@ -219,6 +230,47 @@ describe('sendMessage', () => {
       'Hello there',
       expect.objectContaining({ kind: 'outreach' }),
     );
+  });
+
+  it('emails the publisher about the first listing inquiry', async () => {
+    selectWhere.mockResolvedValue([{ count: 1 }]);
+    findFirstUser.mockResolvedValue({ name: 'Inquirer' });
+    findFirstListing.mockResolvedValue({
+      id: 'listing_1',
+      title: 'Bright flat',
+      slug: 'bright-flat',
+      shortCode: 'abc12345',
+    });
+
+    await sendMessage('conv_1', 'inq_1', 'Is it still available?');
+
+    await vi.waitFor(() => {
+      expect(notifyListingActivityEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          publisherId: 'pub_1',
+          title: 'New inquiry on Bright flat',
+        }),
+      );
+    });
+    expect(notifyNewMessageEmail).not.toHaveBeenCalled();
+  });
+
+  it('emails the other participant for follow-up messages', async () => {
+    selectWhere.mockResolvedValue([{ count: 2 }]);
+    findFirstUser.mockResolvedValue({ name: 'Publisher' });
+
+    await sendMessage('conv_1', 'pub_1', 'Thanks for reaching out');
+
+    await vi.waitFor(() => {
+      expect(notifyNewMessageEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recipientId: 'inq_1',
+          senderName: 'Publisher',
+          conversationId: 'conv_1',
+        }),
+      );
+    });
+    expect(notifyListingActivityEmail).not.toHaveBeenCalled();
   });
 });
 

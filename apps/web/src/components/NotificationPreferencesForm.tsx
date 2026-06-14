@@ -110,7 +110,7 @@ export default function NotificationPreferencesForm() {
         />
         <ToggleRow
           label="Email"
-          description="Messages and digests sent to your account email. Delivery is rolling out — your choices are saved now."
+          description="Messages and digests sent to your account email."
           checked={prefs.emailEnabled}
           onChange={(v) => update('emailEnabled', v)}
         />

@@ -8,7 +8,7 @@ from ..config import LISTING_PATH_SEP, REDIS_KEYS
 from ..db import cursor
 from ..ids import new_id
 from ..redis_client import enqueue_stream_event, get_redis
-from .email import build_saved_search_email
+from .email import build_saved_search_email, should_notify_email
 
 
 def build_listing_path(slug: str, short_code: str) -> str:
@@ -206,25 +206,33 @@ def notify_new_listing(listing_id: str) -> None:
             continue
         if search["user_id"] == row["publisher_id"]:
             continue
-        if not should_notify_in_app(search["user_id"], "saved_searches"):
-            continue
 
         link = f"/listings/{item['path']}"
-        create_search_notification(
-            user_id=search["user_id"],
-            saved_search_id=search["id"],
-            search_type="listings",
-            item_id=item["id"],
-            title="New listing matches your search",
-            body=item["title"],
-            link=link,
-        )
-        enqueue_stream_event(REDIS_KEYS["email_events"], build_saved_search_email(
-            search["user_id"],
-            "New listing matches your search",
-            item["title"],
-            link,
-        ))
+        notify_in_app = should_notify_in_app(search["user_id"], "saved_searches")
+        notify_email = should_notify_email(search["user_id"], "saved_searches")
+        if not notify_in_app and not notify_email:
+            continue
+
+        if notify_in_app:
+            create_search_notification(
+                user_id=search["user_id"],
+                saved_search_id=search["id"],
+                search_type="listings",
+                item_id=item["id"],
+                title="New listing matches your search",
+                body=item["title"],
+                link=link,
+            )
+        if notify_email:
+            enqueue_stream_event(
+                REDIS_KEYS["email_events"],
+                build_saved_search_email(
+                    search["user_id"],
+                    "New listing matches your search",
+                    item["title"],
+                    link,
+                ),
+            )
         append_known_id(search["id"], item["id"], last_known)
 
 
@@ -264,25 +272,33 @@ def notify_new_tenant_request(request_id: str) -> None:
             continue
         if search["user_id"] == row["seeker_id"]:
             continue
-        if not should_notify_in_app(search["user_id"], "saved_searches"):
-            continue
 
         link = seeker_profile_href(seeker["handle"])
-        create_search_notification(
-            user_id=search["user_id"],
-            saved_search_id=search["id"],
-            search_type="tenant_requests",
-            item_id=row["id"],
-            title="New seeker matches your search",
-            body=row["title"],
-            link=link,
-        )
-        enqueue_stream_event(REDIS_KEYS["email_events"], build_saved_search_email(
-            search["user_id"],
-            "New seeker matches your search",
-            row["title"],
-            link,
-        ))
+        notify_in_app = should_notify_in_app(search["user_id"], "saved_searches")
+        notify_email = should_notify_email(search["user_id"], "saved_searches")
+        if not notify_in_app and not notify_email:
+            continue
+
+        if notify_in_app:
+            create_search_notification(
+                user_id=search["user_id"],
+                saved_search_id=search["id"],
+                search_type="tenant_requests",
+                item_id=row["id"],
+                title="New seeker matches your search",
+                body=row["title"],
+                link=link,
+            )
+        if notify_email:
+            enqueue_stream_event(
+                REDIS_KEYS["email_events"],
+                build_saved_search_email(
+                    search["user_id"],
+                    "New seeker matches your search",
+                    row["title"],
+                    link,
+                ),
+            )
         append_known_id(search["id"], row["id"], last_known)
 
 

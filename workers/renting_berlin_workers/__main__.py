@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from .config import REDIS_KEYS
 from .db import close_connection
 from .services.email import process_email_job
+from .services.email_worker import run_email_worker
 from .services.moderation_handler import process_moderation_job
 from .services.notifications import process_notification_job
 from .services.profile_views import process_profile_view_job
@@ -29,6 +30,7 @@ WORKERS = {
         "group": REDIS_KEYS["email_workers"],
         "handler": lambda _id, data: process_email_job(data),
         "env_name": "EMAIL_WORKER_NAME",
+        "runner": "emails",
     },
     "moderation": {
         "stream": REDIS_KEYS["moderation_events"],
@@ -72,6 +74,13 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if config.get("runner") == "telegram":
             run_telegram_worker(
+                config["stream"],
+                config["group"],
+                batch_size=config.get("batch_size", 10),
+                consumer_name=os.environ.get(config["env_name"]),
+            )
+        elif config.get("runner") == "emails":
+            run_email_worker(
                 config["stream"],
                 config["group"],
                 batch_size=config.get("batch_size", 10),
