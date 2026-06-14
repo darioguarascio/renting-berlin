@@ -1,0 +1,150 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getSiteUrl } from '../lib/site-url';
+
+const effectiveDate = '2026-06-14';
+const pageTitle = 'Privacy policy — renting.berlin';
+const pageDescription =
+  'How renting.berlin handles your data: account information, cookies, anonymous analytics, and your GDPR rights.';
+const githubIssuesUrl = 'https://github.com/darioguarascio/renting-berlin/issues';
+---
+
+<BaseLayout title={pageTitle} description={pageDescription} canonical={`${getSiteUrl()}/privacy`}>
+  <div class="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+    <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+      <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-brand)]">Legal</p>
+      <h1 class="mt-2 font-display text-3xl font-extrabold text-[var(--color-ink)] sm:text-4xl">Privacy policy</h1>
+      <p class="mt-3 text-sm text-[var(--color-ink-muted)]">
+        Effective <time datetime={effectiveDate}>{effectiveDate}</time>. This policy explains what we collect on
+        renting.berlin and why.
+      </p>
+    </div>
+  </div>
+
+  <article class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <section class="mb-10">
+      <h2 class="font-display text-xl font-bold text-[var(--color-ink)]">Who operates this site</h2>
+      <p class="mt-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+        renting.berlin is a rental marketplace for Berlin. For privacy questions or data requests, open an issue on
+        <a href={githubIssuesUrl} class="font-semibold text-[var(--color-brand)] hover:underline" target="_blank" rel="noopener noreferrer">GitHub</a>
+        or contact us through the channels listed there.
+      </p>
+    </section>
+
+    <section class="mb-10">
+      <h2 class="font-display text-xl font-bold text-[var(--color-ink)]">Data we collect</h2>
+      <ul class="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+        <li>
+          <strong class="text-[var(--color-ink)]">Account data</strong> — name, email, password hash (or OAuth provider
+          ID), public @handle, profile photo, and listing or seeker profile content you publish.
+        </li>
+        <li>
+          <strong class="text-[var(--color-ink)]">Messages</strong> — conversation content between users on the platform.
+        </li>
+        <li>
+          <strong class="text-[var(--color-ink)]">Usage data</strong> — anonymous page views and events via our analytics
+          provider (see below). We do not link analytics to your account.
+        </li>
+        <li>
+          <strong class="text-[var(--color-ink)]">Technical data</strong> — IP address and browser user agent in server
+          logs and session records, used for security, abuse prevention, and keeping you signed in.
+        </li>
+      </ul>
+    </section>
+
+    <section class="mb-10">
+      <h2 class="font-display text-xl font-bold text-[var(--color-ink)]">How we use your data</h2>
+      <ul class="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+        <li>Provide the marketplace: listings, search, messaging, saved searches, and notifications you opt into.</li>
+        <li>Authenticate you and keep your session secure.</li>
+        <li>Send transactional and notification emails according to your preferences.</li>
+        <li>Improve the product with aggregated, anonymous analytics.</li>
+        <li>Prevent fraud, spam, and abuse.</li>
+      </ul>
+      <p class="mt-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+        We do not sell your personal data. We do not use third-party ad trackers.
+      </p>
+    </section>
+
+    <section class="mb-10">
+      <h2 class="font-display text-xl font-bold text-[var(--color-ink)]">Cookies and local storage</h2>
+      <p class="mt-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+        We use a small number of cookies and browser storage entries. We do not show a cookie consent banner because
+        we avoid non-essential tracking cookies.
+      </p>
+      <ul class="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+        <li>
+          <strong class="text-[var(--color-ink)]">Session cookie</strong> — set when you log in so you stay authenticated.
+          Strictly necessary for the service you requested.
+        </li>
+        <li>
+          <strong class="text-[var(--color-ink)]">Preference cookies</strong> — when signed in, we may store your search
+          view (cards, list, map) so the site opens the way you left it.
+        </li>
+        <li>
+          <strong class="text-[var(--color-ink)]">Local storage</strong> — UI preferences such as table column layout and
+          last-used sign-in method. Stored only in your browser.
+        </li>
+      </ul>
+    </section>
+
+    <section class="mb-10">
+      <h2 class="font-display text-xl font-bold text-[var(--color-ink)]">Analytics</h2>
+      <p class="mt-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+        We use Rybbit for privacy-oriented web analytics. It records page views and custom events (for example, when
+        someone starts sign-up) to understand how the product is used. Rybbit does not use advertising cookies and
+        identifies visitors with a short-lived, hashed signal rather than a persistent profile. We do not pass your
+        account ID or email to analytics.
+      </p>
+      <p class="mt-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+        Analytics runs on all pages via a script loaded from our analytics host. You can block it with a browser
+        extension or network filter; the site will still work.
+      </p>
+    </section>
+
+    <section class="mb-10">
+      <h2 class="font-display text-xl font-bold text-[var(--color-ink)]">Third parties</h2>
+      <ul class="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+        <li>
+          <strong class="text-[var(--color-ink)]">OAuth providers</strong> — Google or GitHub if you choose social sign-in.
+        </li>
+        <li>
+          <strong class="text-[var(--color-ink)]">Email delivery</strong> — SMTP provider to send account and notification
+          emails.
+        </li>
+        <li>
+          <strong class="text-[var(--color-ink)]">Hosting</strong> — servers and databases that run the application.
+        </li>
+      </ul>
+      <p class="mt-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+        Each processor handles data only as needed to provide the service.
+      </p>
+    </section>
+
+    <section class="mb-10">
+      <h2 class="font-display text-xl font-bold text-[var(--color-ink)]">Retention</h2>
+      <p class="mt-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+        We keep account and listing data while your account is active. You can delete conversations you participate in,
+        close listings, and adjust notification settings in your account. Contact us to request account deletion; we
+        will remove or anonymize personal data unless we must retain it for legal or security reasons.
+      </p>
+    </section>
+
+    <section class="mb-10">
+      <h2 class="font-display text-xl font-bold text-[var(--color-ink)]">Your rights</h2>
+      <p class="mt-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+        If you are in the EU/EEA or UK, you may have the right to access, rectify, erase, restrict, or port your
+        personal data, and to object to certain processing. You may also lodge a complaint with your local data
+        protection authority. To exercise these rights, contact us via
+        <a href={githubIssuesUrl} class="font-semibold text-[var(--color-brand)] hover:underline" target="_blank" rel="noopener noreferrer">GitHub</a>.
+      </p>
+    </section>
+
+    <section class="mb-10">
+      <h2 class="font-display text-xl font-bold text-[var(--color-ink)]">Changes</h2>
+      <p class="mt-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+        We may update this policy as the product evolves. The effective date at the top will change when we do.
+      </p>
+    </section>
+  </article>
+</BaseLayout>

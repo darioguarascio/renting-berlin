@@ -25,6 +25,7 @@ export async function getSitemapEntries(siteUrl = getSiteUrl()): Promise<Sitemap
       priority: 0.8,
     })),
     { loc: `${siteUrl}/guides`, changefreq: 'weekly', priority: 0.8 },
+    { loc: `${siteUrl}/privacy`, changefreq: 'yearly', priority: 0.3 },
     { loc: `${siteUrl}/signup`, changefreq: 'monthly', priority: 0.5 },
   ];
 

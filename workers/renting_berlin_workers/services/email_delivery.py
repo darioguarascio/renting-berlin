@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 from ..config import REDIS_KEYS
 from ..db import cursor
 from ..redis_client import get_redis
+from ..metrics import record_email, record_email_buffered, record_email_flush
 from .email import EVENT_FIELDS, send_email, should_notify_email
 
 BUFFER_PREFIX = "emails:buffer:"
@@ -94,7 +95,13 @@ def _buffer_email_job(user_id: str, job: dict[str, str]) -> None:
 
 
 def _send_email_job_now(job: dict[str, str]) -> None:
-    send_email(job["to"], job["subject"], job["text"], job["html"])
+    send_email(
+        job["to"],
+        job["subject"],
+        job["text"],
+        job["html"],
+        event=job.get("event", "unknown"),
+    )
 
 
 def deliver_email_job(job: dict[str, str]) -> None:
@@ -103,11 +110,13 @@ def deliver_email_job(job: dict[str, str]) -> None:
     if not user_id or not event:
         return
     if not should_notify_email(user_id, event):
+        record_email(event, "skipped")
         return
 
     prefs = _load_preferences(user_id)
     if should_buffer_email(prefs, event):
         _buffer_email_job(user_id, job)
+        record_email_buffered(event)
         return
 
     _send_email_job_now(job)
@@ -147,6 +156,7 @@ def flush_buffered_emails_for_user(user_id: str, now_ms: int | None = None) -> i
 
     if sent > 0:
         client.set(_meta_key(user_id), json.dumps({"lastFlushAt": now}))
+        record_email_flush(sent)
 
     return sent
 

@@ -8,6 +8,8 @@ x-worker-common: &worker-common
   <<: *worker-image
   env_file:
     - .env
+  environment:
+    METRICS_PORT: "9090"
   restart: unless-stopped
 
 services:
@@ -27,27 +29,38 @@ services:
 
   worker-notifications:
     <<: *worker-common
+    ports:
+      - "9101:9090"
     command: ["python3", "-m", "renting_berlin_workers", "notifications"]
 
   worker-emails:
     <<: *worker-common
+    ports:
+      - "9102:9090"
     command: ["python3", "-m", "renting_berlin_workers", "emails"]
 
   worker-moderation:
     <<: *worker-common
+    ports:
+      - "9103:9090"
     environment:
       MODERATION_USE_ML: "1"
       UPLOADS_DIR: /app/uploads
+      METRICS_PORT: "9090"
     volumes:
       - uploads:/app/uploads
     command: ["python3", "-m", "renting_berlin_workers", "moderation"]
 
   worker-profile-views:
     <<: *worker-common
+    ports:
+      - "9104:9090"
     command: ["python3", "-m", "renting_berlin_workers", "profile-views"]
 
   worker-telegram:
     <<: *worker-common
+    ports:
+      - "9105:9090"
     command: ["python3", "-m", "renting_berlin_workers", "telegram"]
 
   migrate:

@@ -5,4 +5,4 @@ python-dotenv>=1.0.0
 clickhouse-connect>=0.8.0
 transformers>=4.40.0
 Pillow>=10.0.0
-accelerate>=0.27.0
+prometheus-client>=0.21.0

@@ -1,5 +1,5 @@
 import { authClient } from '../lib/auth-client';
-import { clearUser, trackEvent } from './rybbit';
+import { trackEvent } from './rybbit';
 
 export { authClient };
 
@@ -97,7 +97,6 @@ export async function signUpWithEmail(
 
 export async function signOut(): Promise<void> {
   trackEvent('User Logout');
-  clearUser();
   try {
     await authClient.signOut({ fetchOptions: { timeout: 10_000 } });
   } catch {

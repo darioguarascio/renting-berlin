@@ -1,0 +1,35 @@
+# Prometheus scrape config for renting.berlin production.
+# Place on your Prometheus host (10.0.0.5) and reload Prometheus.
+#
+# Web /metrics is restricted to private IPs by default.
+# Scraping from 10.0.0.5 works without METRICS_PUBLIC=1.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: renting-berlin-web
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["10.0.0.11:80"]
+        labels:
+          service: web
+
+  - job_name: renting-berlin-workers
+    static_configs:
+      - targets: ["10.0.0.11:9101"]
+        labels:
+          worker: notifications
+      - targets: ["10.0.0.11:9102"]
+        labels:
+          worker: emails
+      - targets: ["10.0.0.11:9103"]
+        labels:
+          worker: moderation
+      - targets: ["10.0.0.11:9104"]
+        labels:
+          worker: profile-views
+      - targets: ["10.0.0.11:9105"]
+        labels:
+          worker: telegram

@@ -18,6 +18,7 @@ from ..config import (
     TELEGRAM_CHAT_ID,
     TELEGRAM_DIGEST_INTERVAL_HOURS,
 )
+from ..metrics import observe_job, record_redis_error
 from ..redis_client import close_redis, ensure_consumer_group, get_redis
 from ..stream_worker import parse_stream_fields
 
@@ -200,6 +201,7 @@ def run_telegram_worker(
                 block=block_ms,
             )
         except redis.exceptions.ConnectionError:
+            record_redis_error(stream_key)
             logger.exception("Redis connection error, retrying")
             time.sleep(1)
             continue
@@ -209,7 +211,8 @@ def run_telegram_worker(
                 for entry_id, fields in entries:
                     data = parse_stream_fields(fields)
                     try:
-                        process_telegram_job(data)
+                        with observe_job(stream_key):
+                            process_telegram_job(data)
                         client.xack(stream_key, group_name, entry_id)
                     except Exception:
                         logger.exception("Failed to process %s event %s", stream_key, entry_id)

@@ -9,6 +9,7 @@ const PUBLIC_PAGES = new Set([
   '/for-seekers',
   '/for-tenants',
   '/for-swappers',
+  '/privacy',
   '/sitemap.xml',
   '/robots.txt',
 ]);

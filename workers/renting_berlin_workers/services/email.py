@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import smtplib
+import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate, make_msgid
@@ -9,6 +10,7 @@ from email.utils import formatdate, make_msgid
 from ..config import EMAIL_FROM, SITE_URL, SMTP_HOST, SMTP_PASS, SMTP_PORT, SMTP_SECURE, SMTP_USER
 from ..db import cursor
 from ..email.build import build_notification_email
+from ..metrics import record_email
 
 
 EVENT_FIELDS = {
@@ -24,9 +26,10 @@ def smtp_configured() -> bool:
     return bool(SMTP_HOST and EMAIL_FROM)
 
 
-def send_email(to: str, subject: str, text: str, html: str) -> None:
+def send_email(to: str, subject: str, text: str, html: str, *, event: str = "direct") -> None:
     if not smtp_configured():
         print(f"[email] to={to} subject={subject}\n{text}")
+        record_email(event, "mock")
         return
 
     message = MIMEMultipart("alternative")
@@ -38,12 +41,19 @@ def send_email(to: str, subject: str, text: str, html: str) -> None:
     message.attach(MIMEText(text, "plain"))
     message.attach(MIMEText(html, "html"))
 
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-        if SMTP_SECURE:
-            server.starttls()
-        if SMTP_USER and SMTP_PASS:
-            server.login(SMTP_USER, SMTP_PASS)
-        server.send_message(message)
+    start = time.perf_counter()
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            if SMTP_SECURE:
+                server.starttls()
+            if SMTP_USER and SMTP_PASS:
+                server.login(SMTP_USER, SMTP_PASS)
+            server.send_message(message)
+    except Exception:
+        record_email(event, "failed", time.perf_counter() - start)
+        raise
+
+    record_email(event, "sent", time.perf_counter() - start)
 
 
 def should_notify_email(user_id: str, event: str) -> bool:

@@ -1,6 +1,14 @@
 # Reference copy of production compose on rb.main-0 (/home/app/docker-compose.yml).
 # The live file is managed on the server; update this when changing production layout.
 
+x-worker-common: &worker-common
+  image: darioguarascio/renting.berlin-workers:${DOCKER_IMAGE_TAG:-dev}
+  env_file:
+    - .env
+  environment:
+    METRICS_PORT: "9090"
+  restart: unless-stopped
+
 services:
   web:
     image: darioguarascio/renting.berlin:${DOCKER_IMAGE_TAG:-dev}
@@ -16,33 +24,31 @@ services:
       - app-network
 
   worker-notifications:
-    image: darioguarascio/renting.berlin-workers:${DOCKER_IMAGE_TAG:-dev}
-    env_file:
-      - .env
-    restart: unless-stopped
+    <<: *worker-common
+    ports:
+      - "9101:9090"
     command: ["python3", "-m", "renting_berlin_workers", "notifications"]
     networks:
       - default
       - app-network
 
   worker-emails:
-    image: darioguarascio/renting.berlin-workers:${DOCKER_IMAGE_TAG:-dev}
-    env_file:
-      - .env
-    restart: unless-stopped
+    <<: *worker-common
+    ports:
+      - "9102:9090"
     command: ["python3", "-m", "renting_berlin_workers", "emails"]
     networks:
       - default
       - app-network
 
   worker-moderation:
-    image: darioguarascio/renting.berlin-workers:${DOCKER_IMAGE_TAG:-dev}
-    env_file:
-      - .env
-    restart: unless-stopped
+    <<: *worker-common
+    ports:
+      - "9103:9090"
     environment:
       MODERATION_USE_ML: "1"
       UPLOADS_DIR: /app/uploads
+      METRICS_PORT: "9090"
     volumes:
       - .data/uploads:/app/uploads
     command: ["python3", "-m", "renting_berlin_workers", "moderation"]
@@ -51,20 +57,18 @@ services:
       - app-network
 
   worker-profile-views:
-    image: darioguarascio/renting.berlin-workers:${DOCKER_IMAGE_TAG:-dev}
-    env_file:
-      - .env
-    restart: unless-stopped
+    <<: *worker-common
+    ports:
+      - "9104:9090"
     command: ["python3", "-m", "renting_berlin_workers", "profile-views"]
     networks:
       - default
       - app-network
 
   worker-telegram:
-    image: darioguarascio/renting.berlin-workers:${DOCKER_IMAGE_TAG:-dev}
-    env_file:
-      - .env
-    restart: unless-stopped
+    <<: *worker-common
+    ports:
+      - "9105:9090"
     command: ["python3", "-m", "renting_berlin_workers", "telegram"]
     networks:
       - default

@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 
 from .config import REDIS_KEYS
 from .db import close_connection
+from .metrics import start_metrics_server
 from .services.email import process_email_job
 from .services.email_worker import run_email_worker
 from .services.moderation_handler import process_moderation_job
@@ -70,6 +71,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     config = WORKERS[args.worker]
+
+    start_metrics_server(args.worker)
 
     try:
         if config.get("runner") == "telegram":

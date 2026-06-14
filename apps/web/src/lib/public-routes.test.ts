@@ -12,6 +12,7 @@ describe('isPublicPage', () => {
       expect(isPublicPage(href)).toBe(true);
     }
     expect(isPublicPage('/offers')).toBe(true);
+    expect(isPublicPage('/privacy')).toBe(true);
     expect(isPublicPage('/sitemap.xml')).toBe(true);
     expect(isPublicPage('/robots.txt')).toBe(true);
   });

@@ -8,6 +8,7 @@ import time
 import redis
 
 from ..config import REDIS_KEYS
+from ..metrics import observe_job, record_redis_error
 from ..redis_client import close_redis, ensure_consumer_group, get_redis
 from .email import process_email_job
 from .email_delivery import flush_due_buffered_emails
@@ -49,6 +50,7 @@ def run_email_worker(
                 block=block_ms,
             )
         except redis.exceptions.ConnectionError:
+            record_redis_error(stream_key)
             logger.exception("Redis connection error, retrying")
             time.sleep(1)
             continue
@@ -66,7 +68,8 @@ def run_email_worker(
             for entry_id, fields in entries:
                 data = parse_stream_fields(fields)
                 try:
-                    process_email_job(data)
+                    with observe_job(stream_key):
+                        process_email_job(data)
                     client.xack(stream_key, group_name, entry_id)
                 except Exception:
                     logger.exception("Failed to process email event %s", entry_id)
