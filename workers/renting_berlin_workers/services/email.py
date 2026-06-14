@@ -5,10 +5,10 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate, make_msgid
-from html import escape
 
 from ..config import EMAIL_FROM, SITE_URL, SMTP_HOST, SMTP_PASS, SMTP_PORT, SMTP_SECURE, SMTP_USER
 from ..db import cursor
+from ..email.build import build_notification_email
 
 
 EVENT_FIELDS = {
@@ -94,13 +94,11 @@ def process_email_job(data: dict[str, str]) -> None:
 
 
 def build_saved_search_email(user_id: str, title: str, body: str, link: str) -> dict[str, str]:
-    url = f"{SITE_URL}{link}"
-    text = f"{body}\n\nView: {url}"
-    html = f"<p>{escape(body)}</p><p><a href=\"{escape(url)}\">View on renting.berlin</a></p>"
-    return {
-        "userId": user_id,
-        "subject": title,
-        "text": text,
-        "html": html,
-        "event": "saved_searches",
-    }
+    return build_notification_email(
+        user_id=user_id,
+        category="saved_searches",
+        title=title,
+        body=body,
+        link=link,
+        site_url=SITE_URL,
+    )

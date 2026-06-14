@@ -1,8 +1,12 @@
-import { desc, eq, sql } from 'drizzle-orm';
-import { nanoid } from 'nanoid';
+import { eq, inArray } from 'drizzle-orm';
 import { db } from '../db';
-import { profileViews, tenantRequests, users } from '../db/schema';
+import { tenantRequests, users } from '../db/schema';
 import type { ProfileVisitor } from '../types/tenant-request';
+import {
+  getProfileVisitorCount,
+  getProfileVisitorStats,
+  recordViewEvent,
+} from './analytics/view-events';
 import { enqueueProfileViewEvent } from './profile-view-events';
 import { getUserHandle } from './user-handle';
 
@@ -10,77 +14,59 @@ function profileViewsSyncEnabled(): boolean {
   return process.env.PROFILE_VIEWS_SYNC === '1';
 }
 
-export async function upsertProfileView(
-  profileUserId: string,
-  viewerId: string,
-  viewedAt: Date = new Date(),
-) {
-  await db
-    .insert(profileViews)
-    .values({
-      id: nanoid(),
-      profileUserId,
-      viewerId,
-      firstViewedAt: viewedAt,
-      lastViewedAt: viewedAt,
-    })
-    .onConflictDoUpdate({
-      target: [profileViews.profileUserId, profileViews.viewerId],
-      set: { lastViewedAt: viewedAt },
-    });
-}
-
 export async function recordProfileView(profileUserId: string, viewerId: string) {
   if (viewerId === profileUserId) return;
 
   if (profileViewsSyncEnabled()) {
-    await upsertProfileView(profileUserId, viewerId);
+    await recordViewEvent('profile', profileUserId, viewerId);
     return;
   }
 
   try {
     await enqueueProfileViewEvent(profileUserId, viewerId);
   } catch {
-    await upsertProfileView(profileUserId, viewerId);
+    await recordViewEvent('profile', profileUserId, viewerId);
   }
 }
 
 export async function getProfileVisitors(profileUserId: string, ownerId: string): Promise<ProfileVisitor[]> {
   if (profileUserId !== ownerId) return [];
 
-  const rows = await db
-    .select({
-      viewerId: profileViews.viewerId,
-      viewerName: users.name,
-      viewerImage: users.image,
-      viewerHandle: users.handle,
-      firstViewedAt: profileViews.firstViewedAt,
-      lastViewedAt: profileViews.lastViewedAt,
-    })
-    .from(profileViews)
-    .innerJoin(users, eq(profileViews.viewerId, users.id))
-    .where(eq(profileViews.profileUserId, profileUserId))
-    .orderBy(desc(profileViews.lastViewedAt));
+  const stats = await getProfileVisitorStats(profileUserId);
+  if (stats.length === 0) return [];
 
-  return rows.map((r) => ({
-    viewerId: r.viewerId,
-    viewerName: r.viewerName,
-    viewerImage: r.viewerImage,
-    viewerHandle: r.viewerHandle,
-    firstViewedAt: r.firstViewedAt.toISOString(),
-    lastViewedAt: r.lastViewedAt.toISOString(),
-  }));
+  const viewerIds = stats.map((row) => row.viewerId);
+  const viewerRows = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      image: users.image,
+      handle: users.handle,
+    })
+    .from(users)
+    .where(inArray(users.id, viewerIds));
+
+  const viewersById = new Map(viewerRows.map((row) => [row.id, row]));
+
+  return stats
+    .map((stat) => {
+      const viewer = viewersById.get(stat.viewerId);
+      if (!viewer) return null;
+      return {
+        viewerId: stat.viewerId,
+        viewerName: viewer.name,
+        viewerImage: viewer.image,
+        viewerHandle: viewer.handle,
+        firstViewedAt: stat.firstViewedAt.toISOString(),
+        lastViewedAt: stat.lastViewedAt.toISOString(),
+      };
+    })
+    .filter((row): row is ProfileVisitor => row !== null);
 }
 
 export async function getProfileViewCount(profileUserId: string, ownerId: string): Promise<number> {
   if (profileUserId !== ownerId) return 0;
-
-  const [{ count }] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(profileViews)
-    .where(eq(profileViews.profileUserId, profileUserId));
-
-  return count;
+  return getProfileVisitorCount(profileUserId);
 }
 
 export async function getProfileViewsForAccount(userId: string): Promise<{

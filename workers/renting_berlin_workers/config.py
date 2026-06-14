@@ -3,6 +3,11 @@ import os
 REDIS_URL = os.environ.get("REDIS_URL", "")
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
+CLICKHOUSE_URL = os.environ.get("CLICKHOUSE_URL", "")
+CLICKHOUSE_DATABASE = os.environ.get("CLICKHOUSE_DATABASE", "renting_berlin")
+CLICKHOUSE_USER = os.environ.get("CLICKHOUSE_USER", "default")
+CLICKHOUSE_PASSWORD = os.environ.get("CLICKHOUSE_PASSWORD", "")
+
 UPLOADS_DIR = os.environ.get("UPLOADS_DIR", "public/uploads")
 
 SITE_URL = os.environ.get("SITE_URL") or os.environ.get("BETTER_AUTH_URL") or "http://localhost:4321"

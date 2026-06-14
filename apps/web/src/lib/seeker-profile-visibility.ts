@@ -1,7 +1,8 @@
 import { and, eq, inArray, isNotNull } from 'drizzle-orm';
 import { db } from '../db';
-import { conversations, favorites, listingViews, listings, messages } from '../db/schema';
+import { conversations, favorites, listings, messages } from '../db/schema';
 import type { TenantRequestFull } from '../types/tenant-request';
+import { getViewersForListings } from './analytics/view-events';
 import {
   redactTenantRequestForViewer,
   resolveSeekerProfileAccess,
@@ -13,13 +14,13 @@ import {
 async function getSeekerIdsWithVisitedListings(seekerIds: string[], viewerId: string): Promise<Set<string>> {
   if (seekerIds.length === 0) return new Set();
 
-  const rows = await db
-    .selectDistinct({ seekerId: listingViews.viewerId })
-    .from(listingViews)
-    .innerJoin(listings, eq(listingViews.listingId, listings.id))
-    .where(and(inArray(listingViews.viewerId, seekerIds), eq(listings.publisherId, viewerId)));
+  const publisherListings = await db
+    .select({ id: listings.id })
+    .from(listings)
+    .where(eq(listings.publisherId, viewerId));
 
-  return new Set(rows.map((row) => row.seekerId));
+  const listingIds = publisherListings.map((row) => row.id);
+  return getViewersForListings(listingIds, seekerIds);
 }
 
 async function getSeekerIdsWithFavoritedListings(seekerIds: string[], viewerId: string): Promise<Set<string>> {

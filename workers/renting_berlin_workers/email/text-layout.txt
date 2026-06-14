@@ -1,0 +1,10 @@
+renting.berlin
+{{title}}
+
+{{body}}
+
+{{cta_block}}
+---
+{{footer}}
+
+{{site_url}}

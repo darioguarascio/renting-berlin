@@ -1,0 +1,10 @@
+services:
+  fredy:
+    image: ghcr.io/orangecoding/fredy:master
+    container_name: renting-berlin-fredy
+    ports:
+      - "${FREDY_PORT:-9998}:9998"
+    volumes:
+      - ./conf:/conf
+      - ./db:/db
+    restart: unless-stopped

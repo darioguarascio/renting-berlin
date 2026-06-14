@@ -4,6 +4,7 @@ import { users } from '../db/schema';
 import type { EmailJob } from './email-events';
 import { shouldNotifyEmail } from './notification-preferences';
 import type { NotificationEvent } from './notification-preferences';
+import { buildNotificationEmail } from './email/send';
 
 function smtpConfigured(): boolean {
   return Boolean(process.env.SMTP_HOST && process.env.EMAIL_FROM);
@@ -52,31 +53,19 @@ export async function sendEmailToUser(job: EmailJob): Promise<void> {
   await sendEmail(to, job.subject, job.text, job.html);
 }
 
-export function buildSavedSearchEmail(input: {
+export async function buildSavedSearchEmail(input: {
   userId: string;
   title: string;
   body: string;
   link: string;
   siteUrl: string;
 }) {
-  const url = `${input.siteUrl}${input.link}`;
-  const subject = input.title;
-  const text = `${input.body}\n\nView: ${url}`;
-  const html = `<p>${escapeHtml(input.body)}</p><p><a href="${escapeHtml(url)}">View on renting.berlin</a></p>`;
-
-  return {
+  return buildNotificationEmail({
     userId: input.userId,
-    subject,
-    text,
-    html,
-    event: 'saved_searches' as const,
-  };
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;');
+    category: 'saved_searches',
+    title: input.title,
+    body: input.body,
+    link: input.link,
+    siteUrl: input.siteUrl,
+  });
 }

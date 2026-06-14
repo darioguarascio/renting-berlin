@@ -50,6 +50,13 @@
       "when": 1781373584693,
       "tag": "0006_required_documents_other",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1781373584694,
+      "tag": "0007_external_listings",
+      "breakpoints": true
     }
   ]
 }

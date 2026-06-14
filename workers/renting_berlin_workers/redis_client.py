@@ -12,7 +12,8 @@ def get_redis() -> redis.Redis:
     if _client is None:
         if not REDIS_URL:
             raise RuntimeError("REDIS_URL is not set")
-        _client = redis.from_url(REDIS_URL, decode_responses=True)
+        # socket_timeout must exceed stream_worker block_ms (default 5000) or XREADGROUP raises TimeoutError
+        _client = redis.from_url(REDIS_URL, decode_responses=True, socket_timeout=10)
     return _client
 
 

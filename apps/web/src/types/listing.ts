@@ -1,6 +1,7 @@
 export const LISTING_CATEGORIES = ['full_flat', 'shared_room', 'swap'] as const;
 export const RENT_TYPES = ['long_term', 'short_term', 'overnight'] as const;
 export const LISTING_STATUSES = ['draft', 'active', 'paused', 'closed'] as const;
+export const LISTING_SOURCES = ['native', 'external'] as const;
 
 export const REQUIRED_DOCUMENTS = [
   'schufa',
@@ -38,6 +39,7 @@ export const EQUIPMENT = [
 export type ListingCategory = (typeof LISTING_CATEGORIES)[number];
 export type RentType = (typeof RENT_TYPES)[number];
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
+export type ListingSource = (typeof LISTING_SOURCES)[number];
 export type RequiredDocument = (typeof REQUIRED_DOCUMENTS)[number];
 export type Equipment = (typeof EQUIPMENT)[number];
 
@@ -110,6 +112,9 @@ export interface ListingDetail extends ListingSummary {
   photoUrls: string[];
   publisherId: string;
   publisherName: string;
+  sourceType: ListingSource;
+  externalUrl: string | null;
+  externalProvider: string | null;
 }
 
 export interface SearchResult {

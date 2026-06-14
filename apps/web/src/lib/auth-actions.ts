@@ -51,6 +51,33 @@ export async function signInWithEmail(email: string, password: string): Promise<
   }
 }
 
+export async function signInWithMagicLink(
+  email: string,
+  options: { name?: string; isSignup?: boolean; captchaToken?: string } = {},
+): Promise<void> {
+  setLastUsedProvider('magic-link');
+  const callbackURL = getCallbackUrl();
+  const newUserCallbackURL = getSignupCallbackUrl();
+  const headers: Record<string, string> = {};
+  if (options.captchaToken) {
+    headers['x-captcha-response'] = options.captchaToken;
+  }
+
+  const { error } = await authClient.signIn.magicLink({
+    email,
+    name: options.name?.trim() || undefined,
+    callbackURL: options.isSignup ? newUserCallbackURL : callbackURL,
+    newUserCallbackURL,
+    fetchOptions: { headers },
+  });
+
+  if (error) {
+    throw new Error(error.message ?? 'Could not send sign-in link');
+  }
+
+  trackEvent(options.isSignup ? 'User Signup Started' : 'User Login Started', { method: 'magic-link' });
+}
+
 export async function signUpWithEmail(
   name: string,
   email: string,

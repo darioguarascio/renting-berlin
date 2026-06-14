@@ -91,7 +91,14 @@ vi.mock('./email-events', () => ({
 }));
 
 vi.mock('./email', () => ({
-  buildSavedSearchEmail: vi.fn(() => ({ to: 'test@example.com' })),
+  buildSavedSearchEmail: vi.fn(async () => ({
+    userId: 'user-1',
+    to: 'test@example.com',
+    subject: 'Test',
+    text: 'text',
+    html: 'html',
+    event: 'saved_searches',
+  })),
 }));
 
 vi.mock('./site-url', () => ({

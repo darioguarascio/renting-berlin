@@ -52,7 +52,7 @@ export default defineConfig({
     envDir: rootDir,
     plugins: [tailwindcss()],
     ssr: {
-      noExternal: ['better-auth'],
+      noExternal: ['better-auth', '@clickhouse/client'],
     },
   },
 

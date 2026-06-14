@@ -217,8 +217,8 @@ export async function notifyNewListing(listingId: string) {
       body: item.title,
       link: `/listings/${item.path}`,
     });
-    enqueueEmailJob(
-      buildSavedSearchEmail({
+    await enqueueEmailJob(
+      await buildSavedSearchEmail({
         userId: search.userId,
         title: 'New listing matches your search',
         body: item.title,
@@ -260,8 +260,8 @@ export async function notifyNewTenantRequest(requestId: string) {
       body: row.title,
       link: seekerProfileHref(seeker.handle),
     });
-    enqueueEmailJob(
-      buildSavedSearchEmail({
+    await enqueueEmailJob(
+      await buildSavedSearchEmail({
         userId: search.userId,
         title: 'New seeker matches your search',
         body: row.title,

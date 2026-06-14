@@ -1,8 +1,14 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { OAuthProvider } from '../lib/auth';
-import { getLastUsedProvider, signInWithEmail, signInWithProvider, signUpWithEmail } from '../lib/auth-actions';
+import {
+  getLastUsedProvider,
+  signInWithEmail,
+  signInWithMagicLink,
+  signInWithProvider,
+} from '../lib/auth-actions';
 import { DEV_ACCOUNTS, showDevLogin } from '../lib/dev-user';
 import Logo from './Logo';
+import TurnstileWidget from './TurnstileWidget';
 
 type Mode = 'login' | 'signup';
 
@@ -14,17 +20,25 @@ const PROVIDERS: { id: OAuthProvider; label: string; icon: string }[] = [
 export default function AuthForm({
   mode: initialMode = 'login',
   enabledProviders = [],
+  turnstileSiteKey = '',
 }: {
   mode?: Mode;
   enabledProviders?: OAuthProvider[];
+  turnstileSiteKey?: string;
 }) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [linkSent, setLinkSent] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
   const lastUsed = getLastUsedProvider();
+  const captchaRequired = Boolean(turnstileSiteKey);
+
+  const handleCaptchaToken = useCallback((token: string) => {
+    setCaptchaToken(token);
+  }, []);
 
   const enabledSet = new Set(enabledProviders);
   const sortedProviders = PROVIDERS.filter((provider) => enabledSet.has(provider.id)).sort((a, b) => {
@@ -33,11 +47,11 @@ export default function AuthForm({
     return 0;
   });
 
-  async function handleDevLogin(email: string, password: string) {
+  async function handleDevLogin(devEmail: string, password: string) {
     setError('');
     setLoading(true);
     try {
-      await signInWithEmail(email, password);
+      await signInWithEmail(devEmail, password);
     } catch (err) {
       const message = err instanceof Error ? err.message : '';
       setError(
@@ -50,21 +64,68 @@ export default function AuthForm({
     }
   }
 
-  async function handleEmailSubmit(e: React.FormEvent) {
+  async function handleMagicLinkSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+
+    if (captchaRequired && !captchaToken) {
+      setError('Please complete the captcha.');
+      return;
+    }
+
     setLoading(true);
     try {
-      if (mode === 'signup') {
-        await signUpWithEmail(name, email, password);
-      } else {
-        await signInWithEmail(email, password);
-      }
-    } catch {
-      setError('Authentication failed. Check your credentials and try again.');
+      await signInWithMagicLink(email, {
+        name: mode === 'signup' ? name : undefined,
+        isSignup: mode === 'signup',
+        captchaToken: captchaToken || undefined,
+      });
+      setLinkSent(true);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '';
+      setError(message || 'Could not send sign-in link. Try again in a moment.');
+      setCaptchaToken('');
     } finally {
       setLoading(false);
     }
+  }
+
+  function switchMode(nextMode: Mode) {
+    setMode(nextMode);
+    setError('');
+    setLinkSent(false);
+    setCaptchaToken('');
+  }
+
+  if (linkSent) {
+    return (
+      <div className="mx-auto w-full max-w-md">
+        <div className="mb-8 flex justify-center">
+          <Logo size="lg" />
+        </div>
+        <div className="card-float p-6 sm:p-8">
+          <h1 className="font-display text-2xl font-extrabold text-[var(--color-ink)]">Check your email</h1>
+          <p className="mt-3 text-sm text-[var(--color-ink-muted)]">
+            We sent a sign-in link to <span className="font-semibold text-[var(--color-ink)]">{email}</span>.
+            Click the link in the email to continue — it expires in 15 minutes.
+          </p>
+          <p className="mt-4 text-sm text-[var(--color-ink-muted)]">
+            Didn't get it? Check spam, or{' '}
+            <button
+              type="button"
+              onClick={() => {
+                setLinkSent(false);
+                setCaptchaToken('');
+              }}
+              className="font-semibold text-[var(--color-brand)] hover:underline"
+            >
+              try again
+            </button>
+            .
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -79,7 +140,7 @@ export default function AuthForm({
         <p className="mt-2 text-sm text-[var(--color-ink-muted)]">
           {mode === 'login'
             ? 'Sign in to save favorites, message landlords, and publish listings.'
-            : 'Berlin rentals — built for Berliners.'}
+            : 'Berlin rentals — built for Berliners. No password needed.'}
         </p>
 
         {showDevLogin && mode === 'login' && (
@@ -135,7 +196,7 @@ export default function AuthForm({
           </>
         )}
 
-        <form onSubmit={handleEmailSubmit} className={`space-y-4${sortedProviders.length === 0 ? ' mt-6' : ''}`}>
+        <form onSubmit={handleMagicLinkSubmit} className={`space-y-4${sortedProviders.length === 0 ? ' mt-6' : ''}`}>
           {mode === 'signup' && (
             <label className="block">
               <span className="field-label">Name</span>
@@ -146,21 +207,24 @@ export default function AuthForm({
             <span className="field-label">Email</span>
             <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="field-input" />
           </label>
-          <label className="block">
-            <span className="field-label">Password</span>
-            <input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} className="field-input" />
-          </label>
+          {captchaRequired && (
+            <TurnstileWidget siteKey={turnstileSiteKey} onTokenChange={handleCaptchaToken} />
+          )}
           {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
-          <button type="submit" disabled={loading} className="btn-brand w-full disabled:opacity-50">
-            {loading ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
+          <button
+            type="submit"
+            disabled={loading || (captchaRequired && !captchaToken)}
+            className="btn-brand w-full disabled:opacity-50"
+          >
+            {loading ? 'Sending link…' : mode === 'login' ? 'Email me a sign-in link' : 'Create account'}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-[var(--color-ink-muted)]">
           {mode === 'login' ? (
-            <>No account? <button type="button" onClick={() => setMode('signup')} className="font-semibold text-[var(--color-brand)] hover:underline">Sign up free</button></>
+            <>No account? <button type="button" onClick={() => switchMode('signup')} className="font-semibold text-[var(--color-brand)] hover:underline">Sign up free</button></>
           ) : (
-            <>Already have an account? <button type="button" onClick={() => setMode('login')} className="font-semibold text-[var(--color-brand)] hover:underline">Sign in</button></>
+            <>Already have an account? <button type="button" onClick={() => switchMode('login')} className="font-semibold text-[var(--color-brand)] hover:underline">Sign in</button></>
           )}
         </p>
       </div>

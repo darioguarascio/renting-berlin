@@ -1,5 +1,5 @@
 const PUBLIC_PAGES = new Set(['/', '/login', '/signup', '/signup/handle', '/guides']);
-const PUBLIC_PAGE_PREFIXES = ['/rent-in/', '/guides/'];
+const PUBLIC_PAGE_PREFIXES = ['/rent-in/', '/guides/', '/e/'];
 
 export function isPublicPage(path: string): boolean {
   if (PUBLIC_PAGES.has(path)) return true;
@@ -14,6 +14,7 @@ export function isStaticAsset(path: string): boolean {
   return (
     path.startsWith('/_astro/') ||
     path.startsWith('/uploads/') ||
+    path.startsWith('/email/') ||
     path === '/favicon.ico' ||
     path === '/favicon.svg' ||
     path === '/og.svg' ||

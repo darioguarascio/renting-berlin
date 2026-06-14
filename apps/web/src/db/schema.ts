@@ -15,6 +15,7 @@ import { sql } from 'drizzle-orm';
 export const listingCategoryEnum = pgEnum('listing_category', ['full_flat', 'shared_room', 'swap']);
 export const rentTypeEnum = pgEnum('rent_type', ['long_term', 'short_term', 'overnight']);
 export const listingStatusEnum = pgEnum('listing_status', ['draft', 'active', 'paused', 'closed']);
+export const listingSourceEnum = pgEnum('listing_source', ['native', 'external']);
 export const householdTypeEnum = pgEnum('household_type', [
   'single',
   'couple',
@@ -152,6 +153,11 @@ export const listings = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     publishedAt: timestamp('published_at', { withTimezone: true }),
     moderationStatus: moderationStatusEnum('moderation_status').notNull().default('approved'),
+    sourceType: listingSourceEnum('source_type').notNull().default('native'),
+    externalUrl: text('external_url'),
+    externalProvider: text('external_provider'),
+    externalSourceId: text('external_source_id'),
+    externalSyncedAt: timestamp('external_synced_at', { withTimezone: true }),
   },
   (table) => [
     index('listings_status_idx').on(table.status),
@@ -160,7 +166,9 @@ export const listings = pgTable(
     index('listings_rent_type_idx').on(table.rentType),
     index('listings_category_idx').on(table.category),
     index('listings_publisher_idx').on(table.publisherId),
+    index('listings_source_type_idx').on(table.sourceType),
     uniqueIndex('listings_slug_short_code_idx').on(table.slug, table.shortCode),
+    uniqueIndex('listings_external_source_idx').on(table.externalProvider, table.externalSourceId),
   ],
 );
 
@@ -436,5 +444,44 @@ export const searchNotifications = pgTable(
     index('search_notifications_user_idx').on(table.userId),
     index('search_notifications_user_unread_idx').on(table.userId, table.readAt),
     uniqueIndex('search_notifications_unique_item_idx').on(table.savedSearchId, table.itemId),
+  ],
+);
+
+export const emailTrackingEventTypeEnum = pgEnum('email_tracking_event_type', ['open', 'click']);
+
+export const emailSends = pgTable(
+  'email_sends',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+    toEmail: text('to_email').notNull(),
+    category: text('category').notNull(),
+    subject: text('subject').notNull(),
+    links: jsonb('links').notNull().$type<string[]>().default([]),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('email_sends_user_idx').on(table.userId),
+    index('email_sends_category_idx').on(table.category),
+    index('email_sends_created_at_idx').on(table.createdAt),
+  ],
+);
+
+export const emailTrackingEvents = pgTable(
+  'email_tracking_events',
+  {
+    id: text('id').primaryKey(),
+    sendId: text('send_id')
+      .notNull()
+      .references(() => emailSends.id, { onDelete: 'cascade' }),
+    type: emailTrackingEventTypeEnum('type').notNull(),
+    linkIndex: integer('link_index'),
+    userAgent: text('user_agent'),
+    ipAddress: text('ip_address'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('email_tracking_events_send_idx').on(table.sendId),
+    index('email_tracking_events_type_idx').on(table.type),
   ],
 );
