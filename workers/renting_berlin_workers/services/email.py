@@ -4,6 +4,7 @@ import json
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.utils import formatdate, make_msgid
 from html import escape
 
 from ..config import EMAIL_FROM, SITE_URL, SMTP_HOST, SMTP_PASS, SMTP_PORT, SMTP_SECURE, SMTP_USER
@@ -32,6 +33,8 @@ def send_email(to: str, subject: str, text: str, html: str) -> None:
     message["Subject"] = subject
     message["From"] = EMAIL_FROM
     message["To"] = to
+    message["Date"] = formatdate(localtime=True)
+    message["Message-ID"] = make_msgid(domain=EMAIL_FROM.rsplit("@", 1)[-1])
     message.attach(MIMEText(text, "plain"))
     message.attach(MIMEText(html, "html"))
 
@@ -40,7 +43,7 @@ def send_email(to: str, subject: str, text: str, html: str) -> None:
             server.starttls()
         if SMTP_USER and SMTP_PASS:
             server.login(SMTP_USER, SMTP_PASS)
-        server.sendmail(EMAIL_FROM, [to], message.as_string())
+        server.send_message(message)
 
 
 def should_notify_email(user_id: str, event: str) -> bool:
