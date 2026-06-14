@@ -43,6 +43,7 @@ COPY --from=build /app/apps/web/start.sh ./start.sh
 COPY --from=build /app/apps/web/drizzle.config.ts ./drizzle.config.ts
 COPY --from=build /app/apps/web/drizzle ./drizzle
 COPY --from=build /app/apps/web/src/db/schema.ts ./src/db/schema.ts
+COPY --from=build /app/clickhouse/schema.sql /app/clickhouse/schema.sql
 
 RUN mkdir -p public/uploads \
   && chmod +x migrate.sh start.sh \

@@ -1,5 +1,5 @@
 import type { ClickHouseClient } from '@clickhouse/client';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -38,8 +38,27 @@ async function createClickHouseClient(): Promise<ClickHouseClient> {
   });
 }
 
+function getSchemaPath(): string {
+  const fromEnv = process.env.CLICKHOUSE_SCHEMA_PATH?.trim();
+  if (fromEnv && existsSync(fromEnv)) return fromEnv;
+
+  const candidates = [
+    join(process.cwd(), '../../clickhouse/schema.sql'),
+    join(dirname(fileURLToPath(import.meta.url)), '../../../../clickhouse/schema.sql'),
+    '/app/clickhouse/schema.sql',
+  ];
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return candidate;
+  }
+
+  throw new Error(
+    `ClickHouse schema not found. Set CLICKHOUSE_SCHEMA_PATH or include clickhouse/schema.sql in the image. Tried: ${candidates.join(', ')}`,
+  );
+}
+
 async function ensureSchema(ch: ClickHouseClient): Promise<void> {
-  const schemaPath = join(dirname(fileURLToPath(import.meta.url)), '../../../../clickhouse/schema.sql');
+  const schemaPath = getSchemaPath();
   const sql = readFileSync(schemaPath, 'utf8');
   const statements = sql
     .split(';')

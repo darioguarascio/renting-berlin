@@ -58,30 +58,32 @@ export async function createEmailSend(input: {
   subject: string;
   links: string[];
 }): Promise<string> {
-  const ch = await getClickHouse();
   const id = nanoid();
 
-  if (ch) {
-    await ch.insert({
-      table: 'email_sends',
-      values: [
-        {
-          id,
-          user_id: input.userId ?? null,
-          to_email: input.toEmail,
-          category: input.category,
-          subject: input.subject,
-          links: input.links,
-          created_at: new Date(),
-        },
-      ],
-      format: 'JSONEachRow',
-    });
-    return id;
-  }
-
   if (clickhouseConfigured()) {
-    throw new Error('ClickHouse is configured but unavailable');
+    try {
+      const ch = await getClickHouse();
+      if (ch) {
+        await ch.insert({
+          table: 'email_sends',
+          values: [
+            {
+              id,
+              user_id: input.userId ?? null,
+              to_email: input.toEmail,
+              category: input.category,
+              subject: input.subject,
+              links: input.links,
+              created_at: new Date(),
+            },
+          ],
+          format: 'JSONEachRow',
+        });
+        return id;
+      }
+    } catch (error) {
+      console.warn('[email] ClickHouse unavailable, falling back to Postgres:', error);
+    }
   }
 
   return createEmailSendPg(input);
