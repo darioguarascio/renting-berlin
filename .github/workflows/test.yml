@@ -8,6 +8,10 @@ jobs:
   unit:
     runs-on: ubuntu-latest
 
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      NODE_ENV: test
+
     permissions:
       contents: read
       pull-requests: write
