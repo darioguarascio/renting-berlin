@@ -21,21 +21,30 @@ export async function prepareBrandedEmail(
     content: EmailContent;
   },
   siteUrl = getSiteUrl(),
-): Promise<RenderedEmail & { sendId: string }> {
+): Promise<RenderedEmail & { sendId: string | null }> {
   const links = input.content.cta ? [input.content.cta.href] : [];
-  const sendId = await createEmailSend({
-    toEmail: input.to,
-    userId: input.userId,
-    category: input.category,
-    subject: input.content.subject,
-    links,
-  });
+  let sendId: string | null = null;
+  let trackedLinks: string[] | undefined;
+  let openPixelUrl: string | undefined;
 
-  const trackedLinks = wrapLinksForTracking(sendId, links, siteUrl);
+  try {
+    sendId = await createEmailSend({
+      toEmail: input.to,
+      userId: input.userId,
+      category: input.category,
+      subject: input.content.subject,
+      links,
+    });
+    trackedLinks = wrapLinksForTracking(sendId, links, siteUrl);
+    openPixelUrl = trackingOpenUrl(sendId, siteUrl);
+  } catch (error) {
+    console.warn('[email] tracking unavailable, sending without analytics:', error);
+  }
+
   const rendered = renderBrandedEmail(input.content, {
     siteUrl,
     trackedLinks,
-    openPixelUrl: trackingOpenUrl(sendId, siteUrl),
+    openPixelUrl,
   });
 
   return { ...rendered, sendId };

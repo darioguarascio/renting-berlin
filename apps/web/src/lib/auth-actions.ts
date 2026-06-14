@@ -98,5 +98,12 @@ export async function signUpWithEmail(
 export async function signOut(): Promise<void> {
   trackEvent('User Logout');
   clearUser();
-  await authClient.signOut();
+  try {
+    await authClient.signOut({ fetchOptions: { timeout: 10_000 } });
+  } catch {
+    // Still leave the app if the API is slow or unreachable.
+  }
+  if (typeof window !== 'undefined') {
+    window.location.assign('/');
+  }
 }

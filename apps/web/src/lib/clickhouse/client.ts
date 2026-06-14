@@ -1,10 +1,19 @@
-import { createClient, type ClickHouseClient } from '@clickhouse/client';
+import type { ClickHouseClient } from '@clickhouse/client';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 let client: ClickHouseClient | null = null;
 let schemaReady: Promise<void> | null = null;
+let createClientFn: typeof import('@clickhouse/client').createClient | null = null;
+
+async function loadCreateClient() {
+  if (!createClientFn) {
+    const mod = await import('@clickhouse/client');
+    createClientFn = mod.createClient;
+  }
+  return createClientFn;
+}
 
 export function clickhouseConfigured(): boolean {
   return Boolean(process.env.CLICKHOUSE_URL?.trim());
@@ -14,7 +23,8 @@ function getDatabase(): string {
   return process.env.CLICKHOUSE_DATABASE?.trim() || 'renting_berlin';
 }
 
-function createClickHouseClient(): ClickHouseClient {
+async function createClickHouseClient(): Promise<ClickHouseClient> {
+  const createClient = await loadCreateClient();
   const url = process.env.CLICKHOUSE_URL!.trim();
   const parsed = new URL(url);
   const username = decodeURIComponent(parsed.username || process.env.CLICKHOUSE_USER || 'default');
@@ -45,7 +55,7 @@ export async function getClickHouse(): Promise<ClickHouseClient | null> {
   if (!clickhouseConfigured()) return null;
 
   if (!client) {
-    client = createClickHouseClient();
+    client = await createClickHouseClient();
   }
 
   if (!schemaReady) {

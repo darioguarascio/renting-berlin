@@ -27,6 +27,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify migration journal
+        run: bash scripts/check-migrations.sh
+
       - name: Run unit tests with coverage
         run: npm run test:coverage
 

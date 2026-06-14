@@ -4,12 +4,16 @@ import { authClient } from '../lib/auth-client';
 import { signOut } from '../lib/auth-actions';
 
 export default function AccountSettings() {
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
   const [signingOut, setSigningOut] = useState(false);
 
-  if (!user) {
+  if (isPending) {
     return <p className="text-sm text-[var(--color-ink-muted)]">Loading…</p>;
+  }
+
+  if (!user) {
+    return null;
   }
 
   const initials = user.name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();

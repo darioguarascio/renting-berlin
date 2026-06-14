@@ -39,12 +39,13 @@ COPY --from=build /app/apps/web/public ./public
 COPY --from=build /app/apps/web/server.mjs ./server.mjs
 COPY --from=build /app/apps/web/server ./server
 COPY --from=build /app/apps/web/migrate.sh ./migrate.sh
+COPY --from=build /app/apps/web/start.sh ./start.sh
 COPY --from=build /app/apps/web/drizzle.config.ts ./drizzle.config.ts
 COPY --from=build /app/apps/web/drizzle ./drizzle
 COPY --from=build /app/apps/web/src/db/schema.ts ./src/db/schema.ts
 
 RUN mkdir -p public/uploads \
-  && chmod +x migrate.sh \
+  && chmod +x migrate.sh start.sh \
   && chown -R node:node /app
 
 USER node
@@ -55,4 +56,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD wget -qO- "http://127.0.0.1:${PORT}/" >/dev/null 2>&1 || exit 1
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["node", "server.mjs"]
+CMD ["./start.sh"]

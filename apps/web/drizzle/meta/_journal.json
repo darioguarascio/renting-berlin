@@ -57,6 +57,13 @@
       "when": 1781373584694,
       "tag": "0007_external_listings",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781373584695,
+      "tag": "0008_email_tracking",
+      "breakpoints": true
     }
   ]
 }
