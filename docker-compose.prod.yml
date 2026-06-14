@@ -1,6 +1,9 @@
 x-worker-image: &worker-image
   image: darioguarascio/renting.berlin-workers:${DOCKER_IMAGE_TAG:-dev}
 
+# Generic pull-only compose for local/staging. Production uses deploy/docker-compose.server.yml
+# (copied manually to rb.main-0 as ~/docker-compose.yml).
+
 x-worker-common: &worker-common
   <<: *worker-image
   env_file:

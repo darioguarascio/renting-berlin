@@ -95,22 +95,16 @@ jobs:
 
             compose() {
               if [ -x "${HOME}/bin/docker-compose" ]; then
-                "${HOME}/bin/docker-compose" -f docker-compose.prod.yml "$@"
+                "${HOME}/bin/docker-compose" "$@"
               elif command -v docker-compose >/dev/null 2>&1; then
-                docker-compose -f docker-compose.prod.yml "$@"
+                docker-compose "$@"
               elif docker compose version >/dev/null 2>&1; then
-                docker compose -f docker-compose.prod.yml "$@"
+                docker compose "$@"
               else
                 echo "docker-compose not found; expected ${HOME}/bin/docker-compose" >&2
                 exit 1
               fi
             }
-
-            if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-              git fetch origin dev
-              git checkout dev
-              git pull --ff-only origin dev
-            fi
 
             SERVICES="web worker-notifications worker-emails worker-moderation worker-profile-views"
 
