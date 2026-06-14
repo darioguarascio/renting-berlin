@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { AUDIENCE_PAGES } from './audience-pages';
 import { authEntryUrl, isPublicApi, isPublicPage, isStaticAsset } from './public-routes';
 
 describe('isPublicPage', () => {
@@ -7,7 +8,9 @@ describe('isPublicPage', () => {
     expect(isPublicPage('/login')).toBe(true);
     expect(isPublicPage('/signup')).toBe(true);
     expect(isPublicPage('/signup/handle')).toBe(true);
-    expect(isPublicPage('/for-landlords')).toBe(true);
+    for (const { href } of AUDIENCE_PAGES) {
+      expect(isPublicPage(href)).toBe(true);
+    }
     expect(isPublicPage('/offers')).toBe(true);
     expect(isPublicPage('/sitemap.xml')).toBe(true);
     expect(isPublicPage('/robots.txt')).toBe(true);

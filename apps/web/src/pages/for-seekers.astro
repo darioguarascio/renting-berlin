@@ -1,0 +1,114 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { authEntryUrl } from '../lib/public-routes';
+import { getSiteUrl } from '../lib/site-url';
+
+const session = Astro.locals.session;
+const profileHref = session ? '/requests/new' : authEntryUrl('/requests/new', 'signup');
+const browseOffersHref = session ? '/offers' : authEntryUrl('/offers', 'signup');
+const pageTitle = 'Find a flat or room in Berlin — renting.berlin';
+const pageDescription =
+  'Post a free seeker profile for Berlin rentals. Browse listings, save searches, message landlords directly, and get alerts when new matches appear.';
+---
+
+<BaseLayout title={pageTitle} description={pageDescription} canonical={`${getSiteUrl()}/for-seekers`}>
+  <section class="hero-mesh grid-berlin relative overflow-hidden border-b border-[var(--color-border)] py-14">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6">
+      <div class="max-w-2xl">
+        <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-brand)]">For apartment seekers</p>
+        <h1 class="mt-2 font-display text-4xl font-extrabold leading-tight text-[var(--color-ink)] sm:text-5xl">
+          Find your place in Berlin
+        </h1>
+        <p class="mt-4 text-base leading-relaxed text-[var(--color-ink-muted)]">
+          Browse flats and rooms, post a seeker profile so <a href="/for-landlords" class="font-semibold text-[var(--color-brand)] hover:underline">landlords and WG hosts</a> can find you, and message directly — no broker in the middle. Need to sublet while away? See <a href="/for-tenants" class="font-semibold text-[var(--color-brand)] hover:underline">for tenants subletting</a>. Swapping cities? Try <a href="/for-swappers" class="font-semibold text-[var(--color-brand)] hover:underline">for swappers</a>.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href={browseOffersHref} class="btn-brand">Browse listings</a>
+          <a href={profileHref} class="btn-ghost">Post seeker profile</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {[
+        {
+          title: 'Two ways to search',
+          body: 'Browse Offers when you want to hunt listings — or post a Request so landlords come to you.',
+        },
+        {
+          title: 'Filters that matter in Berlin',
+          body: 'Anmeldung, SCHUFA, budget, neighborhood, move-in date, WG vs whole flat — narrow down fast.',
+        },
+        {
+          title: 'Save searches & alerts',
+          body: 'Save your filters and get email notifications when new listings or profiles match.',
+        },
+        {
+          title: 'Direct messaging',
+          body: 'Contact landlords in-app. Share documents when you are ready — no public phone number required.',
+        },
+        {
+          title: 'Public seeker profile',
+          body: 'A permanent @handle and profile URL. Landlords see who you are before messaging back.',
+        },
+        {
+          title: 'Verified feedback',
+          body: 'After a confirmed rental, both sides leave reviews — so you can spot fair landlords over time.',
+        },
+      ].map(({ title, body }) => (
+        <article class="card p-6">
+          <h2 class="font-display text-lg font-bold text-[var(--color-ink)]">{title}</h2>
+          <p class="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">{body}</p>
+        </article>
+      ))}
+    </div>
+
+    <section class="mt-14 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-gradient-to-br from-[var(--color-brand-muted)] to-white p-8 sm:p-10">
+      <div class="grid gap-8 lg:grid-cols-2 lg:items-center">
+        <div>
+          <h2 class="font-display text-2xl font-extrabold text-[var(--color-ink)]">How it works</h2>
+          <ol class="mt-5 space-y-4 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+            <li class="flex gap-3">
+              <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand)] text-xs font-bold text-white">1</span>
+              <span>Sign up and pick your @handle — your public profile URL.</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand)] text-xs font-bold text-white">2</span>
+              <span>Browse listings or post a seeker profile with budget, dates, and what you need.</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand)] text-xs font-bold text-white">3</span>
+              <span>Message landlords — or wait for them to contact you from your profile.</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand)] text-xs font-bold text-white">4</span>
+              <span>After a rental completes, leave verified feedback for the next search.</span>
+            </li>
+          </ol>
+        </div>
+        <div class="rounded-2xl border border-[var(--color-border)] bg-white p-6">
+          <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-brand)]">New to Berlin?</p>
+          <p class="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+            Read our guides on Anmeldung, SCHUFA, and documents landlords commonly request — then state your situation clearly on your seeker profile.
+          </p>
+          <a href="/guides" class="mt-4 inline-block text-sm font-semibold text-[var(--color-brand)] hover:underline">
+            Browse guides →
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="mt-14 text-center">
+      <h2 class="font-display text-2xl font-extrabold text-[var(--color-ink)]">Start your search</h2>
+      <p class="mx-auto mt-3 max-w-lg text-sm text-[var(--color-ink-muted)]">
+        Most seekers browse listings first, then post a profile so landlords can find them too.
+      </p>
+      <div class="mt-6 flex flex-wrap justify-center gap-3">
+        <a href={browseOffersHref} class="btn-brand">Browse listings</a>
+        <a href={profileHref} class="btn-ghost">Post seeker profile</a>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

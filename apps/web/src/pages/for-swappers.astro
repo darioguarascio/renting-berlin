@@ -1,0 +1,114 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { authEntryUrl } from '../lib/public-routes';
+import { getSiteUrl } from '../lib/site-url';
+
+const session = Astro.locals.session;
+const listHref = session ? '/listings/new' : authEntryUrl('/listings/new', 'signup');
+const browseSwapsHref = session ? '/offers?category=swap' : authEntryUrl('/offers?category=swap', 'signup');
+const pageTitle = 'Swap flats in Berlin — renting.berlin';
+const pageDescription =
+  'Exchange flats with another tenant in Berlin or beyond. Post a swap listing, browse matches, and message directly on renting.berlin.';
+---
+
+<BaseLayout title={pageTitle} description={pageDescription} canonical={`${getSiteUrl()}/for-swappers`}>
+  <section class="hero-mesh grid-berlin relative overflow-hidden border-b border-[var(--color-border)] py-14">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6">
+      <div class="max-w-2xl">
+        <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-brand)]">For swappers</p>
+        <h1 class="mt-2 font-display text-4xl font-extrabold leading-tight text-[var(--color-ink)] sm:text-5xl">
+          Swap your flat with someone else's
+        </h1>
+        <p class="mt-4 text-base leading-relaxed text-[var(--color-ink-muted)]">
+          Moving cities but want to keep renting? List your place as a swap and find someone in Berlin — or elsewhere — who wants yours. Renting out long-term instead? See <a href="/for-landlords" class="font-semibold text-[var(--color-brand)] hover:underline">for landlords & WG hosts</a>. Subletting while away? Try <a href="/for-tenants" class="font-semibold text-[var(--color-brand)] hover:underline">for tenants subletting</a>. Just looking for a flat? Head to <a href="/for-seekers" class="font-semibold text-[var(--color-brand)] hover:underline">for apartment seekers</a>.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href={listHref} class="btn-brand">Post a swap listing</a>
+          <a href={browseSwapsHref} class="btn-ghost">Browse swaps</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {[
+        {
+          title: 'Swap category',
+          body: 'Choose “Swap” when posting — your listing appears alongside others open to an exchange.',
+        },
+        {
+          title: 'Describe both sides',
+          body: 'Show your current flat with photos and explain where you want to move — city, size, dates.',
+        },
+        {
+          title: 'Direct messaging',
+          body: 'Compare situations in-app before sharing lease details or arranging viewings.',
+        },
+        {
+          title: 'Filter swap listings',
+          body: 'Browse only swap offers to find people already interested in an exchange.',
+        },
+        {
+          title: 'Public profile',
+          body: 'Swappers see your @handle and history — useful when trust matters for a mutual move.',
+        },
+        {
+          title: 'Berlin-focused pool',
+          body: 'Smaller than general classifieds, but everyone here is in the rental market.',
+        },
+      ].map(({ title, body }) => (
+        <article class="card p-6">
+          <h2 class="font-display text-lg font-bold text-[var(--color-ink)]">{title}</h2>
+          <p class="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">{body}</p>
+        </article>
+      ))}
+    </div>
+
+    <section class="mt-14 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-gradient-to-br from-[var(--color-brand-muted)] to-white p-8 sm:p-10">
+      <div class="grid gap-8 lg:grid-cols-2 lg:items-center">
+        <div>
+          <h2 class="font-display text-2xl font-extrabold text-[var(--color-ink)]">How swapping works here</h2>
+          <ol class="mt-5 space-y-4 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+            <li class="flex gap-3">
+              <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand)] text-xs font-bold text-white">1</span>
+              <span>Post your current flat as a swap listing with photos, rent, and target location.</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand)] text-xs font-bold text-white">2</span>
+              <span>Browse other swap listings or wait for messages from interested swappers.</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand)] text-xs font-bold text-white">3</span>
+              <span>Align on dates, lease rules, and logistics — renting.berlin connects you, not the paperwork.</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand)] text-xs font-bold text-white">4</span>
+              <span>After a completed rental period, leave verified feedback on each other's profiles.</span>
+            </li>
+          </ol>
+        </div>
+        <div class="rounded-2xl border border-[var(--color-border)] bg-white p-6">
+          <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-brand)]">Lease & legal</p>
+          <p class="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+            Swaps often involve subletting or assignment clauses in your Mietvertrag. Check with your landlord before committing — we help you find a match, not replace legal advice.
+          </p>
+          <a href="/guides/tenant-rights" class="mt-4 inline-block text-sm font-semibold text-[var(--color-brand)] hover:underline">
+            Tenant rights guide →
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="mt-14 text-center">
+      <h2 class="font-display text-2xl font-extrabold text-[var(--color-ink)]">Find your swap</h2>
+      <p class="mx-auto mt-3 max-w-lg text-sm text-[var(--color-ink-muted)]">
+        Post what you have and where you want to go — then browse others doing the same.
+      </p>
+      <div class="mt-6 flex flex-wrap justify-center gap-3">
+        <a href={listHref} class="btn-brand">Post a swap listing</a>
+        <a href={browseSwapsHref} class="btn-ghost">Browse swaps</a>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AUDIENCE_PAGES } from './audience-pages';
 import { GUIDES } from './guides';
 import { BERLIN_NEIGHBORHOODS } from '../types/listing';
 import { renderRobotsTxt, renderSitemapXml } from './sitemap-xml';
@@ -59,7 +60,9 @@ describe('getSitemapEntries', () => {
     const entries = await getSitemapEntries('https://renting.berlin');
 
     expect(entries.some((entry) => entry.loc === 'https://renting.berlin/')).toBe(true);
-    expect(entries.some((entry) => entry.loc === 'https://renting.berlin/for-landlords')).toBe(true);
+    for (const { href } of AUDIENCE_PAGES) {
+      expect(entries.some((entry) => entry.loc === `https://renting.berlin${href}`)).toBe(true);
+    }
     expect(entries.filter((entry) => entry.loc.includes('/guides/')).length).toBe(GUIDES.length);
     expect(entries.filter((entry) => entry.loc.includes('/rent-in/')).length).toBe(
       BERLIN_NEIGHBORHOODS.length,

@@ -1,0 +1,102 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { authEntryUrl } from '../lib/public-routes';
+import { getSiteUrl } from '../lib/site-url';
+
+const session = Astro.locals.session;
+const listHref = session ? '/listings/new' : authEntryUrl('/listings/new', 'signup');
+const browseOffersHref = session ? '/offers' : authEntryUrl('/offers', 'signup');
+const pageTitle = 'Sublet your flat or room in Berlin — renting.berlin';
+const pageDescription =
+  'Going away for a few months? List your Zwischenmiete or sublet on renting.berlin — free during beta, direct messaging, and verified reviews after rentals.';
+---
+
+<BaseLayout title={pageTitle} description={pageDescription} canonical={`${getSiteUrl()}/for-tenants`}>
+  <section class="hero-mesh grid-berlin relative overflow-hidden border-b border-[var(--color-border)] py-14">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6">
+      <div class="max-w-2xl">
+        <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-brand)]">For tenants subletting</p>
+        <h1 class="mt-2 font-display text-4xl font-extrabold leading-tight text-[var(--color-ink)] sm:text-5xl">
+          Sublet your flat or room while you are away
+        </h1>
+        <p class="mt-4 text-base leading-relaxed text-[var(--color-ink-muted)]">
+          Traveling, on leave, or filling a room temporarily? Post a Zwischenmiete or Untermiete listing and reach people actively searching in Berlin. If you own the lease long-term, see <a href="/for-landlords" class="font-semibold text-[var(--color-brand)] hover:underline">for landlords & WG hosts</a>. Looking for a place yourself? Go to <a href="/for-seekers" class="font-semibold text-[var(--color-brand)] hover:underline">for apartment seekers</a>. Want to exchange flats instead? See <a href="/for-swappers" class="font-semibold text-[var(--color-brand)] hover:underline">for swappers</a>.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href={listHref} class="btn-brand">Post a sublet</a>
+          <a href="/guides/wg-rooms" class="btn-ghost">WG & sublet guide</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {[
+        {
+          title: 'Free to list',
+          body: 'No commission during beta. Post your sublet with dates, rent, and whether Anmeldung is possible.',
+        },
+        {
+          title: 'Short & medium term',
+          body: 'Mark availability dates clearly — Zwischenmiete seekers filter by move-in and move-out.',
+        },
+        {
+          title: 'WG rooms welcome',
+          body: 'Main tenant with a room to fill? List it as a shared room and describe your household.',
+        },
+        {
+          title: 'Direct messaging',
+          body: 'Talk to applicants in-app. Share the lease rules and house details when you are ready.',
+        },
+        {
+          title: 'Public profile',
+          body: 'Subletters see your @handle and listing history — transparency beats anonymous classifieds.',
+        },
+        {
+          title: 'Verified reviews',
+          body: 'After a confirmed sublet ends, both sides leave feedback. Good history helps the next time.',
+        },
+      ].map(({ title, body }) => (
+        <article class="card p-6">
+          <h2 class="font-display text-lg font-bold text-[var(--color-ink)]">{title}</h2>
+          <p class="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">{body}</p>
+        </article>
+      ))}
+    </div>
+
+    <section class="mt-14 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-gradient-to-br from-[var(--color-brand-muted)] to-white p-8 sm:p-10">
+      <div class="grid gap-8 lg:grid-cols-2 lg:items-center">
+        <div>
+          <h2 class="font-display text-2xl font-extrabold text-[var(--color-ink)]">Before you post</h2>
+          <ul class="mt-5 space-y-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+            <li>Check your lease — many contracts require landlord consent for subletting.</li>
+            <li>State clearly whether Anmeldung is available; many informal sublets are not.</li>
+            <li>Include exact dates, what's furnished, and house rules (pets, guests, quiet hours).</li>
+            <li>Use photos of the actual room or flat — subletters decide quickly on visuals.</li>
+          </ul>
+        </div>
+        <div class="rounded-2xl border border-[var(--color-border)] bg-white p-6">
+          <p class="text-xs font-bold uppercase tracking-widest text-[var(--color-brand)]">Find a subtenant faster</p>
+          <p class="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+            Browse seeker profiles filtered by budget and move-in date — then message people who already fit your timeline.
+          </p>
+          <a href={session ? '/requests' : authEntryUrl('/requests', 'signup')} class="mt-4 inline-block text-sm font-semibold text-[var(--color-brand)] hover:underline">
+            Browse seeker profiles →
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="mt-14 text-center">
+      <h2 class="font-display text-2xl font-extrabold text-[var(--color-ink)]">Ready to sublet?</h2>
+      <p class="mx-auto mt-3 max-w-lg text-sm text-[var(--color-ink-muted)]">
+        Listing takes about ten minutes. See what seekers browse before you post.
+      </p>
+      <div class="mt-6 flex flex-wrap justify-center gap-3">
+        <a href={listHref} class="btn-brand">Post a sublet</a>
+        <a href={browseOffersHref} class="btn-ghost">Browse listings</a>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

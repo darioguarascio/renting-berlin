@@ -1,6 +1,7 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { listings } from '../db/schema';
+import { AUDIENCE_PAGES } from './audience-pages';
 import { GUIDES } from './guides';
 import { buildListingPath } from './urls';
 import { BERLIN_NEIGHBORHOODS } from '../types/listing';
@@ -18,7 +19,11 @@ export async function getSitemapEntries(siteUrl = getSiteUrl()): Promise<Sitemap
   const staticPages: SitemapEntry[] = [
     { loc: `${siteUrl}/`, changefreq: 'weekly', priority: 1 },
     { loc: `${siteUrl}/offers`, changefreq: 'hourly', priority: 0.9 },
-    { loc: `${siteUrl}/for-landlords`, changefreq: 'monthly', priority: 0.8 },
+    ...AUDIENCE_PAGES.map(({ href }) => ({
+      loc: `${siteUrl}${href}`,
+      changefreq: 'monthly' as const,
+      priority: 0.8,
+    })),
     { loc: `${siteUrl}/guides`, changefreq: 'weekly', priority: 0.8 },
     { loc: `${siteUrl}/signup`, changefreq: 'monthly', priority: 0.5 },
   ];

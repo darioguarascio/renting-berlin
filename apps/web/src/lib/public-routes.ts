@@ -6,6 +6,9 @@ const PUBLIC_PAGES = new Set([
   '/guides',
   '/offers',
   '/for-landlords',
+  '/for-seekers',
+  '/for-tenants',
+  '/for-swappers',
   '/sitemap.xml',
   '/robots.txt',
 ]);
