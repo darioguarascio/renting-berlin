@@ -1,0 +1,24 @@
+# Run on the monitoring host (10.0.0.5):
+#   docker compose -f docker-compose.prometheus.yml up -d
+#
+# UI: http://10.0.0.5:9092
+# Point Grafana Prometheus datasource at http://10.0.0.5:9092
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9092:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --web.enable-lifecycle
+
+volumes:
+  prometheus-data:
