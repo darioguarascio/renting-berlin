@@ -13,6 +13,7 @@ import {
   buildListingDescription,
   buildListingJsonLd,
   listingPageUrl,
+  resolveListingOgImage,
 } from '../../lib/listing-seo';
 import { CATEGORY_LABELS, RENT_TYPE_LABELS, NEIGHBORHOOD_LABELS, floorLevelLabel, type BerlinNeighborhood } from '../../types/listing';
 import FavoriteButton from '../../components/FavoriteButton.tsx';
@@ -108,6 +109,7 @@ const pageDescription = buildListingDescription({
   anmeldungAvailable: listing.anmeldungAvailable,
 });
 const canonical = listingPageUrl(listing.slug, listing.shortCode);
+const ogImage = resolveListingOgImage(listing.photoUrls);
 const listingJsonLd = buildListingJsonLd({
   title: listing.title,
   slug: listing.slug,
@@ -137,6 +139,8 @@ const breadcrumbJsonLd = buildListingBreadcrumbJsonLd({
   title={pageTitle}
   description={pageDescription}
   canonical={canonical}
+  ogImage={ogImage}
+  ogImageAlt={listing.title}
   jsonLd={[listingJsonLd, breadcrumbJsonLd]}
 >
   <article class="mx-auto max-w-7xl px-4 py-8 sm:px-6">

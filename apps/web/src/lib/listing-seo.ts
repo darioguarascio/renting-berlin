@@ -11,6 +11,12 @@ import { buildListingPath, listingHref } from './urls';
 
 const SITE_NAME = 'renting.berlin';
 
+export function resolveListingOgImage(photoUrls: string[], siteUrl = getSiteUrl()): string {
+  const primaryPhoto = photoUrls[0];
+  if (!primaryPhoto) return `${siteUrl}/og.svg`;
+  return primaryPhoto.startsWith('http') ? primaryPhoto : `${siteUrl}${primaryPhoto}`;
+}
+
 export function listingPageUrl(slug: string, shortCode: string, siteUrl = getSiteUrl()): string {
   return `${siteUrl}${listingHref(slug, shortCode)}`;
 }
@@ -59,12 +65,7 @@ export function buildListingJsonLd(
   const pageUrl = listingPageUrl(listing.slug, listing.shortCode, siteUrl);
   const neighborhood =
     NEIGHBORHOOD_LABELS[listing.neighborhood as BerlinNeighborhood] ?? listing.neighborhood;
-  const primaryPhoto = listing.photoUrls[0];
-  const image = primaryPhoto?.startsWith('http')
-    ? primaryPhoto
-    : primaryPhoto
-      ? `${siteUrl}${primaryPhoto}`
-      : `${siteUrl}/og.svg`;
+  const image = resolveListingOgImage(listing.photoUrls, siteUrl);
 
   return {
     '@context': 'https://schema.org',

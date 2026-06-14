@@ -4,6 +4,7 @@ import {
   buildListingDescription,
   buildListingJsonLd,
   listingPageUrl,
+  resolveListingOgImage,
 } from './listing-seo';
 
 const siteUrl = 'https://renting.berlin';
@@ -55,6 +56,22 @@ describe('buildListingDescription', () => {
 
     expect(description).not.toContain('Anmeldung');
     expect(description).toContain('short term');
+  });
+});
+
+describe('resolveListingOgImage', () => {
+  it('prefixes relative photo paths with the site URL', () => {
+    expect(resolveListingOgImage(['/uploads/photo.jpg'], siteUrl)).toBe(`${siteUrl}/uploads/photo.jpg`);
+  });
+
+  it('uses absolute photo URLs as-is', () => {
+    expect(resolveListingOgImage(['https://cdn.example.com/photo.jpg'], siteUrl)).toBe(
+      'https://cdn.example.com/photo.jpg',
+    );
+  });
+
+  it('falls back to og image when there are no photos', () => {
+    expect(resolveListingOgImage([], siteUrl)).toBe(`${siteUrl}/og.svg`);
   });
 });
 
