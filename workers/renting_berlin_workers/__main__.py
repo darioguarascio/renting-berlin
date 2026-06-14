@@ -14,6 +14,7 @@ from .services.email import process_email_job
 from .services.moderation_handler import process_moderation_job
 from .services.notifications import process_notification_job
 from .services.profile_views import process_profile_view_job
+from .services.telegram import process_telegram_job
 from .stream_worker import run_stream_worker
 
 WORKERS = {
@@ -41,6 +42,12 @@ WORKERS = {
         "group": REDIS_KEYS["profile_view_workers"],
         "handler": lambda _id, data: process_profile_view_job(data),
         "env_name": "PROFILE_VIEW_WORKER_NAME",
+    },
+    "telegram": {
+        "stream": REDIS_KEYS["telegram_events"],
+        "group": REDIS_KEYS["telegram_workers"],
+        "handler": lambda _id, data: process_telegram_job(data),
+        "env_name": "TELEGRAM_WORKER_NAME",
     },
 }
 

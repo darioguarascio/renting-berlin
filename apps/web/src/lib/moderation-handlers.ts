@@ -4,6 +4,7 @@ import { db } from '../db';
 import { listings, moderationResults, tenantRequests } from '../db/schema';
 import type { ModerationJob } from './moderation-events';
 import { enqueueNotificationJob } from './notification-events';
+import { enqueueTelegramJob } from './telegram-events';
 import { moderateImageUrl } from './moderation/image-scorer';
 import { moderateText } from './moderation/text-scorer';
 import { indexListing, removeListingFromIndex } from './search';
@@ -81,6 +82,7 @@ async function moderateListing(listingId: string): Promise<void> {
   if (moderationStatus === 'approved' && row.status === 'active') {
     await indexListing(listingId);
     await enqueueNotificationJob('new_listing', listingId);
+    await enqueueTelegramJob('new_listing', listingId);
     return;
   }
 
@@ -131,6 +133,7 @@ async function moderateTenantRequest(requestId: string): Promise<void> {
 
   if (moderationStatus === 'approved' && row.status === 'active') {
     await enqueueNotificationJob('new_tenant_request', requestId);
+    await enqueueTelegramJob('new_tenant_request', requestId);
   }
 }
 
@@ -175,6 +178,7 @@ export async function requestListingModeration(listingId: string): Promise<void>
       .where(eq(listings.id, listingId));
     await indexListing(listingId);
     await enqueueNotificationJob('new_listing', listingId);
+    await enqueueTelegramJob('new_listing', listingId);
     return;
   }
 
@@ -194,6 +198,7 @@ export async function requestTenantRequestModeration(requestId: string): Promise
       .set({ moderationStatus: 'approved', updatedAt: new Date() })
       .where(eq(tenantRequests.id, requestId));
     await enqueueNotificationJob('new_tenant_request', requestId);
+    await enqueueTelegramJob('new_tenant_request', requestId);
     return;
   }
 

@@ -44,6 +44,7 @@ export default defineConfig({
     MODERATION_DISABLED: '1',
     NOTIFICATIONS_SYNC: '1',
     EMAILS_SYNC: '1',
+    TELEGRAM_SYNC: '1',
     MODERATION_USE_ML: '0',
   },
 });

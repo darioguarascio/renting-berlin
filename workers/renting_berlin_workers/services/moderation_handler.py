@@ -95,6 +95,10 @@ def moderate_listing(listing_id: str) -> None:
             REDIS_KEYS["notification_events"],
             {"type": "new_listing", "entityId": listing_id},
         )
+        enqueue_stream_event(
+            REDIS_KEYS["telegram_events"],
+            {"type": "new_listing", "entityId": listing_id},
+        )
         return
 
     remove_listing_from_index(listing_id)
@@ -139,6 +143,10 @@ def moderate_tenant_request(request_id: str) -> None:
     if moderation_status == "approved" and row["status"] == "active":
         enqueue_stream_event(
             REDIS_KEYS["notification_events"],
+            {"type": "new_tenant_request", "entityId": request_id},
+        )
+        enqueue_stream_event(
+            REDIS_KEYS["telegram_events"],
             {"type": "new_tenant_request", "entityId": request_id},
         )
 

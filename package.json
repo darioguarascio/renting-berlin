@@ -18,6 +18,7 @@
     "db:seed-dev-user": "npm run db:seed-dev-user -w apps/web",
     "db:import-external": "npm run db:import-external -w apps/web",
     "worker:profile-views": "cd workers && UPLOADS_DIR=../apps/web/public/uploads python3 -m renting_berlin_workers profile-views",
+    "worker:telegram": "cd workers && python3 -m renting_berlin_workers telegram",
     "worker:notifications": "cd workers && UPLOADS_DIR=../apps/web/public/uploads python3 -m renting_berlin_workers notifications",
     "worker:emails": "cd workers && python3 -m renting_berlin_workers emails",
     "worker:moderation": "cd workers && UPLOADS_DIR=../apps/web/public/uploads python3 -m renting_berlin_workers moderation",
@@ -33,7 +34,7 @@
     "docker:up:web": "docker compose up -d web",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f web",
-    "docker:logs:workers": "docker compose logs -f worker-notifications worker-emails worker-moderation worker-profile-views",
+    "docker:logs:workers": "docker compose logs -f worker-notifications worker-emails worker-moderation worker-profile-views worker-telegram",
     "docker:migrate": "docker compose --profile tools run --rm migrate"
   }
 }

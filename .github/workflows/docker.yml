@@ -106,7 +106,7 @@ jobs:
               fi
             }
 
-            SERVICES="web worker-notifications worker-emails worker-moderation worker-profile-views"
+            SERVICES="web worker-notifications worker-emails worker-moderation worker-profile-views worker-telegram"
 
             compose pull $SERVICES
             compose --profile tools run --rm migrate

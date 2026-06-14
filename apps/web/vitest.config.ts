@@ -40,6 +40,7 @@ export default defineConfig({
         'src/lib/email.ts',
         'src/lib/email-events.ts',
         'src/lib/notification-events.ts',
+        'src/lib/telegram-events.ts',
         'src/lib/moderation-events.ts',
         'src/lib/profile-view-events.ts',
         'src/lib/dev-user.ts',

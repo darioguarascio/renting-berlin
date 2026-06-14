@@ -46,6 +46,10 @@ services:
     <<: *worker-common
     command: ["python3", "-m", "renting_berlin_workers", "profile-views"]
 
+  worker-telegram:
+    <<: *worker-common
+    command: ["python3", "-m", "renting_berlin_workers", "telegram"]
+
   migrate:
     profiles:
       - tools

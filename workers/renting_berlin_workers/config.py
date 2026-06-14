@@ -22,6 +22,9 @@ SMTP_USER = os.environ.get("SMTP_USER", "")
 SMTP_PASS = os.environ.get("SMTP_PASS", "")
 EMAIL_FROM = os.environ.get("EMAIL_FROM", "")
 
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+
 REDIS_KEYS = {
     "profile_view_events": "profile_views:events",
     "profile_view_workers": "profile-view-workers",
@@ -31,6 +34,8 @@ REDIS_KEYS = {
     "email_workers": "email-workers",
     "moderation_events": "moderation:events",
     "moderation_workers": "moderation-workers",
+    "telegram_events": "telegram:events",
+    "telegram_workers": "telegram-workers",
     "listings_index": "listings:active",
     "geo_index": "listings:geo",
 }
