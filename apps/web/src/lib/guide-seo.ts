@@ -87,7 +87,7 @@ export function buildGuideArticleJsonLd(guide: Guide, siteUrl = getSiteUrl()) {
     articleSection: GUIDE_CATEGORIES[guide.category],
     author: organizationRef(siteUrl),
     publisher: organizationRef(siteUrl),
-    keywords: [GUIDE_CATEGORIES[guide.category], 'Berlin rental', 'expat guide', guide.slug].join(', '),
+    keywords: [GUIDE_CATEGORIES[guide.category], 'Berlin rental', 'Berlin guide', guide.slug].join(', '),
     about: {
       '@type': 'Thing',
       name: guide.title.replace(/ — .*/, ''),
@@ -112,7 +112,7 @@ export function buildGuidesIndexJsonLd(guides: Guide[], siteUrl = getSiteUrl()) 
         '@id': pageUrl,
         name: 'Berlin rental guides',
         description:
-          'Plain-English guides on Anmeldung, SCHUFA, rent costs, tenant rights, and finding a flat in Berlin.',
+          'Practical guides on Anmeldung, SCHUFA, rent costs, tenant rights, and finding a flat in Berlin.',
         url: pageUrl,
         inLanguage: 'en-GB',
         isPartOf: {

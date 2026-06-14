@@ -19,6 +19,12 @@ export const ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
   { href: '/favorites', label: 'Favorites', description: 'Saved listings', icon: 'favorites' },
 ];
 
+export const ACCOUNT_DRAWER_ITEMS: AccountNavItem[] = [
+  ...ACCOUNT_NAV_ITEMS.filter((item) => item.href !== '/messages' && item.href !== '/favorites'),
+  { href: '/listings/new', label: 'New listing', description: 'Publish an offer', icon: 'listings' },
+  { href: '/requests/new', label: 'Post seeker profile', description: 'Let landlords find you', icon: 'requests' },
+];
+
 export function AccountNavLinks({
   currentPath,
   onNavigate,

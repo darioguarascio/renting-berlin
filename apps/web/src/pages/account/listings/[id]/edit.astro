@@ -8,13 +8,15 @@ const { id } = Astro.params;
 if (!id) return Astro.redirect('/account/listings');
 
 const reactivate = Astro.url.searchParams.has('reactivate');
+const pageHeading = reactivate ? 'Reactivate listing' : 'Edit listing';
 ---
 
 <AccountLayout
   title={reactivate ? 'Reactivate listing — renting.berlin' : 'Edit listing — renting.berlin'}
-  heading={reactivate ? 'Reactivate listing' : 'Edit listing'}
+  heading={pageHeading}
   description={reactivate ? 'Review and update your listing before publishing it again.' : 'Update your rental offer.'}
   currentPath="/account/listings"
+  breadcrumbTail={[{ label: pageHeading }]}
 >
   <ListingForm client:load listingId={id} reactivate={reactivate} />
 </AccountLayout>

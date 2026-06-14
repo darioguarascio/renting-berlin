@@ -35,6 +35,7 @@ describe('isPublicApi', () => {
 
 describe('isStaticAsset', () => {
   it('allows built assets and icons', () => {
+    expect(isStaticAsset('/favicon.ico')).toBe(true);
     expect(isStaticAsset('/favicon.svg')).toBe(true);
     expect(isStaticAsset('/_astro/page.js')).toBe(true);
   });

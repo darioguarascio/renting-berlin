@@ -7,7 +7,7 @@ import { getListingByPath } from '../../lib/listings';
 import { recordListingView } from '../../lib/listing-views';
 import { getPublishedListingFeedback, type ListingFeedbackSummary } from '../../lib/feedback';
 import { buildListingPath, listingHref } from '../../lib/urls';
-import { CATEGORY_LABELS, RENT_TYPE_LABELS, NEIGHBORHOOD_LABELS } from '../../types/listing';
+import { CATEGORY_LABELS, RENT_TYPE_LABELS, NEIGHBORHOOD_LABELS, floorLevelLabel } from '../../types/listing';
 import FavoriteButton from '../../components/FavoriteButton.tsx';
 import ContactButton from '../../components/ContactButton.tsx';
 import ListingGallery from '../../components/ListingGallery.tsx';
@@ -69,6 +69,7 @@ const summary = {
   rentPerMonth: listing.costs.rentPerMonth,
   sizeSqm: listing.sizeSqm,
   rooms: listing.rooms,
+  floorLevel: listing.floorLevel,
   neighborhood: listing.neighborhood,
   availableFrom: listing.availableFrom.toISOString(),
   availableTo: listing.availableTo?.toISOString() ?? null,
@@ -83,6 +84,7 @@ const summary = {
 };
 
 const neighborhoodLabel = NEIGHBORHOOD_LABELS[listing.neighborhood as keyof typeof NEIGHBORHOOD_LABELS] ?? listing.neighborhood;
+const floorLabel = floorLevelLabel(listing.floorLevel);
 ---
 
 <BaseLayout title={`${listing.title} — renting.berlin`}>
@@ -157,6 +159,7 @@ const neighborhoodLabel = NEIGHBORHOOD_LABELS[listing.neighborhood as keyof type
             <div class="detail-cell"><dt>Rent type</dt><dd>{RENT_TYPE_LABELS[listing.rentType]}</dd></div>
             <div class="detail-cell"><dt>Size</dt><dd>{listing.sizeSqm} m²</dd></div>
             <div class="detail-cell"><dt>Rooms</dt><dd>{listing.rooms}</dd></div>
+            {floorLabel && <div class="detail-cell"><dt>Floor</dt><dd>{floorLabel}</dd></div>}
             {listing.costs.deposit && <div class="detail-cell"><dt>Deposit</dt><dd>€{listing.costs.deposit}</dd></div>}
             {listing.costs.utilities && <div class="detail-cell"><dt>Utilities</dt><dd>€{listing.costs.utilities}/mo</dd></div>}
           </dl>

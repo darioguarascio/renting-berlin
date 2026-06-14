@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import FormShell from './forms/FormShell';
-import FormAccordion, { FormAccordionPanel, FormActions, getSectionIndex } from './forms/FormAccordion';
+import FormSections, { FormActions, FormSection } from './forms/FormSections';
 import PhotoUploadField, { uploadPhotosToApi } from './forms/PhotoUploadField';
+import CurrencyField from './forms/CurrencyField';
 import {
   BERLIN_NEIGHBORHOODS,
   CATEGORY_LABELS,
@@ -29,19 +30,16 @@ import { accountProfileHref } from '../lib/urls';
 
 const defaultNeighborhoods = ['kreuzberg', 'neukolln', 'friedrichshain'];
 
-const TABS = [
-  { id: 'basics', label: 'Basics' },
-  { id: 'about', label: 'About you' },
-  { id: 'budget', label: 'Budget & documents' },
-  { id: 'requirements', label: 'Requirements' },
-  { id: 'lifestyle', label: 'Lifestyle' },
-  { id: 'photos', label: 'Photos' },
+const SECTIONS = [
+  { label: 'Basics' },
+  { label: 'About you' },
+  { label: 'Budget & documents' },
+  { label: 'Requirements' },
+  { label: 'Lifestyle' },
+  { label: 'Photos' },
 ] as const;
 
-type TabId = (typeof TABS)[number]['id'];
-
 export default function SeekerRequestForm() {
-  const [expandedSection, setExpandedSection] = useState<TabId>('basics');
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<(typeof LISTING_CATEGORIES)[number]>('shared_room');
   const [rentType, setRentType] = useState<(typeof RENT_TYPES)[number]>('long_term');
@@ -146,16 +144,6 @@ export default function SeekerRequestForm() {
   }
 
   const canPublish = title.length >= 5 && description.length >= 20 && neighborhoods.length > 0;
-  const stepIndex = getSectionIndex([...TABS], expandedSection);
-  const isFirstStep = stepIndex === 0;
-  const isLastStep = stepIndex === TABS.length - 1;
-
-  function goToStep(direction: 'next' | 'prev') {
-    const nextIndex = direction === 'next' ? stepIndex + 1 : stepIndex - 1;
-    if (nextIndex >= 0 && nextIndex < TABS.length) {
-      setExpandedSection(TABS[nextIndex].id);
-    }
-  }
 
   return (
     <FormShell
@@ -171,32 +159,15 @@ export default function SeekerRequestForm() {
       }}
       onSubmit={handleSubmit}
       footer={
-        <FormActions>
-          {!isFirstStep && (
-            <button type="button" onClick={() => goToStep('prev')} disabled={loading || uploading} className="btn-ghost">
-              Back
-            </button>
-          )}
-          {!isLastStep ? (
-            <button type="button" onClick={() => goToStep('next')} disabled={loading || uploading} className="btn-brand">
-              Continue
-            </button>
-          ) : (
-            <button type="submit" className="btn-brand" disabled={loading || uploading || !canPublish}>
-              {loading ? 'Publishing…' : 'Publish seeker profile'}
-            </button>
-          )}
+        <FormActions className="form-actions--end">
+          <button type="submit" className="btn-brand" disabled={loading || uploading || !canPublish}>
+            {loading ? 'Publishing…' : 'Publish seeker profile'}
+          </button>
         </FormActions>
       }
     >
-      <FormAccordion
-        sections={[...TABS]}
-        expandedSection={expandedSection}
-        onExpandedChange={setExpandedSection}
-        idPrefix="seeker"
-        ariaLabel="Seeker profile sections"
-      >
-        <FormAccordionPanel sectionId="basics">
+      <FormSections>
+        <FormSection title={SECTIONS[0].label} step={1}>
           <div>
             <label className="field-label" htmlFor="title">Headline</label>
             <input
@@ -230,9 +201,9 @@ export default function SeekerRequestForm() {
               </select>
             </div>
           </div>
-        </FormAccordionPanel>
+        </FormSection>
 
-        <FormAccordionPanel sectionId="about">
+        <FormSection title={SECTIONS[1].label} step={2}>
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
               <label className="field-label" htmlFor="birthYear">Year of birth</label>
@@ -277,18 +248,26 @@ export default function SeekerRequestForm() {
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
-        </FormAccordionPanel>
+        </FormSection>
 
-        <FormAccordionPanel sectionId="budget">
+        <FormSection title={SECTIONS[2].label} step={3}>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="field-label" htmlFor="budgetMax">Budget (€/mo)</label>
-              <input id="budgetMax" type="number" className="field-input" required min={1} value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} />
-            </div>
-            <div>
-              <label className="field-label" htmlFor="monthlyIncome">Monthly income (€)</label>
-              <input id="monthlyIncome" type="number" className="field-input" min={0} placeholder="Optional" value={monthlyIncome} onChange={(e) => setMonthlyIncome(e.target.value)} />
-            </div>
+            <CurrencyField
+              id="budgetMax"
+              label="Budget / mo"
+              required
+              min={1}
+              value={budgetMax}
+              onChange={(e) => setBudgetMax(e.target.value)}
+            />
+            <CurrencyField
+              id="monthlyIncome"
+              label="Monthly income"
+              min={0}
+              placeholder="Optional"
+              value={monthlyIncome}
+              onChange={(e) => setMonthlyIncome(e.target.value)}
+            />
           </div>
           <div className="flex flex-wrap gap-4">
             <label className="flex items-center gap-2 text-sm">
@@ -300,9 +279,9 @@ export default function SeekerRequestForm() {
               Have SCHUFA
             </label>
           </div>
-        </FormAccordionPanel>
+        </FormSection>
 
-        <FormAccordionPanel sectionId="requirements">
+        <FormSection title={SECTIONS[3].label} step={4}>
           <div>
             <label className="field-label">Desired areas</label>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -327,9 +306,9 @@ export default function SeekerRequestForm() {
               <input id="sizeMin" type="number" className="field-input" min={5} value={sizeMin} onChange={(e) => setSizeMin(e.target.value)} />
             </div>
           </div>
-        </FormAccordionPanel>
+        </FormSection>
 
-        <FormAccordionPanel sectionId="lifestyle">
+        <FormSection title={SECTIONS[4].label} step={5}>
           <div className="flex flex-wrap gap-4">
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={hasPets} onChange={(e) => setHasPets(e.target.checked)} className="size-4 rounded border-[var(--color-border)]" />
@@ -344,9 +323,9 @@ export default function SeekerRequestForm() {
               Need bed linens & towels
             </label>
           </div>
-        </FormAccordionPanel>
+        </FormSection>
 
-        <FormAccordionPanel sectionId="photos">
+        <FormSection title={SECTIONS[5].label} step={6}>
           <div>
             <p className="field-label">Who can see your full profile?</p>
             <div className="mt-2 space-y-3">
@@ -381,8 +360,8 @@ export default function SeekerRequestForm() {
             uploading={uploading}
             onUpload={uploadPhotos}
           />
-        </FormAccordionPanel>
-      </FormAccordion>
+        </FormSection>
+      </FormSections>
     </FormShell>
   );
 }

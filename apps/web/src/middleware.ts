@@ -47,7 +47,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       return context.redirect(redirect);
     }
 
-    if (handle && (path === '/' || path === '/login' || path === '/signup')) {
+    if (handle && (path === '/login' || path === '/signup')) {
       return context.redirect('/dashboard');
     }
 

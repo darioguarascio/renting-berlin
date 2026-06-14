@@ -1,0 +1,28 @@
+---
+import type { BreadcrumbItem } from '../lib/breadcrumbs';
+
+interface Props {
+  items: BreadcrumbItem[];
+}
+
+const { items } = Astro.props;
+---
+
+<nav class="breadcrumb" aria-label="Breadcrumb">
+  <ol class="breadcrumb__list">
+    {items.map((item, index) => (
+      <li class="breadcrumb__item">
+        {index > 0 && (
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" class="breadcrumb__separator" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m5.75 12.5 4.5-4.5-4.5-4.5" />
+          </svg>
+        )}
+        {item.href ? (
+          <a href={item.href} class="breadcrumb__link">{item.label}</a>
+        ) : (
+          <span class="breadcrumb__current">{item.label}</span>
+        )}
+      </li>
+    ))}
+  </ol>
+</nav>

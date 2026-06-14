@@ -33,7 +33,7 @@ interface FormShellProps {
 
 export default function FormShell({ error, notice, onSubmit, children, footer, extra }: FormShellProps) {
   return (
-    <form onSubmit={onSubmit} className="card overflow-hidden">
+    <form onSubmit={onSubmit} className="form-shell">
       {error && (
         <div className="form-banner form-banner--error">
           <p className="form-banner__title">{error}</p>
@@ -44,9 +44,9 @@ export default function FormShell({ error, notice, onSubmit, children, footer, e
 
       {children}
 
-      {footer && <div className="border-t border-[var(--color-border)] px-4 sm:px-6">{footer}</div>}
+      {footer && <div className="form-footer">{footer}</div>}
 
-      {extra && <div className="px-4 pb-6 sm:px-6">{extra}</div>}
+      {extra}
     </form>
   );
 }

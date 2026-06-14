@@ -10,6 +10,7 @@ import {
   LISTING_CATEGORIES,
   RENT_TYPES,
   REQUIRED_DOCUMENTS,
+  FLOOR_LEVEL_VALUES,
 } from '../types/listing';
 import { indexListing, removeListingFromIndex } from './search';
 import { buildListingPath, generateShortCode, parseListingPath, seoSlug } from './urls';
@@ -22,6 +23,7 @@ export const listingInputSchema = z.object({
   availableTo: z.string().datetime().or(z.string().date()).optional().nullable(),
   sizeSqm: z.number().int().min(5).max(500),
   rooms: z.number().int().min(1).max(20),
+  floorLevel: z.number().int().refine((value) => FLOOR_LEVEL_VALUES.includes(value as (typeof FLOOR_LEVEL_VALUES)[number])).optional().nullable(),
   onlineViewingAvailable: z.boolean().default(false),
   anmeldungAvailable: z.boolean().default(false),
   schufaRequired: z.boolean().default(false),
@@ -43,6 +45,7 @@ export const listingInputSchema = z.object({
     misc: z.string().max(5000).optional(),
   }),
   requiredDocuments: z.array(z.enum(REQUIRED_DOCUMENTS)).default([]),
+  requiredDocumentsOther: z.string().max(500).optional().nullable(),
   equipment: z.array(z.enum(EQUIPMENT)).default([]),
   photoUrls: z
     .array(z.union([z.string().url(), z.string().regex(/^\/uploads\//)]))
@@ -78,6 +81,7 @@ export async function createListing(publisherId: string, input: ListingInput) {
       availableTo: data.availableTo ? parseDate(data.availableTo) : null,
       sizeSqm: data.sizeSqm,
       rooms: data.rooms,
+      floorLevel: data.floorLevel ?? null,
       onlineViewingAvailable: data.onlineViewingAvailable,
       anmeldungAvailable: data.anmeldungAvailable,
       schufaRequired: data.schufaRequired,
@@ -131,6 +135,7 @@ export async function updateListing(
         : {}),
       ...('sizeSqm' in data ? { sizeSqm: data.sizeSqm } : {}),
       ...('rooms' in data ? { rooms: data.rooms } : {}),
+      ...('floorLevel' in data ? { floorLevel: data.floorLevel ?? null } : {}),
       ...('onlineViewingAvailable' in data
         ? { onlineViewingAvailable: data.onlineViewingAvailable }
         : {}),
@@ -144,6 +149,9 @@ export async function updateListing(
       ...('costs' in data ? { costs: data.costs } : {}),
       ...('descriptions' in data ? { descriptions: data.descriptions } : {}),
       ...('requiredDocuments' in data ? { requiredDocuments: data.requiredDocuments } : {}),
+      ...('requiredDocumentsOther' in data
+        ? { requiredDocumentsOther: data.requiredDocumentsOther?.trim() || null }
+        : {}),
       ...('equipment' in data ? { equipment: data.equipment } : {}),
       ...('photoUrls' in data ? { photoUrls: data.photoUrls } : {}),
       ...('status' in data && data.status === 'active' && !existing.publishedAt
@@ -218,6 +226,7 @@ function toListingSummary(row: typeof listings.$inferSelect): ListingSummary {
     rentPerMonth: row.costs.rentPerMonth,
     sizeSqm: row.sizeSqm,
     rooms: row.rooms,
+    floorLevel: row.floorLevel,
     neighborhood: row.neighborhood,
     availableFrom: row.availableFrom.toISOString(),
     availableTo: row.availableTo?.toISOString() ?? null,

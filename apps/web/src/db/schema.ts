@@ -12,7 +12,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
-export const listingCategoryEnum = pgEnum('listing_category', ['full_flat', 'shared_room']);
+export const listingCategoryEnum = pgEnum('listing_category', ['full_flat', 'shared_room', 'swap']);
 export const rentTypeEnum = pgEnum('rent_type', ['long_term', 'short_term', 'overnight']);
 export const listingStatusEnum = pgEnum('listing_status', ['draft', 'active', 'paused', 'closed']);
 export const householdTypeEnum = pgEnum('household_type', [
@@ -123,6 +123,7 @@ export const listings = pgTable(
     availableTo: timestamp('available_to', { withTimezone: true }),
     sizeSqm: integer('size_sqm').notNull(),
     rooms: integer('rooms').notNull(),
+    floorLevel: integer('floor_level'),
     onlineViewingAvailable: boolean('online_viewing_available').notNull().default(false),
     anmeldungAvailable: boolean('anmeldung_available').notNull().default(false),
     schufaRequired: boolean('schufa_required').notNull().default(false),
@@ -144,6 +145,7 @@ export const listings = pgTable(
       misc?: string;
     }>(),
     requiredDocuments: jsonb('required_documents').notNull().$type<string[]>().default([]),
+    requiredDocumentsOther: text('required_documents_other'),
     equipment: jsonb('equipment').notNull().$type<string[]>().default([]),
     photoUrls: jsonb('photo_urls').notNull().$type<string[]>().default([]),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

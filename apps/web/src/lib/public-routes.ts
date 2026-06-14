@@ -14,6 +14,7 @@ export function isStaticAsset(path: string): boolean {
   return (
     path.startsWith('/_astro/') ||
     path.startsWith('/uploads/') ||
+    path === '/favicon.ico' ||
     path === '/favicon.svg' ||
     path === '/og.svg' ||
     path === '/robots.txt'

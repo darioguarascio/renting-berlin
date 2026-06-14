@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
+import Breadcrumbs from './Breadcrumbs';
 import ConversationList from './ConversationList';
 import MessageThread from './MessageThread';
+import { buildAccountBreadcrumbs } from '../lib/breadcrumbs';
 
 interface Props {
   conversationId?: string;
@@ -29,18 +31,20 @@ function useChatViewportHeight() {
 export default function MessagesShell({ conversationId }: Props) {
   useChatViewportHeight();
 
+  const breadcrumbItems = buildAccountBreadcrumbs({
+    currentPath: conversationId ? `/messages/${conversationId}` : '/messages',
+    heading: 'Messages',
+    sectionHref: '/messages',
+    sectionLabel: 'Messages',
+    tail: conversationId ? [{ label: 'Conversation' }] : [],
+  });
+
   return (
     <div className="chat-app">
       <aside className={`chat-sidebar ${conversationId ? 'hidden lg:flex' : 'flex'}`}>
-        <header className="chat-sidebar__header">
+        <header className="chat-sidebar__header chat-sidebar__header--stacked">
+          <Breadcrumbs items={breadcrumbItems} />
           <h1 className="chat-sidebar__title">Chats</h1>
-          <a
-            href="/dashboard"
-            className="text-xs font-semibold text-[var(--color-ink-muted)] hover:text-[var(--color-brand-deep)]"
-            title="Back to dashboard"
-          >
-            Dashboard
-          </a>
         </header>
         <ConversationList selectedId={conversationId} />
       </aside>

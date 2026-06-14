@@ -104,7 +104,7 @@ export function buildNeighborhoodSeoDescription(
   stats: NeighborhoodListingStats,
 ): string {
   if (stats.totalListings === 0) {
-    return `Rent in ${label}, Berlin on renting.berlin. Browse verified listings from international-friendly landlords — sign up free to search apartments and rooms.`;
+    return `Rent in ${label}, Berlin on renting.berlin. Browse verified listings from local landlords — sign up free to search apartments and rooms.`;
   }
 
   const parts = [`${stats.totalListings} active rental${stats.totalListings === 1 ? '' : 's'} in ${label}, Berlin`];

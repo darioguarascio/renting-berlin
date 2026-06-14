@@ -25,6 +25,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     availableTo: row.availableTo?.toISOString() ?? null,
     sizeSqm: row.sizeSqm,
     rooms: row.rooms,
+    floorLevel: row.floorLevel,
     onlineViewingAvailable: row.onlineViewingAvailable,
     anmeldungAvailable: row.anmeldungAvailable,
     schufaRequired: row.schufaRequired,
@@ -36,6 +37,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     costs: row.costs,
     descriptions: row.descriptions,
     requiredDocuments: row.requiredDocuments,
+    requiredDocumentsOther: row.requiredDocumentsOther,
     equipment: row.equipment,
     photoUrls: row.photoUrls,
   });

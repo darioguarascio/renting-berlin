@@ -18,6 +18,7 @@ function toSummary(row: typeof listings.$inferSelect): ListingSummary {
     rentPerMonth: row.costs.rentPerMonth,
     sizeSqm: row.sizeSqm,
     rooms: row.rooms,
+    floorLevel: row.floorLevel,
     neighborhood: row.neighborhood,
     availableFrom: row.availableFrom.toISOString(),
     availableTo: row.availableTo?.toISOString() ?? null,

@@ -1,75 +1,58 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import AccountNav, { ACCOUNT_NAV_ITEMS } from '../components/AccountNav.tsx';
-import AccountMobileMenu from '../components/AccountMobileMenu.tsx';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { buildAccountBreadcrumbs, type BreadcrumbItem } from '../lib/breadcrumbs';
 
 interface Props {
   title: string;
   heading: string;
   description?: string;
   currentPath: string;
+  breadcrumbTail?: BreadcrumbItem[];
 }
 
-const { title, heading, description, currentPath } = Astro.props;
+const { title, heading, description, currentPath, breadcrumbTail = [] } = Astro.props;
 
 const currentNavItem = ACCOUNT_NAV_ITEMS.find(
   (item) => currentPath === item.href || currentPath.startsWith(`${item.href}/`)
 );
-const breadcrumbLabel = currentNavItem?.label ?? heading;
 const isRoot = currentPath === '/dashboard';
+const breadcrumbItems = buildAccountBreadcrumbs({
+  currentPath,
+  heading,
+  sectionHref: currentNavItem?.href,
+  sectionLabel: currentNavItem?.label,
+  tail: breadcrumbTail,
+});
 ---
 
 <BaseLayout title={title}>
   <div class="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
     <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-
-      <!-- Breadcrumb -->
-      <nav class="breadcrumb" aria-label="Breadcrumb">
-        <ol class="breadcrumb__list">
-          <li class="breadcrumb__item">
-            <a href="/" class="breadcrumb__link">Home</a>
-          </li>
-          <li class="breadcrumb__item">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" class="breadcrumb__separator" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m5.75 12.5 4.5-4.5-4.5-4.5" />
-            </svg>
-            {isRoot ? (
-              <span class="breadcrumb__current">My account</span>
-            ) : (
-              <a href="/dashboard" class="breadcrumb__link">My account</a>
-            )}
-          </li>
-          {!isRoot && (
-            <li class="breadcrumb__item">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" class="breadcrumb__separator" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m5.75 12.5 4.5-4.5-4.5-4.5" />
-              </svg>
-              <span class="breadcrumb__current">{breadcrumbLabel}</span>
-            </li>
-          )}
-        </ol>
-      </nav>
+      <Breadcrumbs items={breadcrumbItems} />
 
       <!-- Page heading -->
-      <div class="flex items-start justify-between gap-4">
-        <div class="min-w-0 flex-1">
-          <h1 class="font-display text-2xl font-bold text-[var(--color-ink)] sm:text-3xl">{heading}</h1>
-          {description && <p class="mt-1.5 max-w-2xl text-sm text-[var(--color-ink-muted)]">{description}</p>}
-        </div>
-        <AccountMobileMenu client:load currentPath={currentPath} />
+      <div>
+        <h1 class="font-display text-2xl font-bold text-[var(--color-ink)] sm:text-3xl">{heading}</h1>
+        {description && <p class="mt-1.5 max-w-2xl text-sm text-[var(--color-ink-muted)]">{description}</p>}
       </div>
 
     </div>
   </div>
 
   <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-    <div class="grid gap-10 lg:grid-cols-[240px_minmax(0,1fr)]">
-      <aside class="hidden lg:block lg:sticky lg:top-24 lg:self-start">
-        <AccountNav client:load currentPath={currentPath} />
-      </aside>
-      <div class="min-w-0">
-        <slot />
+    {isRoot ? (
+      <slot />
+    ) : (
+      <div class="grid gap-10 md:grid-cols-[240px_minmax(0,1fr)]">
+        <aside class="hidden md:block md:sticky md:top-24 md:self-start">
+          <AccountNav client:load currentPath={currentPath} />
+        </aside>
+        <div class="min-w-0">
+          <slot />
+        </div>
       </div>
-    </div>
+    )}
   </div>
 </BaseLayout>

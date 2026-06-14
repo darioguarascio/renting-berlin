@@ -36,6 +36,7 @@ describe('buildNeighborhoodStatsFromRows', () => {
     expect(stats.rent.median).toBe(950);
     expect(stats.byCategory.shared_room).toBe(1);
     expect(stats.byCategory.full_flat).toBe(1);
+    expect(stats.byCategory.swap).toBe(0);
     expect(stats.anmeldungAvailableCount).toBe(1);
     expect(stats.noSchufaCount).toBe(1);
   });
@@ -48,7 +49,7 @@ describe('buildNeighborhoodSeoDescription', () => {
       totalListings: 12,
       rent: { min: 500, max: 1800, median: 900, average: 950 },
       size: { averageSqm: 42, averageRooms: 2 },
-      byCategory: { full_flat: 8, shared_room: 4 },
+      byCategory: { full_flat: 8, shared_room: 4, swap: 0 },
       byRentType: { long_term: 10, short_term: 2, overnight: 0 },
       anmeldungAvailableCount: 6,
       noSchufaCount: 4,

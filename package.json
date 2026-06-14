@@ -7,6 +7,7 @@
     "build": "npm run build -w apps/web",
     "postinstall": "node scripts/link-workspace-deps.mjs",
     "test": "npm run test -w apps/web",
+    "test:coverage": "npm run test:coverage -w apps/web",
     "test:integration": "npm run test:integration -w apps/web",
     "test:all": "npm run test:all -w apps/web",
     "test:db:setup": "npm run test:db:setup -w apps/web",

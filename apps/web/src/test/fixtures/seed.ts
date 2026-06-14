@@ -74,6 +74,7 @@ export async function seedTestFixtures(): Promise<TestFixtures> {
     availableTo: null,
     sizeSqm: 45,
     rooms: 2,
+    floorLevel: 2,
     onlineViewingAvailable: false,
     anmeldungAvailable: true,
     schufaRequired: false,

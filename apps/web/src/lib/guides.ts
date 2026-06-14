@@ -73,7 +73,7 @@ export const GUIDES: Guide[] = [
         ],
       },
       {
-        heading: 'Tips for internationals',
+        heading: 'Practical tips',
         paragraphs: [
           'Ask for the Wohnungsgeberbestätigung in writing before you pay a deposit. Without it, you cannot complete Anmeldung even if you already moved in.',
           'If a listing says “no Anmeldung” but you need it for visa or work, keep looking — trying to register at an ineligible address causes serious problems later.',
@@ -180,7 +180,7 @@ export const GUIDES: Guide[] = [
     slug: 'rental-documents',
     title: 'Documents landlords commonly request',
     description:
-      'The paperwork Berlin landlords expect — and how to prepare your application as an international tenant.',
+      'The paperwork Berlin landlords expect — and how to prepare a strong application.',
     category: 'search',
     readMinutes: 5,
     publishedAt: '2025-02-12',

@@ -23,7 +23,7 @@ interface Props {
 
 const {
   title = 'renting.berlin — Find your place in Berlin',
-  description = 'English-first rental marketplace for Berlin. Search flats and rooms with trust built in.',
+  description = 'Rental marketplace for Berlin. Search flats and rooms with trust built in.',
   canonical,
   ogType = 'website',
   jsonLd,
@@ -90,13 +90,14 @@ const isAuthenticated = !!initialUser;
     {jsonLdBlocks.map((block) => (
       <script type="application/ld+json" set:html={JSON.stringify(block)} />
     ))}
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <title>{title}</title>
     <script is:inline src="https://t.surl.it/api/script.js" data-site-id="5" defer></script>
   </head>
   <body class="min-h-screen flex flex-col">
-    <Header client:load initialUser={initialUser} favoriteCount={favoriteCount} unreadCount={unreadCount} />
+    <Header client:load initialUser={initialUser} favoriteCount={favoriteCount} unreadCount={unreadCount} currentPath={Astro.url.pathname} />
     <main class="flex-1">
       <slot />
     </main>
@@ -106,7 +107,7 @@ const isAuthenticated = !!initialUser;
           <div>
             <Logo client:load size="md" showTagline variant="light" />
             <p class="mt-4 max-w-xs text-sm leading-relaxed text-white/60">
-              Born from the Berlin apartment hunt nightmare. Now a full marketplace for the city's international renters.
+              Born from the Berlin apartment hunt nightmare. A marketplace built for Berliners — landlords and tenants alike.
             </p>
           </div>
           <div class="grid grid-cols-2 gap-8 sm:grid-cols-4">
@@ -151,7 +152,7 @@ const isAuthenticated = !!initialUser;
           </div>
         </div>
         <div class="mt-10 flex flex-col items-center gap-3 border-t border-white/10 pt-6 text-xs text-white/40 sm:flex-row sm:justify-between">
-          <p>© {new Date().getFullYear()} renting.berlin — Berlin rentals, built for internationals.</p>
+          <p>© {new Date().getFullYear()} renting.berlin — Berlin rentals, built for Berliners.</p>
           <a
             href={githubUrl}
             class="inline-flex items-center gap-1.5 text-white/60 transition hover:text-white"

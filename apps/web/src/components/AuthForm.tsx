@@ -79,7 +79,7 @@ export default function AuthForm({
         <p className="mt-2 text-sm text-[var(--color-ink-muted)]">
           {mode === 'login'
             ? 'Sign in to save favorites, message landlords, and publish listings.'
-            : 'Berlin rentals, English-first — built for internationals.'}
+            : 'Berlin rentals — built for Berliners.'}
         </p>
 
         {showDevLogin && mode === 'login' && (
