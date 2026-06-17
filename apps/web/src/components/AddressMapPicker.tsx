@@ -40,7 +40,13 @@ export default function AddressMapPicker({ value, onChange, addressError }: Prop
     if (markerRef.current) {
       markerRef.current.setLatLng([lat, lng]);
     } else {
-      markerRef.current = L.marker([lat, lng], { draggable: true }).addTo(leafletMap.current);
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="background:#2679a3;width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(38,121,163,0.55);cursor:grab"></div>`,
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
+      });
+      markerRef.current = L.marker([lat, lng], { draggable: true, icon }).addTo(leafletMap.current);
       markerRef.current.on('dragend', () => {
         const pos = markerRef.current?.getLatLng();
         if (pos) onChange({ ...value, lat: pos.lat, lng: pos.lng });
@@ -71,7 +77,13 @@ export default function AddressMapPicker({ value, onChange, addressError }: Prop
 
       leafletMap.current = map;
       if (value.lat && value.lng) {
-        markerRef.current = L.marker([value.lat, value.lng], { draggable: true }).addTo(map);
+        const icon = L.divIcon({
+          className: '',
+          html: `<div style="background:#2679a3;width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(38,121,163,0.55);cursor:grab"></div>`,
+          iconSize: [18, 18],
+          iconAnchor: [9, 9],
+        });
+        markerRef.current = L.marker([value.lat, value.lng], { draggable: true, icon }).addTo(map);
         markerRef.current.on('dragend', () => {
           const pos = markerRef.current?.getLatLng();
           if (pos) onChange({ ...value, lat: pos.lat, lng: pos.lng });

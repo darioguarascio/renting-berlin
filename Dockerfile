@@ -28,7 +28,7 @@ ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=4321
 
-RUN apk add --no-cache wget
+RUN apk add --no-cache wget su-exec
 
 WORKDIR /app/apps/web
 
@@ -40,21 +40,20 @@ COPY --from=build /app/apps/web/server.mjs ./server.mjs
 COPY --from=build /app/apps/web/server ./server
 COPY --from=build /app/apps/web/migrate.sh ./migrate.sh
 COPY --from=build /app/apps/web/start.sh ./start.sh
+COPY --from=build /app/apps/web/docker-entrypoint.sh ./docker-entrypoint.sh
 COPY --from=build /app/apps/web/drizzle.config.ts ./drizzle.config.ts
 COPY --from=build /app/apps/web/drizzle ./drizzle
 COPY --from=build /app/apps/web/src/db/schema.ts ./src/db/schema.ts
 COPY --from=build /app/clickhouse/schema.sql /app/clickhouse/schema.sql
 
 RUN mkdir -p public/uploads \
-  && chmod +x migrate.sh start.sh \
+  && chmod +x migrate.sh start.sh docker-entrypoint.sh \
   && chown -R node:node /app
-
-USER node
 
 EXPOSE 4321
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD wget -qO- "http://127.0.0.1:${PORT}/" >/dev/null 2>&1 || exit 1
 
-ENTRYPOINT ["/sbin/tini", "--"]
+ENTRYPOINT ["/sbin/tini", "--", "./docker-entrypoint.sh"]
 CMD ["./start.sh"]
