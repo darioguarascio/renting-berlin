@@ -70,8 +70,9 @@ export default function MyListingsPage() {
           onCancel={() => setCheckoutListing(null)}
         />
       )}
-      <div className="flex justify-end">
-        <a href="/listings/new" className="btn-brand text-sm">New listing</a>
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm text-[var(--color-ink-muted)]">{items.length} listing{items.length !== 1 ? 's' : ''}</p>
+        <a href="/listings/new" className="btn-brand text-sm">+ New listing</a>
       </div>
       <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-white">
         {items.map((listing, idx) => {

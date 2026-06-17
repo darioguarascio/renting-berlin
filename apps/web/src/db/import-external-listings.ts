@@ -10,7 +10,6 @@ import {
   type ExternalListingImport,
 } from '../lib/external-listings';
 import { indexListing } from '../lib/search';
-import { enqueueTelegramJob } from '../lib/telegram-events';
 import { setUserHandle } from '../lib/user-handle';
 import { generateShortCode, seoSlug } from '../lib/urls';
 
@@ -136,7 +135,6 @@ async function upsertExternalListing(publisherId: string, item: ExternalListingI
     ...values,
   });
   await indexListing(id);
-  await enqueueTelegramJob('new_listing', id);
   return 'inserted';
 }
 
