@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 interface PhotoUploadFieldProps {
   photoUrls: string[];
   onChange: (urls: string[]) => void;
@@ -17,25 +19,74 @@ export default function PhotoUploadField({
   uploadProgress,
   onUpload,
 }: PhotoUploadFieldProps) {
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  function handleDragOver(e: React.DragEvent, index: number) {
+    e.preventDefault();
+    if (dragIndex !== null && dragOverIndex !== index) {
+      setDragOverIndex(index);
+    }
+  }
+
+  function handleDrop(e: React.DragEvent, index: number) {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === index) {
+      setDragIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+    const next = [...photoUrls];
+    const [moved] = next.splice(dragIndex, 1);
+    next.splice(index, 0, moved);
+    onChange(next);
+    setDragIndex(null);
+    setDragOverIndex(null);
+  }
+
   return (
     <div className="space-y-4">
       <p className="text-sm text-[var(--color-ink-muted)]">{hint}</p>
       {photoUrls.length > 0 && (
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-          {photoUrls.map((url, index) => (
-            <div key={url} className="relative aspect-square overflow-hidden rounded-lg">
-              <img src={url} alt="" className="size-full object-cover" />
-              <button
-                type="button"
-                onClick={() => onChange(photoUrls.filter((_, i) => i !== index))}
-                className="absolute right-1 top-1 rounded-full bg-black/60 px-1.5 py-0.5 text-xs text-white"
-                aria-label="Remove photo"
+        <>
+          {photoUrls.length > 1 && (
+            <p className="text-xs text-[var(--color-ink-muted)]">Drag to reorder · first photo is the cover</p>
+          )}
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {photoUrls.map((url, index) => (
+              <div
+                key={url}
+                draggable
+                onDragStart={() => setDragIndex(index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDrop={(e) => handleDrop(e, index)}
+                onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+                className={[
+                  'relative aspect-square overflow-hidden rounded-lg cursor-grab active:cursor-grabbing select-none transition-opacity',
+                  dragIndex === index ? 'opacity-40' : 'opacity-100',
+                  dragOverIndex === index && dragIndex !== index
+                    ? 'ring-2 ring-[var(--color-brand)] ring-offset-1'
+                    : '',
+                ].join(' ')}
               >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
+                <img src={url} alt="" className="size-full object-cover pointer-events-none" />
+                {index === 0 && (
+                  <span className="absolute left-1 top-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                    Cover
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onChange(photoUrls.filter((_, i) => i !== index))}
+                  className="absolute right-1 top-1 rounded-full bg-black/60 px-1.5 py-0.5 text-xs text-white"
+                  aria-label="Remove photo"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
       )}
       <input
         type="file"
