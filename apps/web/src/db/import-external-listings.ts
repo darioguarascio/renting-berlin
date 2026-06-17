@@ -10,6 +10,7 @@ import {
   type ExternalListingImport,
 } from '../lib/external-listings';
 import { indexListing } from '../lib/search';
+import { enqueueTelegramJob } from '../lib/telegram-events';
 import { setUserHandle } from '../lib/user-handle';
 import { generateShortCode, seoSlug } from '../lib/urls';
 
@@ -35,7 +36,7 @@ function resolveExportPath(): string {
 
   throw new Error(
     'Export file required. Pass --file <path> or set EXTERNAL_LISTINGS_EXPORT_PATH. ' +
-      'Third-party exporters (e.g. a local Fredy instance) run this import against production DATABASE_URL.',
+      'Run the import locally against the target DATABASE_URL (e.g. from an external exporter on another host).',
   );
 }
 
@@ -135,6 +136,7 @@ async function upsertExternalListing(publisherId: string, item: ExternalListingI
     ...values,
   });
   await indexListing(id);
+  await enqueueTelegramJob('new_listing', id);
   return 'inserted';
 }
 

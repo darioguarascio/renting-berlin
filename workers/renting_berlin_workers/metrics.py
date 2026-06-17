@@ -69,6 +69,13 @@ emailsFlushedTotal = Counter(
     registry=REGISTRY,
 )
 
+postsPublishedTotal = Counter(
+    "posts_published_total",
+    "Content published and visible on the site",
+    ["type"],
+    registry=REGISTRY,
+)
+
 
 def metrics_enabled() -> bool:
     return os.environ.get("METRICS_ENABLED", "1") != "0"
@@ -138,3 +145,9 @@ def record_email_flush(count: int) -> None:
         return
     if count > 0:
         emailsFlushedTotal.labels(worker=WORKER_NAME).inc(count)
+
+
+def record_post_published(post_type: str) -> None:
+    if not metrics_enabled():
+        return
+    postsPublishedTotal.labels(type=post_type).inc()

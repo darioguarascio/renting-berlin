@@ -11,6 +11,7 @@ import { moderateImageUrl } from './moderation/image-scorer';
 import { moderateText } from './moderation/text-scorer';
 import { indexListing, removeListingFromIndex } from './search';
 import type { ModerationVerdict } from './moderation/text-scorer';
+import { recordPostPublished } from './record-post-published';
 
 type ModerationField = 'title' | 'description' | 'photo';
 
@@ -86,6 +87,7 @@ async function moderateListing(listingId: string): Promise<void> {
     await enqueueNotificationJob('new_listing', listingId);
     await enqueueTelegramJob('new_listing', listingId);
     if (row.moderationStatus !== 'approved') {
+      void recordPostPublished('listing');
       void notifyListingActivityEmail({
         publisherId: row.publisherId,
         title: 'Your listing is live',
@@ -144,6 +146,9 @@ async function moderateTenantRequest(requestId: string): Promise<void> {
   if (moderationStatus === 'approved' && row.status === 'active') {
     await enqueueNotificationJob('new_tenant_request', requestId);
     await enqueueTelegramJob('new_tenant_request', requestId);
+    if (row.moderationStatus !== 'approved') {
+      void recordPostPublished('tenant_request');
+    }
   }
 }
 
@@ -189,12 +194,16 @@ export async function requestListingModeration(listingId: string): Promise<void>
     await indexListing(listingId);
     await enqueueNotificationJob('new_listing', listingId);
     await enqueueTelegramJob('new_listing', listingId);
-    void notifyListingActivityEmail({
-      publisherId: row.publisherId,
-      title: 'Your listing is live',
-      body: `${row.title} is now visible in search.`,
-      link: listingHref(row.slug, row.shortCode),
-    }).catch(() => {});
+    void recordPostPublished('listing');
+    const row = await db.query.listings.findFirst({ where: eq(listings.id, listingId) });
+    if (row) {
+      void notifyListingActivityEmail({
+        publisherId: row.publisherId,
+        title: 'Your listing is live',
+        body: `${row.title} is now visible in search.`,
+        link: listingHref(row.slug, row.shortCode),
+      }).catch(() => {});
+    }
     return;
   }
 
@@ -215,6 +224,7 @@ export async function requestTenantRequestModeration(requestId: string): Promise
       .where(eq(tenantRequests.id, requestId));
     await enqueueNotificationJob('new_tenant_request', requestId);
     await enqueueTelegramJob('new_tenant_request', requestId);
+    void recordPostPublished('tenant_request');
     return;
   }
 

@@ -448,6 +448,67 @@
       ],
       "title": "Email pipeline",
       "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 55 },
+      "id": 103,
+      "title": "Content",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "showPoints": "auto",
+            "stacking": { "mode": "normal" }
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 56 },
+      "id": 13,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "expr": "sum by (type) (rate(posts_published_total{job=~\"renting-berlin-web|renting-berlin-workers\"}[$__rate_interval])) * 3600",
+          "legendFormat": "{{type}} / hour",
+          "refId": "A"
+        }
+      ],
+      "title": "Posts published over time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false }
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 56 },
+      "id": 14,
+      "options": { "legend": { "displayMode": "table", "placement": "right" }, "pieType": "donut", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [
+        {
+          "expr": "sum by (type) (increase(posts_published_total{job=~\"renting-berlin-web|renting-berlin-workers\"}[$__range]))",
+          "legendFormat": "{{type}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Posts published (selected range)",
+      "type": "piechart"
     }
   ],
   "refresh": "30s",
@@ -461,5 +522,5 @@
   "timezone": "browser",
   "title": "renting.berlin",
   "uid": "renting-berlin",
-  "version": 1
+  "version": 2
 }

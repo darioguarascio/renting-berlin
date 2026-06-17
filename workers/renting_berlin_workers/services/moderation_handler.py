@@ -6,6 +6,7 @@ from typing import Any
 from ..config import REDIS_KEYS
 from ..db import cursor
 from ..ids import new_id
+from ..metrics import record_post_published
 from ..redis_client import enqueue_stream_event
 from .moderation.image import moderate_image_url
 from .moderation.text import ModerationVerdict, moderate_text
@@ -99,6 +100,8 @@ def moderate_listing(listing_id: str) -> None:
             REDIS_KEYS["telegram_events"],
             {"type": "new_listing", "entityId": listing_id},
         )
+        if row["moderation_status"] != "approved":
+            record_post_published("listing")
         return
 
     remove_listing_from_index(listing_id)
@@ -149,6 +152,8 @@ def moderate_tenant_request(request_id: str) -> None:
             REDIS_KEYS["telegram_events"],
             {"type": "new_tenant_request", "entityId": request_id},
         )
+        if row["moderation_status"] != "approved":
+            record_post_published("tenant_request")
 
 
 def moderate_uploaded_image(photo_url: str) -> None:

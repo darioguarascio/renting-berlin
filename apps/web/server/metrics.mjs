@@ -33,6 +33,13 @@ const emailSendDurationSeconds = new promClient.Histogram({
   registers: [register],
 });
 
+const postsPublishedTotal = new promClient.Counter({
+  name: 'posts_published_total',
+  help: 'Content published and visible on the site',
+  labelNames: ['type'],
+  registers: [register],
+});
+
 function normalizeRoute(path) {
   return path
     .replace(/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '/:id')
@@ -93,4 +100,9 @@ export function recordEmailSend(category, status, durationSeconds) {
   if (durationSeconds != null) {
     emailSendDurationSeconds.observe(labels, durationSeconds);
   }
+}
+
+export function recordPostPublished(type) {
+  if (!metricsEnabled()) return;
+  postsPublishedTotal.inc({ type });
 }
