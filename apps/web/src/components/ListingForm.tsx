@@ -19,6 +19,7 @@ import {
 } from '../types/listing';
 import type { Equipment, FloorLevel, ListingCategory, RentType, RequiredDocument } from '../types/listing';
 import type { ListingFieldErrors } from '../lib/listing-form-validation';
+import { trackEvent } from '../lib/rybbit';
 import {
   formatListingApiError,
   pickValidListingPatch,
