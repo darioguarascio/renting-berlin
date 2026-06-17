@@ -248,6 +248,7 @@ const breadcrumbJsonLd = buildListingBreadcrumbJsonLd({
             client:load
             listingId={listing.id}
             publisherName={publisher?.name ?? 'landlord'}
+            hidePublisherName={listing.hidePublisherName}
             sourceType={listing.sourceType}
             externalUrl={listing.externalUrl}
             externalProvider={listing.externalProvider}

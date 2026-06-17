@@ -5,6 +5,7 @@ import { authEntryUrl } from '../lib/public-routes';
 interface Props {
   listingId: string;
   publisherName: string;
+  hidePublisherName?: boolean;
   sourceType?: 'native' | 'external';
   externalUrl?: string | null;
   externalProvider?: string | null;
@@ -15,6 +16,7 @@ interface Props {
 export default function ContactButton({
   listingId,
   publisherName,
+  hidePublisherName = false,
   sourceType = 'native',
   externalUrl,
   externalProvider,
@@ -55,7 +57,7 @@ export default function ContactButton({
       onClick={() => trackEvent('Contact Started', { context: 'listing' })}
       className="btn-brand mt-6 block w-full text-center"
     >
-      {isAuthenticated ? `Contact ${publisherName}` : 'Sign up to contact'}
+      {isAuthenticated ? `Contact ${hidePublisherName ? 'landlord' : publisherName}` : 'Sign up to contact'}
     </a>
   );
 }

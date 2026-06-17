@@ -55,6 +55,7 @@ interface FormState {
   requiredDocumentsOther: string;
   equipment: Equipment[];
   photoUrls: string[];
+  hidePublisherName: boolean;
 }
 
 const SECTIONS = [
@@ -97,6 +98,7 @@ const initialState: FormState = {
   requiredDocumentsOther: '',
   equipment: [],
   photoUrls: [],
+  hidePublisherName: false,
 };
 
 export default function ListingForm({ listingId, reactivate = false }: { listingId?: string; reactivate?: boolean }) {
@@ -146,6 +148,7 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
             lng: row.lng,
             approximateLocation: row.approximateLocation,
           },
+          hidePublisherName: row.hidePublisherName,
           costs: {
             rentPerMonth: row.costs.rentPerMonth,
             utilities: row.costs.utilities ?? 0,
@@ -253,6 +256,7 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
       lat: form.location.lat,
       lng: form.location.lng,
       approximateLocation: form.location.approximateLocation,
+      hidePublisherName: form.hidePublisherName,
       costs: {
         rentPerMonth: form.costs.rentPerMonth,
         utilities: form.costs.utilities || undefined,
@@ -600,6 +604,18 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
               onChange={updateLocation}
               addressError={fieldErrors.address}
             />
+            <div className="mt-4 space-y-2 border-t border-[var(--color-border)] pt-4">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-ink-muted)]">Privacy</p>
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.hidePublisherName}
+                  onChange={(e) => update('hidePublisherName', e.target.checked)}
+                  className="size-4 rounded border-[var(--color-border)]"
+                />
+                Hide my name — show "landlord" instead on the public listing
+              </label>
+            </div>
           </FormSection>
 
           <FormSection title={SECTIONS[2].label} step={3}>

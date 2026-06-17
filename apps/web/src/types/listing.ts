@@ -113,6 +113,7 @@ export interface ListingDetail extends ListingSummary {
   photoUrls: string[];
   publisherId: string;
   publisherName: string;
+  hidePublisherName: boolean;
   sourceType: ListingSource;
   externalUrl: string | null;
   externalProvider: string | null;

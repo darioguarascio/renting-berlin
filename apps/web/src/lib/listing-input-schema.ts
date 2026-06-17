@@ -30,6 +30,7 @@ export const listingInputSchema = z.object({
   lat: z.number().min(52.3).max(52.7),
   lng: z.number().min(13.0).max(13.8),
   approximateLocation: z.boolean().default(false),
+  hidePublisherName: z.boolean().default(false),
   costs: z.object({
     rentPerMonth: z.number().int().min(0),
     utilities: z.number().int().min(0).optional(),
