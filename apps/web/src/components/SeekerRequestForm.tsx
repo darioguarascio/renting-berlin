@@ -65,6 +65,7 @@ export default function SeekerRequestForm() {
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [visibility, setVisibility] = useState<SeekerVisibility>('everyone');
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -83,14 +84,16 @@ export default function SeekerRequestForm() {
   async function uploadPhotos(files: FileList | null) {
     if (!files || files.length === 0) return;
     setUploading(true);
+    setUploadProgress(0);
     setError('');
     try {
-      const urls = await uploadPhotosToApi(files, photoUrls.length, 10);
+      const urls = await uploadPhotosToApi(files, photoUrls.length, 10, setUploadProgress);
       setPhotoUrls((prev) => [...prev, ...urls]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   }
 
@@ -360,6 +363,7 @@ export default function SeekerRequestForm() {
                 : 'Up to 10 photos. Only shown to viewers who match your visibility setting.'
             }
             uploading={uploading}
+            uploadProgress={uploadProgress}
             onUpload={uploadPhotos}
           />
         </FormSection>

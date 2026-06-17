@@ -104,6 +104,7 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
   const [currentStatus, setCurrentStatus] = useState<string>('draft');
   const [loadingListing, setLoadingListing] = useState(Boolean(listingId));
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [fieldErrors, setFieldErrors] = useState<ListingFieldErrors>({});
@@ -220,14 +221,16 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
   async function uploadPhotos(files: FileList | null) {
     if (!files || files.length === 0) return;
     setUploading(true);
+    setUploadProgress(0);
     setError('');
     try {
-      const urls = await uploadPhotosToApi(files, form.photoUrls.length, 20);
+      const urls = await uploadPhotosToApi(files, form.photoUrls.length, 20, setUploadProgress);
       update('photoUrls', [...form.photoUrls, ...urls]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   }
 
@@ -732,6 +735,7 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
               maxPhotos={20}
               hint="Up to 20 photos. First photo is used as the cover image."
               uploading={uploading}
+              uploadProgress={uploadProgress}
               onUpload={uploadPhotos}
             />
             {needsCopyrightConfirm && (
