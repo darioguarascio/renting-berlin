@@ -40,6 +40,7 @@ export default defineConfig({
   ...(normalizedSiteUrl ? { site: normalizedSiteUrl } : {}),
 
   security: {
+    checkOrigin: false,
     allowedDomains: getAllowedDomains(),
   },
 
