@@ -4,6 +4,7 @@ import type { ListingFeedbackSummary } from '../lib/feedback';
 interface Props {
   summary: ListingFeedbackSummary;
   publisherName: string;
+  reviewerNamesHidden?: boolean;
 }
 
 const INITIAL_VISIBLE = 4;
@@ -64,7 +65,7 @@ function formatReviewDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
 }
 
-export default function ListingFeedbackSection({ summary, publisherName }: Props) {
+export default function ListingFeedbackSection({ summary, publisherName, reviewerNamesHidden }: Props) {
   const [showAll, setShowAll] = useState(false);
 
   const visibleReviews = showAll ? summary.reviews : summary.reviews.slice(0, INITIAL_VISIBLE);
@@ -122,17 +123,32 @@ export default function ListingFeedbackSection({ summary, publisherName }: Props
         </div>
       </div>
 
+      {reviewerNamesHidden && (
+        <p className="mb-4 flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 py-2 text-xs text-[var(--color-ink-muted)]">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-3.5 shrink-0 text-[var(--color-brand)]" aria-hidden>
+            <path fillRule="evenodd" d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A1.5 1.5 0 0 0 3 8.5v4A1.5 1.5 0 0 0 4.5 14h7a1.5 1.5 0 0 0 1.5-1.5v-4A1.5 1.5 0 0 0 11 7V4.5A3.5 3.5 0 0 0 8 1Zm2 6V4.5a2 2 0 1 0-4 0V7h4Z" clipRule="evenodd" />
+          </svg>
+          Reviewer names are private. Start a conversation — names become visible once the landlord replies.
+        </p>
+      )}
+
       <div className="listing-reviews__grid">
         {visibleReviews.map((review) => (
           <article key={review.id} className="listing-reviews__card">
             <div className="listing-reviews__card-header">
               {review.authorImage ? (
                 <img src={review.authorImage} alt="" className="listing-reviews__avatar" />
-              ) : (
+              ) : review.authorName ? (
                 <span className="listing-reviews__avatar-fallback">{review.authorName[0]}</span>
+              ) : (
+                <span className="listing-reviews__avatar-fallback">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-4" aria-hidden>
+                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
+                  </svg>
+                </span>
               )}
               <div className="min-w-0">
-                <p className="font-semibold text-[var(--color-ink)]">{review.authorName}</p>
+                <p className="font-semibold text-[var(--color-ink)]">{review.authorName ?? 'Verified tenant'}</p>
                 <p className="text-xs text-[var(--color-ink-muted)]">
                   {review.stayedLabel ?? formatReviewDate(review.createdAt)}
                 </p>

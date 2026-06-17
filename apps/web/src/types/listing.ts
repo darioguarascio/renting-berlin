@@ -114,6 +114,7 @@ export interface ListingDetail extends ListingSummary {
   publisherId: string;
   publisherName: string;
   hidePublisherName: boolean;
+  hideReviewerNames: boolean;
   sourceType: ListingSource;
   externalUrl: string | null;
   externalProvider: string | null;

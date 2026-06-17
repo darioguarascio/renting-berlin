@@ -5,7 +5,7 @@ import { db } from '../../db';
 import { users } from '../../db/schema';
 import { getListingByPath } from '../../lib/listings';
 import { recordListingView } from '../../lib/listing-views';
-import { getPublishedListingFeedback, type ListingFeedbackSummary } from '../../lib/feedback';
+import { getPublishedListingFeedback, hasLandlordReplied, redactReviewerNames, type ListingFeedbackSummary } from '../../lib/feedback';
 import { buildListingPath, listingHref } from '../../lib/urls';
 import { externalProviderLabel } from '../../lib/external-listings';
 import {
@@ -60,6 +60,19 @@ if (listing.status !== 'active' || (listing.moderationStatus !== 'approved' && !
 
 if (session && !isPublisher) {
   void recordListingView(listing.id, session.user.id).catch(() => {});
+}
+
+let reviewerNamesHidden = false;
+if (listing.hideReviewerNames && feedbackSummary.totalCount > 0) {
+  const viewerCanSeeNames =
+    isPublisher ||
+    (session
+      ? await hasLandlordReplied(listing.id, listing.publisherId, session.user.id).catch(() => false)
+      : false);
+  if (!viewerCanSeeNames) {
+    feedbackSummary = redactReviewerNames(feedbackSummary);
+    reviewerNamesHidden = true;
+  }
 }
 
 const canonicalPath = buildListingPath(listing.slug, listing.shortCode);
@@ -189,6 +202,7 @@ const breadcrumbJsonLd = buildListingBreadcrumbJsonLd({
               client:load
               summary={feedbackSummary}
               publisherName={publisher?.name ?? 'the landlord'}
+              reviewerNamesHidden={reviewerNamesHidden}
             />
           )}
         </div>

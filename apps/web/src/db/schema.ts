@@ -134,6 +134,7 @@ export const listings = pgTable(
     lng: doublePrecision('lng').notNull(),
     approximateLocation: boolean('approximate_location').notNull().default(false),
     hidePublisherName: boolean('hide_publisher_name').notNull().default(false),
+    hideReviewerNames: boolean('hide_reviewer_names').notNull().default(false),
     costs: jsonb('costs').notNull().$type<{
       rentPerMonth: number;
       utilities?: number;

@@ -35,6 +35,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     lng: row.lng,
     approximateLocation: row.approximateLocation,
     hidePublisherName: row.hidePublisherName,
+    hideReviewerNames: row.hideReviewerNames,
     costs: row.costs,
     descriptions: row.descriptions,
     requiredDocuments: row.requiredDocuments,

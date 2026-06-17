@@ -1,13 +1,13 @@
 import { and, eq, inArray, lte } from 'drizzle-orm';
 import { db } from '../db';
-import { feedback, rentalTransactions, users } from '../db/schema';
+import { conversations, feedback, messages, rentalTransactions, users } from '../db/schema';
 
 export interface PublishedReview {
   id: string;
   rating: number;
   comment: string | null;
   createdAt: string;
-  authorName: string;
+  authorName: string | null;
   authorImage: string | null;
   stayedLabel: string | null;
 }
@@ -110,6 +110,34 @@ export async function getPublishedListingFeedback(listingId: string): Promise<Li
   const averageRating = totalCount > 0 ? Math.round((ratingSum / totalCount) * 10) / 10 : null;
 
   return { averageRating, totalCount, distribution, reviews };
+}
+
+export function redactReviewerNames(summary: ListingFeedbackSummary): ListingFeedbackSummary {
+  return {
+    ...summary,
+    reviews: summary.reviews.map((r) => ({ ...r, authorName: null, authorImage: null })),
+  };
+}
+
+export async function hasLandlordReplied(
+  listingId: string,
+  publisherId: string,
+  viewerId: string,
+): Promise<boolean> {
+  const rows = await db
+    .select({ id: messages.id })
+    .from(messages)
+    .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+    .where(
+      and(
+        eq(conversations.listingId, listingId),
+        eq(conversations.publisherId, publisherId),
+        eq(conversations.inquirerId, viewerId),
+        eq(messages.senderId, publisherId),
+      ),
+    )
+    .limit(1);
+  return rows.length > 0;
 }
 
 export async function getPublishedLandlordFeedback(landlordId: string): Promise<ListingFeedbackSummary> {

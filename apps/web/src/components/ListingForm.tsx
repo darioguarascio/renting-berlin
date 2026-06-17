@@ -56,6 +56,7 @@ interface FormState {
   equipment: Equipment[];
   photoUrls: string[];
   hidePublisherName: boolean;
+  hideReviewerNames: boolean;
 }
 
 const SECTIONS = [
@@ -99,6 +100,7 @@ const initialState: FormState = {
   equipment: [],
   photoUrls: [],
   hidePublisherName: false,
+  hideReviewerNames: false,
 };
 
 export default function ListingForm({ listingId, reactivate = false }: { listingId?: string; reactivate?: boolean }) {
@@ -149,6 +151,7 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
             approximateLocation: row.approximateLocation,
           },
           hidePublisherName: row.hidePublisherName,
+          hideReviewerNames: row.hideReviewerNames,
           costs: {
             rentPerMonth: row.costs.rentPerMonth,
             utilities: row.costs.utilities ?? 0,
@@ -257,6 +260,7 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
       lng: form.location.lng,
       approximateLocation: form.location.approximateLocation,
       hidePublisherName: form.hidePublisherName,
+      hideReviewerNames: form.hideReviewerNames,
       costs: {
         rentPerMonth: form.costs.rentPerMonth,
         utilities: form.costs.utilities || undefined,
@@ -614,6 +618,15 @@ export default function ListingForm({ listingId, reactivate = false }: { listing
                   className="size-4 rounded border-[var(--color-border)]"
                 />
                 Hide my name — show "landlord" instead on the public listing
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.hideReviewerNames}
+                  onChange={(e) => update('hideReviewerNames', e.target.checked)}
+                  className="size-4 rounded border-[var(--color-border)]"
+                />
+                Hide reviewer names — only reveal them to people I've replied to
               </label>
             </div>
           </FormSection>
