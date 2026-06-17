@@ -34,6 +34,7 @@ if (metricsEnabled()) {
 }
 
 app.use(express.static(path.join(rootDir, 'dist/client')));
+app.use('/uploads', express.static(path.join(rootDir, 'public/uploads')));
 app.use(ssrHandler);
 
 app.listen(port, host, () => {
