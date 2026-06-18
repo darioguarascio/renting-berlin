@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { trackEvent } from '../lib/rybbit';
+import MarkdownContent from './MarkdownContent';
 
 type AgreementStatus = 'proposed' | 'signed' | 'declined' | 'withdrawn';
 
@@ -753,9 +754,7 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
                             </button>
                           </div>
                           <div className="max-h-[48vh] overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-paper)] px-4 py-3 lg:max-h-[60vh]">
-                            <pre className="whitespace-pre-wrap break-words font-sans text-[13px] leading-relaxed text-[var(--color-ink)]">
-                              {documentMd}
-                            </pre>
+                            <MarkdownContent markdown={documentMd} />
                           </div>
                         </div>
                       ) : (

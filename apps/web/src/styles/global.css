@@ -2491,3 +2491,110 @@ input[type="number"]::-webkit-outer-spin-button {
   border: 1px solid var(--color-brand-light);
   padding: 1rem 1.25rem;
 }
+
+/* ─── Rendered markdown (agreement documents) ── */
+.markdown-document {
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: var(--color-ink);
+}
+
+.markdown-document > :first-child {
+  margin-top: 0;
+}
+
+.markdown-document > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown-document h1 {
+  margin: 0 0 1rem;
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-ink);
+}
+
+.markdown-document h2 {
+  margin: 1.5rem 0 0.625rem;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--color-ink);
+}
+
+.markdown-document h3 {
+  margin: 1.125rem 0 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--color-ink);
+}
+
+.markdown-document p {
+  margin: 0.625rem 0;
+}
+
+.markdown-document strong {
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.markdown-document ul,
+.markdown-document ol {
+  margin: 0.625rem 0;
+  padding-left: 1.375rem;
+}
+
+.markdown-document li {
+  margin: 0.25rem 0;
+}
+
+.markdown-document li > p {
+  margin: 0.25rem 0;
+}
+
+.markdown-document blockquote {
+  margin: 1rem 0 0;
+  border-left: 3px solid var(--color-brand-light);
+  padding: 0.625rem 0 0.625rem 0.875rem;
+  font-size: 0.8125rem;
+  color: var(--color-ink-muted);
+}
+
+.markdown-document table {
+  width: 100%;
+  margin: 1rem 0;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.markdown-document th,
+.markdown-document td {
+  border: 1px solid var(--color-border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown-document th {
+  background: var(--color-paper);
+  font-weight: 600;
+}
+
+.markdown-document hr {
+  margin: 1.25rem 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.markdown-document a {
+  color: var(--color-brand-deep);
+  text-decoration: underline;
+}
+
+.markdown-document a:hover {
+  color: var(--color-brand);
+}
