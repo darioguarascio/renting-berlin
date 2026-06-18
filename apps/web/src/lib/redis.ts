@@ -27,6 +27,7 @@ export function getRedis(): Redis {
 
 export const REDIS_KEYS = {
   listingsIndex: 'listings:active',
+  listingsIndexReady: 'listings:active:ready',
   listingData: (id: string) => `listing:${id}`,
   geoIndex: 'listings:geo',
   favorites: (userId: string) => `favorites:${userId}`,

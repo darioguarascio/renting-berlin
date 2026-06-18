@@ -39,6 +39,7 @@ vi.mock('./redis', () => ({
   getRedis,
   REDIS_KEYS: {
     listingsIndex: 'listings',
+    listingsIndexReady: 'listings:ready',
     geoIndex: 'geo',
     listingData: (id: string) => `listing:${id}`,
     searchCache: (key: string) => `search:${key}`,
@@ -182,7 +183,7 @@ describe('searchListings', () => {
   });
 
   it('searches redis and paginates results', async () => {
-    redisGet.mockResolvedValue(null);
+    redisGet.mockImplementation((key: string) => Promise.resolve(key === 'listings:ready' ? '1' : null));
     redisSmembers.mockResolvedValue(['listing_1', 'listing_2']);
     pipelineExec.mockResolvedValue([
       [null, JSON.stringify(baseItem)],
@@ -204,6 +205,17 @@ describe('searchListings', () => {
 
     expect(result.total).toBe(1);
     expect(result.items[0]?.id).toBe('listing_1');
+  });
+
+  it('ignores a not-yet-warmed index and serves from postgres', async () => {
+    redisGet.mockResolvedValue(null);
+    redisSmembers.mockResolvedValue(['listing_1']);
+    findMany.mockResolvedValue([mockListingRow]);
+
+    const result = await searchListings({ neighborhood: 'kreuzberg' });
+
+    expect(result.total).toBe(1);
+    expect(redisSmembers).not.toHaveBeenCalled();
   });
 });
 

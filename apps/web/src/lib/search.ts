@@ -79,14 +79,35 @@ export async function warmListingCache(): Promise<number> {
     pipeline.geoadd(REDIS_KEYS.geoIndex, row.lng, row.lat, row.id);
   }
 
+  pipeline.set(REDIS_KEYS.listingsIndexReady, '1');
   await pipeline.exec();
   return rows.length;
+}
+
+let warmInFlight: Promise<number> | null = null;
+
+function warmListingCacheOnce(): Promise<number> {
+  if (!warmInFlight) {
+    warmInFlight = warmListingCache().finally(() => {
+      warmInFlight = null;
+    });
+  }
+  return warmInFlight;
 }
 
 async function searchFromRedis(filters: ListingSearchFilters): Promise<ListingSummary[] | null> {
   try {
     await connectRedis();
     const redis = getRedis();
+    // The index is maintained incrementally (by both the web app and workers), so
+    // a single index op after a Redis flush/restart can leave a partial set that
+    // would silently hide listings. Only trust the index once it has been fully
+    // warmed; otherwise rebuild it in the background and serve from Postgres.
+    const ready = await redis.get(REDIS_KEYS.listingsIndexReady);
+    if (!ready) {
+      void warmListingCacheOnce().catch(() => {});
+      return null;
+    }
     const ids = await redis.smembers(REDIS_KEYS.listingsIndex);
     if (ids.length === 0) return null;
 
