@@ -37,6 +37,8 @@ REDIS_KEYS = {
     "moderation_workers": "moderation-workers",
     "telegram_events": "telegram:events",
     "telegram_workers": "telegram-workers",
+    "agreement_events": "agreements:events",
+    "agreement_workers": "agreement-workers",
     "telegram_pending_listings": "telegram:pending:listings",
     "telegram_pending_seekers": "telegram:pending:seekers",
     "telegram_last_digest_at": "telegram:last_digest_at",

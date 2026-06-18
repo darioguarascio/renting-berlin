@@ -41,6 +41,8 @@ export const REDIS_KEYS = {
   moderationWorkers: 'moderation-workers',
   telegramEvents: 'telegram:events',
   telegramWorkers: 'telegram-workers',
+  agreementEvents: 'agreements:events',
+  agreementWorkers: 'agreement-workers',
 } as const;
 
 export async function connectRedis(): Promise<void> {

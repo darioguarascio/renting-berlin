@@ -4,15 +4,27 @@ import { db } from '../db';
 import { agreements, conversations, listings, messages, users } from '../db/schema';
 import { parseDate } from './dates';
 import { sendMessage } from './messages';
+import type { MessageMetadata } from '../types/message';
+import { enqueueAgreementJob } from './agreement-events';
 import {
+  buildSubleaseContractData,
+  renderSubleaseContractMarkdown,
+  type ClauseId,
+} from './agreement-contract';
+import {
+  contractPreviewSchema,
   DEFAULT_REJECTION_MESSAGE,
   proposeAgreementSchema,
   type AgreementAction,
+  type AgreementContractConfig,
   type ProposeAgreementInput,
   type RejectOthersInput,
 } from './agreement-schema';
 
 export { DEFAULT_REJECTION_MESSAGE };
+
+type ListingRow = typeof listings.$inferSelect;
+type UserRow = typeof users.$inferSelect;
 
 type AgreementRow = typeof agreements.$inferSelect;
 type ConversationRow = typeof conversations.$inferSelect;
@@ -41,6 +53,7 @@ export type AgreementDTO = {
   createdAt: string;
   viewerIsProposer: boolean;
   viewerHasSigned: boolean;
+  hasContractDocument: boolean;
 };
 
 function toAgreementDTO(row: AgreementRow, viewerId: string): AgreementDTO {
@@ -65,6 +78,7 @@ function toAgreementDTO(row: AgreementRow, viewerId: string): AgreementDTO {
     createdAt: row.createdAt.toISOString(),
     viewerIsProposer,
     viewerHasSigned: viewerIsProposer || row.status === 'signed',
+    hasContractDocument: Boolean(row.contractMarkdown),
   };
 }
 
@@ -84,6 +98,128 @@ async function getLatestAgreement(conversationId: string): Promise<AgreementRow 
     where: eq(agreements.conversationId, conversationId),
     orderBy: [desc(agreements.createdAt)],
   });
+}
+
+type ContractCore = {
+  monthlyRent: number;
+  deposit: number | null;
+  startDate?: string;
+  endDate?: string | null;
+  terms?: string | null;
+};
+
+async function loadContractParticipants(conv: ConversationRow) {
+  const [publisher, inquirer, listing] = await Promise.all([
+    db.query.users.findFirst({ where: eq(users.id, conv.publisherId) }),
+    db.query.users.findFirst({ where: eq(users.id, conv.inquirerId) }),
+    conv.listingId
+      ? db.query.listings.findFirst({ where: eq(listings.id, conv.listingId) })
+      : Promise.resolve(undefined),
+  ]);
+  return { publisher, inquirer, listing };
+}
+
+/**
+ * Builds the full sublease contract markdown. The listing publisher is treated
+ * as the main tenant (sublessor) and the inquirer as the subtenant.
+ */
+function assembleContractMarkdown(
+  publisher: UserRow | undefined,
+  inquirer: UserRow | undefined,
+  listing: ListingRow | null | undefined,
+  core: ContractCore,
+  config: AgreementContractConfig | null,
+): string {
+  const data = buildSubleaseContractData({
+    mainTenant: { name: publisher?.name ?? 'Main Tenant', email: publisher?.email },
+    subtenant: { name: inquirer?.name ?? 'Subtenant', email: inquirer?.email },
+    property: {
+      address: config?.propertyAddress || listing?.address || '',
+      floor: config?.floor ?? (listing?.floorLevel != null ? `floor ${listing.floorLevel}` : undefined),
+      district: config?.district || listing?.neighborhood || undefined,
+      rooms: config?.rooms ?? listing?.rooms ?? undefined,
+      ancillaryRooms: config?.ancillaryRooms,
+    },
+    monthlyRent: core.monthlyRent,
+    operatingCostsAdvance: config?.operatingCostsAdvance,
+    deposit: core.deposit,
+    startDate: core.startDate,
+    endDate: core.endDate,
+    fixedTermReason: config?.fixedTermReason,
+    additionalTerms: core.terms,
+    keys: config?.keys,
+    houseRules: config?.houseRules,
+    bank: config?.bank,
+    placeAndDate: config?.placeAndDate,
+    disabledClauses: config?.disabledClauses as ClauseId[] | undefined,
+  });
+  return renderSubleaseContractMarkdown(data);
+}
+
+/**
+ * Freezes the rendered contract on the signed agreement and enqueues the worker
+ * that turns it into a PDF and emails both parties. Best-effort.
+ */
+async function finalizeSignedContract(row: AgreementRow): Promise<void> {
+  const conv = await db.query.conversations.findFirst({
+    where: eq(conversations.id, row.conversationId),
+  });
+  if (!conv) return;
+
+  const { publisher, inquirer, listing } = await loadContractParticipants(conv);
+  const markdown = assembleContractMarkdown(
+    publisher,
+    inquirer,
+    listing,
+    {
+      monthlyRent: row.monthlyRent,
+      deposit: row.deposit,
+      startDate: row.startDate.toISOString().slice(0, 10),
+      endDate: row.endDate ? row.endDate.toISOString().slice(0, 10) : null,
+      terms: row.terms,
+    },
+    row.contractConfig ?? null,
+  );
+
+  await db
+    .update(agreements)
+    .set({ contractMarkdown: markdown, updatedAt: new Date() })
+    .where(eq(agreements.id, row.id));
+
+  await enqueueAgreementJob({ type: 'signed', agreementId: row.id });
+}
+
+export async function renderAgreementContractPreview(
+  conversationId: string,
+  userId: string,
+  rawInput: unknown,
+): Promise<string> {
+  const input = contractPreviewSchema.parse(rawInput);
+  const conv = await requireParticipant(conversationId, userId);
+  const { publisher, inquirer, listing } = await loadContractParticipants(conv);
+  return assembleContractMarkdown(
+    publisher,
+    inquirer,
+    listing,
+    {
+      monthlyRent: input.monthlyRent,
+      deposit: input.deposit,
+      startDate: input.startDate,
+      endDate: input.endDate,
+      terms: input.terms,
+    },
+    input.contract ?? null,
+  );
+}
+
+export async function getAgreementContractMarkdown(
+  agreementId: string,
+  userId: string,
+): Promise<string | null> {
+  const row = await db.query.agreements.findFirst({ where: eq(agreements.id, agreementId) });
+  if (!row) return null;
+  if (row.proposerId !== userId && row.counterpartyId !== userId) return null;
+  return row.contractMarkdown ?? null;
 }
 
 /** Conversations about the same listing held by this landlord that actually have messages. */
@@ -133,6 +269,12 @@ export type AgreementContext = {
     deposit: number | null;
     startDate: string;
     endDate: string | null;
+  };
+  contractDefaults: {
+    propertyAddress: string;
+    district: string;
+    floor: string;
+    rooms: number | null;
   };
 };
 
@@ -189,6 +331,12 @@ export async function getConversationAgreementContext(
     canPropose,
     rejectableCount,
     defaults,
+    contractDefaults: {
+      propertyAddress: listing?.address ?? '',
+      district: listing?.neighborhood ?? '',
+      floor: listing?.floorLevel != null ? `floor ${listing.floorLevel}` : '',
+      rooms: listing?.rooms ?? null,
+    },
   };
 }
 
@@ -229,13 +377,15 @@ export async function proposeAgreement(
       terms: input.terms?.trim() ? input.terms.trim() : null,
       proposerSignatureName: input.signatureName,
       proposerSignedAt: new Date(),
+      contractConfig: input.contract ?? null,
     })
     .returning();
 
   await postSystemMessage(
     conversationId,
     userId,
-    `📄 Proposed a rental agreement: “${row.title}”. Open it from the banner above to review and sign.`,
+    `📄 Proposed a rental agreement: “${row.title}”. Review the terms and sign to make it binding.`,
+    { type: 'agreement', agreementId: row.id, event: 'proposed' },
   );
 
   if (input.rejectOthers && conv.listingId && conv.publisherId === userId) {
@@ -279,10 +429,18 @@ export async function actOnAgreement(
       })
       .where(eq(agreements.id, agreementId))
       .returning();
+    // Freeze the contract document and hand off PDF generation + email to the
+    // worker. Never let this block the signature itself.
+    try {
+      await finalizeSignedContract(updated);
+    } catch {
+      // best-effort; the agreement is still binding without the PDF email
+    }
     await postSystemMessage(
       row.conversationId,
       userId,
-      `✅ Signed the agreement “${row.title}”. It is now binding for both parties.`,
+      `✅ Signed the agreement “${row.title}”. It is now binding for both parties. A signed PDF copy is on its way to both inboxes.`,
+      { type: 'agreement', agreementId: row.id, event: 'signed' },
     );
     return toAgreementDTO(updated, userId);
   }
@@ -305,6 +463,7 @@ export async function actOnAgreement(
       row.conversationId,
       userId,
       `❌ Declined the proposed agreement “${row.title}”.`,
+      { type: 'agreement', agreementId: row.id, event: 'declined' },
     );
     return toAgreementDTO(updated, userId);
   }
@@ -322,6 +481,7 @@ export async function actOnAgreement(
     row.conversationId,
     userId,
     `↩️ Withdrew the proposed agreement “${row.title}”.`,
+    { type: 'agreement', agreementId: row.id, event: 'withdrawn' },
   );
   return toAgreementDTO(updated, userId);
 }
@@ -355,9 +515,14 @@ export async function rejectOtherListingConversations(
   return { count };
 }
 
-async function postSystemMessage(conversationId: string, senderId: string, body: string) {
+async function postSystemMessage(
+  conversationId: string,
+  senderId: string,
+  body: string,
+  metadata?: MessageMetadata,
+) {
   try {
-    await sendMessage(conversationId, senderId, body);
+    await sendMessage(conversationId, senderId, body, metadata ? { metadata } : undefined);
   } catch {
     // A failed status note shouldn't block the agreement action itself.
   }

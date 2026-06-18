@@ -66,6 +66,12 @@ services:
       - "9105:9090"
     command: ["python3", "-m", "renting_berlin_workers", "telegram"]
 
+  worker-agreements:
+    <<: *worker-common
+    ports:
+      - "9106:9090"
+    command: ["python3", "-m", "renting_berlin_workers", "agreements"]
+
   migrate:
     profiles:
       - tools

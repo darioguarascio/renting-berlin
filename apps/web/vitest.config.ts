@@ -43,6 +43,7 @@ export default defineConfig({
         'src/lib/telegram-events.ts',
         'src/lib/moderation-events.ts',
         'src/lib/profile-view-events.ts',
+        'src/lib/agreement-events.ts',
         'src/lib/dev-user.ts',
         'src/lib/storage.ts',
         'src/lib/get-neighborhood-listing-stats.ts',

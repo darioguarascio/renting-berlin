@@ -7,17 +7,28 @@ import MessageReceipt, { receiptStatusFromReadAt } from './MessageReceipt';
 import { trackEvent } from '../lib/rybbit';
 import { otherUserProfileSubtitle } from '../lib/user-profile-display';
 import type { ConversationOtherUser } from '../types/listing';
-import type { MessageAttachment } from '../types/message';
+import type { MessageAttachment, MessageMetadata } from '../types/message';
 
 interface Message {
   id: string;
   body: string;
   attachments?: MessageAttachment[];
+  metadata?: MessageMetadata | null;
   senderId: string;
   isMine: boolean;
   createdAt: string;
   readAt?: string | null;
 }
+
+const AGREEMENT_CARD: Record<
+  MessageMetadata['event'],
+  { icon: string; title: string }
+> = {
+  proposed: { icon: '📄', title: 'Rental agreement' },
+  signed: { icon: '✅', title: 'Agreement signed' },
+  declined: { icon: '❌', title: 'Agreement declined' },
+  withdrawn: { icon: '↩️', title: 'Agreement withdrawn' },
+};
 
 interface ThreadData {
   id: string;
@@ -253,26 +264,54 @@ export default function MessageThread({ conversationId, embedded = false, showMo
       )}
 
       <div className="chat-thread-messages">
-        {groupedMessages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`chat-bubble-wrap ${msg.isMine ? 'chat-bubble-wrap--mine' : 'chat-bubble-wrap--theirs'} ${msg.isGrouped ? '' : 'chat-bubble-wrap--gap'}`}
-          >
+        {groupedMessages.map((msg) => {
+          if (msg.metadata?.type === 'agreement') {
+            const card = AGREEMENT_CARD[msg.metadata.event];
+            const canSign = msg.metadata.event === 'proposed' && !msg.isMine;
+            return (
+              <div key={msg.id} className="my-3 flex justify-center px-2">
+                <div className="w-full max-w-sm rounded-2xl border border-[var(--color-brand-light)] bg-[var(--color-brand-muted)] p-4 text-center shadow-sm">
+                  <div className="mx-auto mb-2 flex size-10 items-center justify-center rounded-full bg-white text-xl">
+                    <span aria-hidden>{card.icon}</span>
+                  </div>
+                  <p className="text-sm font-semibold text-[var(--color-ink)]">{card.title}</p>
+                  <p className="mt-1 text-xs text-[var(--color-ink-muted)]">{msg.body}</p>
+                  <button
+                    type="button"
+                    className={`mt-3 w-full text-sm ${canSign ? 'btn-brand' : 'btn-ghost'}`}
+                    onClick={() => setAgreementOpen(true)}
+                  >
+                    {canSign ? 'Review & sign' : 'View agreement'}
+                  </button>
+                  <time className="mt-2 block text-[10px] text-[var(--color-ink-muted)]">
+                    {new Date(msg.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                  </time>
+                </div>
+              </div>
+            );
+          }
+
+          return (
             <div
-              className={`chat-bubble ${msg.isMine ? 'chat-bubble--out' : 'chat-bubble--in'} ${msg.isGrouped ? 'chat-bubble--grouped' : ''}`}
+              key={msg.id}
+              className={`chat-bubble-wrap ${msg.isMine ? 'chat-bubble-wrap--mine' : 'chat-bubble-wrap--theirs'} ${msg.isGrouped ? '' : 'chat-bubble-wrap--gap'}`}
             >
-              <MessageContent
-                body={msg.body}
-                attachments={msg.attachments ?? []}
-                isMine={msg.isMine}
-              />
-              <span className="chat-bubble__meta">
-                <time>{new Date(msg.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</time>
-                {msg.isMine && <MessageReceipt status={receiptStatusFromReadAt(msg.readAt)} />}
-              </span>
+              <div
+                className={`chat-bubble ${msg.isMine ? 'chat-bubble--out' : 'chat-bubble--in'} ${msg.isGrouped ? 'chat-bubble--grouped' : ''}`}
+              >
+                <MessageContent
+                  body={msg.body}
+                  attachments={msg.attachments ?? []}
+                  isMine={msg.isMine}
+                />
+                <span className="chat-bubble__meta">
+                  <time>{new Date(msg.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</time>
+                  {msg.isMine && <MessageReceipt status={receiptStatusFromReadAt(msg.readAt)} />}
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         <div ref={bottomRef} />
       </div>
 

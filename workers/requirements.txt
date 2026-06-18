@@ -6,3 +6,5 @@ clickhouse-connect>=0.8.0
 transformers>=4.40.0
 Pillow>=10.0.0
 prometheus-client>=0.21.0
+markdown>=3.6
+xhtml2pdf>=0.2.16

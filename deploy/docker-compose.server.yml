@@ -74,6 +74,15 @@ services:
       - default
       - app-network
 
+  worker-agreements:
+    <<: *worker-common
+    ports:
+      - "9106:9090"
+    command: ["python3", "-m", "renting_berlin_workers", "agreements"]
+    networks:
+      - default
+      - app-network
+
   migrate:
     profiles:
       - tools

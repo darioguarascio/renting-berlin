@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from .config import REDIS_KEYS
 from .db import close_connection
 from .metrics import start_metrics_server
+from .services.agreements import process_agreement_job
 from .services.email import process_email_job
 from .services.email_worker import run_email_worker
 from .services.moderation_handler import process_moderation_job
@@ -52,6 +53,12 @@ WORKERS = {
         "handler": lambda _id, data: process_telegram_job(data),
         "env_name": "TELEGRAM_WORKER_NAME",
         "runner": "telegram",
+    },
+    "agreements": {
+        "stream": REDIS_KEYS["agreement_events"],
+        "group": REDIS_KEYS["agreement_workers"],
+        "handler": lambda _id, data: process_agreement_job(data),
+        "env_name": "AGREEMENT_WORKER_NAME",
     },
 }
 

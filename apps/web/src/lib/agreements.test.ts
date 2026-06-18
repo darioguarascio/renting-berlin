@@ -10,6 +10,7 @@ const {
   insertReturning,
   updateReturning,
   sendMessage,
+  enqueueAgreementJob,
 } = vi.hoisted(() => ({
   findFirstConversation: vi.fn(),
   findManyConversations: vi.fn(),
@@ -20,6 +21,7 @@ const {
   insertReturning: vi.fn(),
   updateReturning: vi.fn(),
   sendMessage: vi.fn(),
+  enqueueAgreementJob: vi.fn(),
 }));
 
 vi.mock('../db', () => ({
@@ -45,12 +47,15 @@ vi.mock('../db', () => ({
 }));
 
 vi.mock('./messages', () => ({ sendMessage }));
+vi.mock('./agreement-events', () => ({ enqueueAgreementJob }));
 
 import {
   actOnAgreement,
+  getAgreementContractMarkdown,
   getConversationAgreementContext,
   proposeAgreement,
   rejectOtherListingConversations,
+  renderAgreementContractPreview,
 } from './agreements';
 
 const conversation = {
@@ -102,6 +107,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   sendMessage.mockResolvedValue(undefined);
   selectGroupBy.mockResolvedValue([]);
+  enqueueAgreementJob.mockResolvedValue(undefined);
 });
 
 describe('getConversationAgreementContext', () => {
@@ -221,7 +227,12 @@ describe('proposeAgreement', () => {
     expect(dto.status).toBe('proposed');
     expect(dto.viewerIsProposer).toBe(true);
     expect(insertReturning).toHaveBeenCalledOnce();
-    expect(sendMessage).toHaveBeenCalledWith('conv_1', 'pub_1', expect.stringContaining('Proposed'));
+    expect(sendMessage).toHaveBeenCalledWith(
+      'conv_1',
+      'pub_1',
+      expect.stringContaining('Proposed'),
+      { metadata: { type: 'agreement', agreementId: 'agr_1', event: 'proposed' } },
+    );
   });
 
   it('also declines other applicants when the landlord opts in', async () => {
@@ -284,7 +295,44 @@ describe('actOnAgreement', () => {
 
     expect(dto.status).toBe('signed');
     expect(dto.counterpartySignatureName).toBe('Sam Tenant');
-    expect(sendMessage).toHaveBeenCalledWith('conv_1', 'inq_1', expect.stringContaining('Signed'));
+    expect(sendMessage).toHaveBeenCalledWith(
+      'conv_1',
+      'inq_1',
+      expect.stringContaining('Signed'),
+      { metadata: { type: 'agreement', agreementId: 'agr_1', event: 'signed' } },
+    );
+  });
+
+  it('freezes the contract and enqueues the PDF worker on signing', async () => {
+    findFirstAgreement.mockResolvedValue(agreementRow());
+    updateReturning.mockResolvedValue([
+      agreementRow({
+        status: 'signed',
+        counterpartySignatureName: 'Sam Tenant',
+        counterpartySignedAt: new Date('2026-01-11T10:00:00Z'),
+        resolvedAt: new Date('2026-01-11T10:00:00Z'),
+      }),
+    ]);
+    findFirstConversation.mockResolvedValue(conversation);
+    findFirstUser.mockResolvedValue({ name: 'Pat Owner', email: 'pat@example.com' });
+    findFirstListing.mockResolvedValue(listing);
+
+    await actOnAgreement('agr_1', 'inq_1', { action: 'sign', signatureName: 'Sam Tenant' });
+
+    expect(enqueueAgreementJob).toHaveBeenCalledWith({ type: 'signed', agreementId: 'agr_1' });
+  });
+
+  it('still signs even if the contract finalisation fails', async () => {
+    findFirstAgreement.mockResolvedValue(agreementRow());
+    updateReturning.mockResolvedValue([agreementRow({ status: 'signed' })]);
+    findFirstConversation.mockResolvedValue(conversation);
+    findFirstUser.mockResolvedValue({ name: 'Pat Owner', email: 'pat@example.com' });
+    findFirstListing.mockResolvedValue(listing);
+    enqueueAgreementJob.mockRejectedValueOnce(new Error('redis down'));
+
+    const dto = await actOnAgreement('agr_1', 'inq_1', { action: 'sign', signatureName: 'Sam Tenant' });
+
+    expect(dto.status).toBe('signed');
   });
 
   it('prevents the proposer from signing', async () => {
@@ -320,7 +368,12 @@ describe('actOnAgreement', () => {
     const dto = await actOnAgreement('agr_1', 'pub_1', { action: 'withdraw' });
 
     expect(dto.status).toBe('withdrawn');
-    expect(sendMessage).toHaveBeenCalledWith('conv_1', 'pub_1', expect.stringContaining('Withdrew'));
+    expect(sendMessage).toHaveBeenCalledWith(
+      'conv_1',
+      'pub_1',
+      expect.stringContaining('Withdrew'),
+      { metadata: { type: 'agreement', agreementId: 'agr_1', event: 'withdrawn' } },
+    );
   });
 
   it('prevents the counterparty from withdrawing', async () => {
@@ -328,6 +381,50 @@ describe('actOnAgreement', () => {
     await expect(actOnAgreement('agr_1', 'inq_1', { action: 'withdraw' })).rejects.toThrow(
       'Only the proposer can withdraw',
     );
+  });
+});
+
+describe('renderAgreementContractPreview', () => {
+  it('renders contract markdown with the parties and rent', async () => {
+    findFirstConversation.mockResolvedValue(conversation);
+    findFirstUser.mockResolvedValue({ name: 'Pat Owner', email: 'pat@example.com' });
+    findFirstListing.mockResolvedValue(listing);
+
+    const markdown = await renderAgreementContractPreview('conv_1', 'pub_1', {
+      monthlyRent: 1200,
+      deposit: 2400,
+      startDate: '2026-02-01',
+      endDate: null,
+      contract: { propertyAddress: 'Test St 1', disabledClauses: ['pets'] },
+    });
+
+    expect(typeof markdown).toBe('string');
+    expect(markdown).toContain('Pat Owner');
+    expect(markdown).toContain('Test St 1');
+  });
+
+  it('rejects non-participants', async () => {
+    findFirstConversation.mockResolvedValue(conversation);
+    await expect(
+      renderAgreementContractPreview('conv_1', 'stranger', { monthlyRent: 0, deposit: null }),
+    ).rejects.toThrow('Not a participant');
+  });
+});
+
+describe('getAgreementContractMarkdown', () => {
+  it('returns null for unknown agreements', async () => {
+    findFirstAgreement.mockResolvedValue(undefined);
+    expect(await getAgreementContractMarkdown('agr_x', 'pub_1')).toBeNull();
+  });
+
+  it('returns null for non-participants', async () => {
+    findFirstAgreement.mockResolvedValue(agreementRow({ contractMarkdown: '# doc' }));
+    expect(await getAgreementContractMarkdown('agr_1', 'stranger')).toBeNull();
+  });
+
+  it('returns the stored markdown for a participant', async () => {
+    findFirstAgreement.mockResolvedValue(agreementRow({ contractMarkdown: '# doc' }));
+    expect(await getAgreementContractMarkdown('agr_1', 'inq_1')).toBe('# doc');
   });
 });
 

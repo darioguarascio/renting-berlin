@@ -23,6 +23,7 @@ interface Agreement {
   createdAt: string;
   viewerIsProposer: boolean;
   viewerHasSigned: boolean;
+  hasContractDocument: boolean;
 }
 
 interface AgreementContext {
@@ -44,7 +45,23 @@ interface AgreementContext {
     startDate: string;
     endDate: string | null;
   };
+  contractDefaults: {
+    propertyAddress: string;
+    district: string;
+    floor: string;
+    rooms: number | null;
+  };
 }
+
+type OptionalClauseId = 'houseRules' | 'pets' | 'insurance' | 'energyCertificate' | 'dataProtection';
+
+const OPTIONAL_CLAUSES: { id: OptionalClauseId; label: string; hint: string }[] = [
+  { id: 'houseRules', label: 'House rules & quiet hours', hint: 'Noise, consideration for neighbours' },
+  { id: 'pets', label: 'Pets', hint: 'Pets require consent; small animals allowed' },
+  { id: 'insurance', label: 'Insurance', hint: 'Recommend liability/contents insurance' },
+  { id: 'energyCertificate', label: 'Energy certificate', hint: 'GEG energy certificate disclosure' },
+  { id: 'dataProtection', label: 'Data protection', hint: 'GDPR handling of personal data' },
+];
 
 interface Props {
   conversationId: string;
@@ -113,6 +130,28 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
   const [rejectOthers, setRejectOthers] = useState(false);
   const [rejectMessage, setRejectMessage] = useState(DEFAULT_REJECTION);
 
+  // full contract document (optional, collapsible)
+  const [contractOpen, setContractOpen] = useState(false);
+  const [propertyAddress, setPropertyAddress] = useState('');
+  const [district, setDistrict] = useState('');
+  const [floor, setFloor] = useState('');
+  const [rooms, setRooms] = useState('');
+  const [ancillaryRooms, setAncillaryRooms] = useState('');
+  const [operatingCosts, setOperatingCosts] = useState('');
+  const [fixedTermReason, setFixedTermReason] = useState('');
+  const [keyFront, setKeyFront] = useState('');
+  const [keyApt, setKeyApt] = useState('');
+  const [keyMailbox, setKeyMailbox] = useState('');
+  const [bankHolder, setBankHolder] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [bankIban, setBankIban] = useState('');
+  const [bankBic, setBankBic] = useState('');
+  const [excludedClauses, setExcludedClauses] = useState<Set<OptionalClauseId>>(new Set());
+
+  // contract preview
+  const [previewMd, setPreviewMd] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
   // sign form
   const [signName, setSignName] = useState('');
   const [signAgree, setSignAgree] = useState(false);
@@ -130,6 +169,103 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
     setDeposit(data.defaults.deposit != null ? String(data.defaults.deposit) : '');
     setStartDate(data.defaults.startDate);
     setEndDate(data.defaults.endDate ?? '');
+    setPropertyAddress(data.contractDefaults.propertyAddress);
+    setDistrict(data.contractDefaults.district);
+    setFloor(data.contractDefaults.floor);
+    setRooms(data.contractDefaults.rooms != null ? String(data.contractDefaults.rooms) : '');
+  }
+
+  function num(v: string): number | undefined {
+    const n = Number(v);
+    return v.trim() && !Number.isNaN(n) ? n : undefined;
+  }
+
+  function trimmed(v: string): string | undefined {
+    return v.trim() || undefined;
+  }
+
+  function buildContractConfig(): Record<string, unknown> | undefined {
+    const keys = {
+      frontDoor: num(keyFront),
+      apartment: num(keyApt),
+      mailbox: num(keyMailbox),
+    };
+    const hasKeys = Object.values(keys).some((v) => v !== undefined);
+    const bank = {
+      accountHolder: trimmed(bankHolder),
+      bank: trimmed(bankName),
+      iban: trimmed(bankIban),
+      bic: trimmed(bankBic),
+    };
+    const hasBank = Object.values(bank).some((v) => v !== undefined);
+
+    const config: Record<string, unknown> = {
+      propertyAddress: trimmed(propertyAddress),
+      district: trimmed(district),
+      floor: trimmed(floor),
+      rooms: num(rooms),
+      ancillaryRooms: trimmed(ancillaryRooms),
+      operatingCostsAdvance: num(operatingCosts),
+      fixedTermReason: trimmed(fixedTermReason),
+      keys: hasKeys ? keys : undefined,
+      bank: hasBank ? bank : undefined,
+      disabledClauses: excludedClauses.size ? Array.from(excludedClauses) : undefined,
+    };
+
+    const hasAny = Object.values(config).some((v) => v !== undefined);
+    return hasAny ? config : undefined;
+  }
+
+  function toggleClause(id: OptionalClauseId) {
+    setExcludedClauses((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function loadPreview() {
+    setPreviewLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/conversations/${conversationId}/agreement/contract-preview`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title.trim() || undefined,
+          monthlyRent: Number(monthlyRent) || 0,
+          deposit: deposit ? Number(deposit) : null,
+          startDate: startDate || undefined,
+          endDate: endDate || null,
+          terms: terms.trim() || undefined,
+          contract: buildContractConfig(),
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = (await res.json()) as { markdown: string };
+      setPreviewMd(data.markdown);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not render the contract preview.');
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
+
+  async function loadSignedContract() {
+    if (!ctx?.agreement) return;
+    setPreviewLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/agreements/${ctx.agreement.id}/contract`);
+      if (!res.ok) throw new Error(await res.text());
+      const data = (await res.json()) as { markdown: string };
+      setPreviewMd(data.markdown);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load the contract document.');
+    } finally {
+      setPreviewLoading(false);
+    }
   }
 
   async function load(initial = false) {
@@ -177,6 +313,7 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
           signatureName: proposeName.trim(),
           rejectOthers,
           rejectMessage: rejectOthers ? rejectMessage.trim() || undefined : undefined,
+          contract: buildContractConfig(),
         }),
       });
       if (!res.ok) throw new Error(await res.text());
@@ -364,6 +501,141 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
                     />
                   </div>
 
+                  {/* ── Full contract document (optional) ─────── */}
+                  <div className="rounded-xl border border-[var(--color-border)]">
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
+                      onClick={() => setContractOpen((v) => !v)}
+                    >
+                      <span>
+                        <span className="block text-sm font-semibold text-[var(--color-ink)]">
+                          Full contract document
+                        </span>
+                        <span className="block text-xs text-[var(--color-ink-muted)]">
+                          Optional — fill in details to generate a complete sublease contract PDF.
+                        </span>
+                      </span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className={`size-5 shrink-0 text-[var(--color-ink-muted)] transition-transform ${contractOpen ? 'rotate-180' : ''}`}
+                      >
+                        <path d="M12 15.5a.75.75 0 0 1-.53-.22l-6-6a.75.75 0 1 1 1.06-1.06L12 13.69l5.47-5.47a.75.75 0 1 1 1.06 1.06l-6 6a.75.75 0 0 1-.53.22Z" />
+                      </svg>
+                    </button>
+
+                    {contractOpen && (
+                      <div className="space-y-3 border-t border-[var(--color-border)] px-4 py-4">
+                        <div>
+                          <label className="field-label">Property address</label>
+                          <input
+                            className="field-input"
+                            value={propertyAddress}
+                            onChange={(e) => setPropertyAddress(e.target.value)}
+                            placeholder="Street, number, postcode, city"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="field-label">District</label>
+                            <input className="field-input" value={district} onChange={(e) => setDistrict(e.target.value)} />
+                          </div>
+                          <div>
+                            <label className="field-label">Floor</label>
+                            <input className="field-input" value={floor} onChange={(e) => setFloor(e.target.value)} />
+                          </div>
+                          <div>
+                            <label className="field-label">Rooms</label>
+                            <input type="number" className="field-input" value={rooms} onChange={(e) => setRooms(e.target.value)} />
+                          </div>
+                          <div>
+                            <label className="field-label">Operating costs / mo</label>
+                            <div className="field-currency">
+                              <input
+                                type="number"
+                                className="field-input field-currency__input"
+                                value={operatingCosts}
+                                onChange={(e) => setOperatingCosts(e.target.value)}
+                                placeholder="Optional"
+                              />
+                              <span className="field-currency__suffix">€</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="field-label">Ancillary rooms</label>
+                          <input
+                            className="field-input"
+                            value={ancillaryRooms}
+                            onChange={(e) => setAncillaryRooms(e.target.value)}
+                            placeholder="e.g. 1 bathroom with shower and WC"
+                          />
+                        </div>
+                        <div>
+                          <label className="field-label">Reason for fixed term</label>
+                          <input
+                            className="field-input"
+                            value={fixedTermReason}
+                            onChange={(e) => setFixedTermReason(e.target.value)}
+                            placeholder="e.g. semester abroad of the main tenant"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="field-label">Keys handed over</label>
+                          <div className="grid grid-cols-3 gap-3">
+                            <input type="number" className="field-input" value={keyFront} onChange={(e) => setKeyFront(e.target.value)} placeholder="Front door" />
+                            <input type="number" className="field-input" value={keyApt} onChange={(e) => setKeyApt(e.target.value)} placeholder="Apartment" />
+                            <input type="number" className="field-input" value={keyMailbox} onChange={(e) => setKeyMailbox(e.target.value)} placeholder="Mailbox" />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="field-label">Bank details for rent</label>
+                          <div className="space-y-2">
+                            <input className="field-input" value={bankHolder} onChange={(e) => setBankHolder(e.target.value)} placeholder="Account holder" />
+                            <div className="grid grid-cols-2 gap-2">
+                              <input className="field-input" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="Bank" />
+                              <input className="field-input" value={bankBic} onChange={(e) => setBankBic(e.target.value)} placeholder="BIC" />
+                            </div>
+                            <input className="field-input" value={bankIban} onChange={(e) => setBankIban(e.target.value)} placeholder="IBAN" />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="field-label">Include optional clauses</label>
+                          <div className="space-y-1.5">
+                            {OPTIONAL_CLAUSES.map((c) => (
+                              <label key={c.id} className="flex cursor-pointer items-start gap-2 text-sm text-[var(--color-ink)]">
+                                <input
+                                  type="checkbox"
+                                  className="mt-0.5 size-4 accent-[var(--color-brand)]"
+                                  checked={!excludedClauses.has(c.id)}
+                                  onChange={() => toggleClause(c.id)}
+                                />
+                                <span>
+                                  {c.label}
+                                  <span className="block text-xs text-[var(--color-ink-muted)]">{c.hint}</span>
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="btn-ghost w-full text-sm"
+                          onClick={loadPreview}
+                          disabled={previewLoading}
+                        >
+                          {previewLoading ? 'Rendering…' : 'Preview contract document'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="rounded-xl border border-[var(--color-brand-light)] bg-[var(--color-brand-muted)] px-4 py-3">
                     <label className="field-label">Your signature</label>
                     <input
@@ -469,8 +741,21 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
                     {agreement.status === 'signed' && (
                       <div className="form-banner form-banner--brand rounded-xl">
                         <p className="form-banner__title">This agreement is binding ✍️</p>
-                        <p className="form-banner__body">Both parties have signed. You can revisit it here anytime.</p>
+                        <p className="form-banner__body">
+                          Both parties have signed. A signed PDF copy has been emailed to you both.
+                        </p>
                       </div>
+                    )}
+
+                    {agreement.status === 'signed' && agreement.hasContractDocument && (
+                      <button
+                        type="button"
+                        className="btn-ghost w-full text-sm"
+                        onClick={loadSignedContract}
+                        disabled={previewLoading}
+                      >
+                        {previewLoading ? 'Loading…' : 'View full contract document'}
+                      </button>
                     )}
 
                     {agreement.status === 'proposed' && agreement.viewerIsProposer && (
@@ -659,6 +944,34 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
                 Close
               </button>
             )}
+          </div>
+        )}
+
+        {/* ── Contract document preview overlay ─────────── */}
+        {previewMd !== null && (
+          <div className="absolute inset-0 z-20 flex flex-col bg-white">
+            <div className="flex items-center justify-between gap-3 border-b border-[var(--color-border)] bg-[var(--color-paper)] px-6 py-4">
+              <h3 className="font-display text-base font-bold text-[var(--color-ink)]">Contract document</h3>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="btn-ghost text-sm"
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(previewMd);
+                  }}
+                >
+                  Copy
+                </button>
+                <button type="button" className="btn-brand text-sm" onClick={() => setPreviewMd(null)}>
+                  Done
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto px-6 py-5">
+              <pre className="whitespace-pre-wrap break-words font-sans text-[13px] leading-relaxed text-[var(--color-ink)]">
+                {previewMd}
+              </pre>
+            </div>
           </div>
         )}
       </div>

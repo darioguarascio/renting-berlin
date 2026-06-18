@@ -3,9 +3,11 @@ from __future__ import annotations
 import json
 import smtplib
 import time
+from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate, make_msgid
+from typing import Sequence
 
 from ..config import EMAIL_FROM, SITE_URL, SMTP_HOST, SMTP_PASS, SMTP_PORT, SMTP_SECURE, SMTP_USER
 from ..db import cursor
@@ -26,20 +28,43 @@ def smtp_configured() -> bool:
     return bool(SMTP_HOST and EMAIL_FROM)
 
 
-def send_email(to: str, subject: str, text: str, html: str, *, event: str = "direct") -> None:
+def send_email(
+    to: str,
+    subject: str,
+    text: str,
+    html: str,
+    *,
+    event: str = "direct",
+    attachments: Sequence[tuple[str, bytes, str]] | None = None,
+) -> None:
+    """Send an email. `attachments` is a sequence of (filename, content, subtype)
+    tuples, e.g. ("agreement.pdf", pdf_bytes, "pdf")."""
     if not smtp_configured():
-        print(f"[email] to={to} subject={subject}\n{text}")
+        attached = ", ".join(name for name, _, _ in attachments or [])
+        suffix = f" attachments={attached}" if attached else ""
+        print(f"[email] to={to} subject={subject}{suffix}\n{text}")
         record_email(event, "mock")
         return
 
-    message = MIMEMultipart("alternative")
+    body = MIMEMultipart("alternative")
+    body.attach(MIMEText(text, "plain"))
+    body.attach(MIMEText(html, "html"))
+
+    if attachments:
+        message = MIMEMultipart("mixed")
+        message.attach(body)
+        for filename, content, subtype in attachments:
+            part = MIMEApplication(content, _subtype=subtype)
+            part.add_header("Content-Disposition", "attachment", filename=filename)
+            message.attach(part)
+    else:
+        message = body
+
     message["Subject"] = subject
     message["From"] = EMAIL_FROM
     message["To"] = to
     message["Date"] = formatdate(localtime=True)
     message["Message-ID"] = make_msgid(domain=EMAIL_FROM.rsplit("@", 1)[-1])
-    message.attach(MIMEText(text, "plain"))
-    message.attach(MIMEText(html, "html"))
 
     start = time.perf_counter()
     try:

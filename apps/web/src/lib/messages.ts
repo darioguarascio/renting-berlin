@@ -2,7 +2,7 @@ import { and, desc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { db } from '../db';
 import { conversations, listings, messages, tenantRequests, users } from '../db/schema';
-import type { MessageAttachment } from '../types/message';
+import type { MessageAttachment, MessageMetadata } from '../types/message';
 import type { MessageTemplateKind } from '../types/message-template';
 import { saveMessageAsTemplate } from './message-templates';
 import { getNotificationPreferences } from './notification-preferences';
@@ -88,8 +88,13 @@ async function conversationHasMessages(conversationId: string): Promise<boolean>
   return !!existing;
 }
 
-function previewMessage(body: string, attachments: MessageAttachment[]): string | null {
+function previewMessage(
+  body: string,
+  attachments: MessageAttachment[],
+  metadata?: MessageMetadata | null,
+): string | null {
   if (body.trim()) return body;
+  if (metadata?.type === 'agreement') return '📄 Rental agreement';
   if (attachments.length > 0) return '📎 Attachment';
   return null;
 }
@@ -211,7 +216,11 @@ export async function listConversationsForUser(userId: string) {
       otherUserName: otherUser?.name ?? 'User',
       otherUserImage: otherUser?.image ?? null,
       lastMessage: lastMessage
-        ? previewMessage(lastMessage.body, (lastMessage.attachments as MessageAttachment[]) ?? [])
+        ? previewMessage(
+            lastMessage.body,
+            (lastMessage.attachments as MessageAttachment[]) ?? [],
+            lastMessage.metadata as MessageMetadata | null,
+          )
         : null,
       lastMessageAt: lastMessage?.createdAt.toISOString() ?? conv.createdAt.toISOString(),
       updatedAt: conv.updatedAt.toISOString(),
@@ -290,6 +299,7 @@ export async function getConversationWithMessages(conversationId: string, userId
       id: m.id,
       body: m.body,
       attachments: (m.attachments as MessageAttachment[]) ?? [],
+      metadata: (m.metadata as MessageMetadata | null) ?? null,
       senderId: m.senderId,
       isMine: m.senderId === userId,
       createdAt: m.createdAt.toISOString(),
@@ -304,6 +314,7 @@ export async function sendMessage(
   body: string,
   options?: {
     attachments?: MessageAttachment[];
+    metadata?: MessageMetadata | null;
     saveAsTemplate?: boolean;
     templateLabel?: string;
     templateKind?: MessageTemplateKind;
@@ -319,11 +330,12 @@ export async function sendMessage(
 
   const trimmed = body.trim();
   const attachments = options?.attachments ?? [];
-  if (!trimmed && attachments.length === 0) throw new Error('Message cannot be empty');
+  const metadata = options?.metadata ?? null;
+  if (!trimmed && attachments.length === 0 && !metadata) throw new Error('Message cannot be empty');
 
   const [message] = await db
     .insert(messages)
-    .values({ id: nanoid(), conversationId, senderId, body: trimmed, attachments })
+    .values({ id: nanoid(), conversationId, senderId, body: trimmed, attachments, metadata })
     .returning();
 
   await db
@@ -345,7 +357,7 @@ export async function sendMessage(
   void notifyMessageRecipients({
     conversation: conv,
     senderId,
-    preview: previewMessage(trimmed, attachments) ?? trimmed,
+    preview: previewMessage(trimmed, attachments, metadata) ?? trimmed,
   }).catch(() => {});
 
   return message;

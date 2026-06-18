@@ -11,6 +11,8 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
+import type { AgreementContractConfig } from '../lib/agreement-schema';
+import type { MessageMetadata } from '../types/message';
 
 export const listingCategoryEnum = pgEnum('listing_category', ['full_flat', 'shared_room', 'swap']);
 export const rentTypeEnum = pgEnum('rent_type', ['long_term', 'short_term', 'overnight']);
@@ -205,6 +207,7 @@ export const messages = pgTable('messages', {
     .references(() => users.id, { onDelete: 'cascade' }),
   body: text('body').notNull(),
   attachments: jsonb('attachments').notNull().$type<{ url: string; name: string; mimeType: string }[]>().default([]),
+  metadata: jsonb('metadata').$type<MessageMetadata>(),
   readAt: timestamp('read_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -366,6 +369,10 @@ export const agreements = pgTable(
     counterpartySignedAt: timestamp('counterparty_signed_at', { withTimezone: true }),
     declineReason: text('decline_reason'),
     resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    /** Editable contract inputs (clauses toggled off, property/keys/bank details…). */
+    contractConfig: jsonb('contract_config').$type<AgreementContractConfig>(),
+    /** Rendered sublease contract markdown, frozen when both parties have signed. */
+    contractMarkdown: text('contract_markdown'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
