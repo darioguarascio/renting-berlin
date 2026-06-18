@@ -401,6 +401,8 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
 
   const agreement = ctx?.agreement ?? null;
   const showProposeForm = mode === 'propose' && ctx?.canPropose;
+  const wideDocument =
+    (showProposeForm && proposeStep === 'document') || (mode === 'view' && !!agreement?.hasContractDocument);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
@@ -408,7 +410,9 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
       <div
         role="dialog"
         aria-labelledby="agreement-title"
-        className="relative z-10 flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white shadow-[var(--shadow-float)]"
+        className={`relative z-10 flex max-h-[92vh] w-full flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white shadow-[var(--shadow-float)] ${
+          wideDocument ? 'max-w-lg sm:max-w-2xl lg:max-w-4xl xl:max-w-5xl' : 'max-w-lg'
+        }`}
       >
         <div className="flex items-start justify-between gap-3 border-b border-[var(--color-border)] bg-[var(--color-paper)] px-6 py-4">
           <div className="min-w-0">
@@ -665,7 +669,7 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
                       This exact text becomes the binding agreement. Edit anything you like before signing.
                     </p>
                     <textarea
-                      className="field-input min-h-[320px] resize-y font-mono text-[12px] leading-relaxed"
+                      className="field-input min-h-[320px] resize-y font-mono text-[12px] leading-relaxed lg:min-h-[55vh]"
                       value={editableMarkdown}
                       onChange={(e) => setEditableMarkdown(e.target.value)}
                     />
@@ -748,7 +752,7 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
                               Copy
                             </button>
                           </div>
-                          <div className="max-h-[48vh] overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-paper)] px-4 py-3">
+                          <div className="max-h-[48vh] overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-paper)] px-4 py-3 lg:max-h-[60vh]">
                             <pre className="whitespace-pre-wrap break-words font-sans text-[13px] leading-relaxed text-[var(--color-ink)]">
                               {documentMd}
                             </pre>
