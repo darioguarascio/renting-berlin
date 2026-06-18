@@ -5,6 +5,7 @@ when an agreement becomes binding."""
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 
 from ..config import SITE_URL
 from ..db import cursor
@@ -18,11 +19,19 @@ _QUERY = """
         a.title,
         a.status,
         a.contract_markdown,
+        a.proposer_id,
+        a.counterparty_id,
+        a.proposer_signature_name,
+        a.proposer_signed_at,
+        a.counterparty_signature_name,
+        a.counterparty_signed_at,
+        c.publisher_id,
         u1.email AS proposer_email,
         u1.name  AS proposer_name,
         u2.email AS counterparty_email,
         u2.name  AS counterparty_name
     FROM agreements a
+    JOIN conversations c ON c.id = a.conversation_id
     JOIN users u1 ON u1.id = a.proposer_id
     JOIN users u2 ON u2.id = a.counterparty_id
     WHERE a.id = %s
@@ -46,6 +55,36 @@ def _build_email(title: str) -> tuple[str, str, str]:
         "</div>"
     )
     return subject, text, html
+
+
+def _party_signatures(row: dict) -> tuple[tuple[str, str, datetime], tuple[str, str, datetime]]:
+    """Map proposer/counterparty signatures onto Main Tenant / Subtenant roles."""
+    publisher_id = row["publisher_id"]
+    proposer_is_publisher = row["proposer_id"] == publisher_id
+
+    if proposer_is_publisher:
+        publisher_name = row["proposer_signature_name"]
+        publisher_signed_at = row["proposer_signed_at"]
+        inquirer_name = row["counterparty_signature_name"]
+        inquirer_signed_at = row["counterparty_signed_at"]
+    else:
+        inquirer_name = row["proposer_signature_name"]
+        inquirer_signed_at = row["proposer_signed_at"]
+        publisher_name = row["counterparty_signature_name"]
+        publisher_signed_at = row["counterparty_signed_at"]
+
+    if not publisher_name or not inquirer_name or not publisher_signed_at or not inquirer_signed_at:
+        raise ValueError("Signed agreement is missing one or both party signatures")
+
+    main_tenant = ("Main Tenant", publisher_name, _as_datetime(publisher_signed_at))
+    subtenant = ("Subtenant", inquirer_name, _as_datetime(inquirer_signed_at))
+    return main_tenant, subtenant
+
+
+def _as_datetime(value: datetime) -> datetime:
+    if isinstance(value, datetime):
+        return value
+    raise TypeError(f"Expected datetime, got {type(value)!r}")
 
 
 def process_agreement_job(data: dict[str, str]) -> None:
@@ -72,10 +111,18 @@ def process_agreement_job(data: dict[str, str]) -> None:
         logger.warning("agreement %s has no contract markdown", agreement_id)
         return
 
-    # Import lazily so the worker can start even if PDF deps are missing.
-    from .pdf import markdown_to_pdf
+    try:
+        main_raw, sub_raw = _party_signatures(row)
+    except ValueError as exc:
+        logger.warning("agreement %s: %s", agreement_id, exc)
+        return
 
-    pdf_bytes = markdown_to_pdf(markdown)
+    # Import lazily so the worker can start even if PDF deps are missing.
+    from .pdf import SignatureInfo, markdown_to_signed_pdf
+
+    main_tenant = SignatureInfo(*main_raw)
+    subtenant = SignatureInfo(*sub_raw)
+    pdf_bytes = markdown_to_signed_pdf(markdown, main_tenant, subtenant)
     attachment = ("rental-agreement.pdf", pdf_bytes, "pdf")
 
     subject, text, html = _build_email(row["title"])
