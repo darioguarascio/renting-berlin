@@ -64,6 +64,20 @@
       "when": 1781373584695,
       "tag": "0008_email_tracking",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1781373584696,
+      "tag": "0009_hide_publisher_name",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1781373584697,
+      "tag": "0010_hide_reviewer_names",
+      "breakpoints": true
     }
   ]
 }
