@@ -3,9 +3,10 @@ import type { ConversationSummary } from '../types/listing';
 
 interface Props {
   selectedId?: string;
+  onSelect?: (id: string) => void;
 }
 
-export default function ConversationList({ selectedId }: Props) {
+export default function ConversationList({ selectedId, onSelect }: Props) {
   const [items, setItems] = useState<ConversationSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,19 +48,17 @@ export default function ConversationList({ selectedId }: Props) {
       {items.map((conv) => {
         const active = conv.id === selectedId;
         return (
-          <div
+          <a
             key={conv.id}
-            role="link"
-            tabIndex={0}
+            href={`/messages/${conv.id}`}
             className={`chat-row ${active ? 'chat-row--active' : ''}`}
-            onClick={() => {
-              window.location.href = `/messages/${conv.id}`;
-            }}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                window.location.href = `/messages/${conv.id}`;
+            aria-current={active ? 'page' : undefined}
+            onClick={(event) => {
+              if (!onSelect || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+                return;
               }
+              event.preventDefault();
+              onSelect(conv.id);
             }}
           >
             {conv.otherUserImage ? (
@@ -76,7 +75,7 @@ export default function ConversationList({ selectedId }: Props) {
                 {conv.lastMessage ?? 'No messages yet'}
               </p>
             </div>
-          </div>
+          </a>
         );
       })}
     </div>

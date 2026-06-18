@@ -1755,6 +1755,13 @@ body:has(.chat-app) > header {
   background: var(--chat-bg);
 }
 
+@media (max-width: 1023px) {
+  .chat-app--thread-open .chat-main {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+}
+
 .chat-empty {
   display: flex;
   flex: 1;

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Breadcrumbs from './Breadcrumbs';
 import ConversationList from './ConversationList';
 import MessageThread from './MessageThread';
@@ -6,6 +6,11 @@ import { buildAccountBreadcrumbs } from '../lib/breadcrumbs';
 
 interface Props {
   conversationId?: string;
+}
+
+function conversationIdFromPath(pathname: string): string | undefined {
+  const match = pathname.match(/^\/messages\/([^/]+)$/);
+  return match?.[1];
 }
 
 function useChatViewportHeight() {
@@ -28,30 +33,65 @@ function useChatViewportHeight() {
   }, []);
 }
 
-export default function MessagesShell({ conversationId }: Props) {
+export default function MessagesShell({ conversationId: initialConversationId }: Props) {
   useChatViewportHeight();
+  const [activeConversationId, setActiveConversationId] = useState(initialConversationId);
+
+  useEffect(() => {
+    setActiveConversationId(initialConversationId);
+  }, [initialConversationId]);
+
+  useEffect(() => {
+    function syncFromUrl() {
+      setActiveConversationId(conversationIdFromPath(window.location.pathname));
+    }
+
+    window.addEventListener('popstate', syncFromUrl);
+    return () => window.removeEventListener('popstate', syncFromUrl);
+  }, []);
+
+  const openConversation = useCallback((id: string) => {
+    const path = `/messages/${id}`;
+    if (window.location.pathname !== path) {
+      window.history.pushState({ conversationId: id }, '', path);
+    }
+    setActiveConversationId(id);
+  }, []);
+
+  const closeConversation = useCallback(() => {
+    if (window.location.pathname !== '/messages') {
+      window.history.pushState({}, '', '/messages');
+    }
+    setActiveConversationId(undefined);
+  }, []);
 
   const breadcrumbItems = buildAccountBreadcrumbs({
-    currentPath: conversationId ? `/messages/${conversationId}` : '/messages',
+    currentPath: activeConversationId ? `/messages/${activeConversationId}` : '/messages',
     heading: 'Messages',
     sectionHref: '/messages',
     sectionLabel: 'Messages',
-    tail: conversationId ? [{ label: 'Conversation' }] : [],
+    tail: activeConversationId ? [{ label: 'Conversation' }] : [],
   });
 
   return (
-    <div className="chat-app">
-      <aside className={`chat-sidebar ${conversationId ? 'hidden lg:flex' : 'flex'}`}>
+    <div className={`chat-app ${activeConversationId ? 'chat-app--thread-open' : ''}`}>
+      <aside className={`chat-sidebar ${activeConversationId ? 'hidden lg:flex' : 'flex'}`}>
         <header className="chat-sidebar__header chat-sidebar__header--stacked">
           <Breadcrumbs items={breadcrumbItems} />
           <h1 className="chat-sidebar__title">Chats</h1>
         </header>
-        <ConversationList selectedId={conversationId} />
+        <ConversationList selectedId={activeConversationId} onSelect={openConversation} />
       </aside>
 
-      <main className={`chat-main ${conversationId ? 'flex' : 'hidden lg:flex'}`}>
-        {conversationId ? (
-          <MessageThread conversationId={conversationId} embedded showMobileBack />
+      <main className={`chat-main ${activeConversationId ? 'flex' : 'hidden lg:flex'}`}>
+        {activeConversationId ? (
+          <MessageThread
+            key={activeConversationId}
+            conversationId={activeConversationId}
+            embedded
+            showMobileBack
+            onBack={closeConversation}
+          />
         ) : (
           <div className="chat-empty">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="chat-empty__icon text-[var(--color-brand)]">

@@ -43,6 +43,7 @@ interface Props {
   conversationId: string;
   embedded?: boolean;
   showMobileBack?: boolean;
+  onBack?: () => void;
 }
 
 function withGrouping(messages: Message[]) {
@@ -62,8 +63,9 @@ interface AgreementSummary {
   conversation: { otherUserName: string };
 }
 
-export default function MessageThread({ conversationId, embedded = false, showMobileBack = false }: Props) {
+export default function MessageThread({ conversationId, embedded = false, showMobileBack = false, onBack }: Props) {
   const [data, setData] = useState<ThreadData | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const [sending, setSending] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [agreementOpen, setAgreementOpen] = useState(false);
@@ -75,7 +77,12 @@ export default function MessageThread({ conversationId, embedded = false, showMo
 
   async function load() {
     const res = await fetch(`/api/conversations/${conversationId}`);
-    if (res.ok) setData(await res.json());
+    if (res.ok) {
+      setData(await res.json());
+      setLoadError(false);
+      return;
+    }
+    setLoadError(true);
   }
 
   async function loadAgreement() {
@@ -84,6 +91,8 @@ export default function MessageThread({ conversationId, embedded = false, showMo
   }
 
   useEffect(() => {
+    setData(null);
+    setLoadError(false);
     load();
     loadAgreement();
     const interval = setInterval(load, 5000);
@@ -136,11 +145,33 @@ export default function MessageThread({ conversationId, embedded = false, showMo
     try {
       const res = await fetch(`/api/conversations/${conversationId}`, { method: 'DELETE' });
       if (res.ok || res.status === 204) {
-        window.location.href = '/messages';
+        if (onBack) {
+          onBack();
+        } else {
+          window.location.href = '/messages';
+        }
       }
     } finally {
       setDeleting(false);
     }
+  }
+
+  if (loadError) {
+    return (
+      <div className={`flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center ${embedded ? '' : 'py-16'}`}>
+        {showMobileBack && onBack && (
+          <button type="button" className="chat-compose__icon-btn self-start lg:hidden" aria-label="Back to chats" onClick={onBack}>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
+              <path fillRule="evenodd" d="M7.72 12.53a.75.75 0 0 1 0-1.06l7.5-7.5a.75.75 0 1 1 1.06 1.06L9.31 12l6.97 6.97a.75.75 0 1 1-1.06 1.06l-7.5-7.5Z" clipRule="evenodd" />
+            </svg>
+          </button>
+        )}
+        <p className="text-sm text-[var(--color-ink-muted)]">Couldn&apos;t load this conversation.</p>
+        <button type="button" className="btn-ghost text-sm" onClick={() => void load()}>
+          Try again
+        </button>
+      </div>
+    );
   }
 
   if (!data) {
@@ -171,11 +202,19 @@ export default function MessageThread({ conversationId, embedded = false, showMo
     <div className={embedded ? 'flex h-full min-h-0 flex-col' : 'flex h-full flex-col'}>
       <header className="chat-thread-header">
         {showMobileBack && (
-          <a href="/messages" className="chat-compose__icon-btn lg:hidden" aria-label="Back to chats">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
-              <path fillRule="evenodd" d="M7.72 12.53a.75.75 0 0 1 0-1.06l7.5-7.5a.75.75 0 1 1 1.06 1.06L9.31 12l6.97 6.97a.75.75 0 1 1-1.06 1.06l-7.5-7.5Z" clipRule="evenodd" />
-            </svg>
-          </a>
+          onBack ? (
+            <button type="button" className="chat-compose__icon-btn lg:hidden" aria-label="Back to chats" onClick={onBack}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
+                <path fillRule="evenodd" d="M7.72 12.53a.75.75 0 0 1 0-1.06l7.5-7.5a.75.75 0 1 1 1.06 1.06L9.31 12l6.97 6.97a.75.75 0 1 1-1.06 1.06l-7.5-7.5Z" clipRule="evenodd" />
+              </svg>
+            </button>
+          ) : (
+            <a href="/messages" className="chat-compose__icon-btn lg:hidden" aria-label="Back to chats">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
+                <path fillRule="evenodd" d="M7.72 12.53a.75.75 0 0 1 0-1.06l7.5-7.5a.75.75 0 1 1 1.06 1.06L9.31 12l6.97 6.97a.75.75 0 1 1-1.06 1.06l-7.5-7.5Z" clipRule="evenodd" />
+              </svg>
+            </a>
+          )
         )}
 
         {data.otherUser?.profileHref ? (
