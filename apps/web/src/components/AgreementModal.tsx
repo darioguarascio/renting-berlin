@@ -148,9 +148,8 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
   const [bankBic, setBankBic] = useState('');
   const [excludedClauses, setExcludedClauses] = useState<Set<OptionalClauseId>>(new Set());
 
-  // contract preview / read-only viewer overlay
-  const [previewMd, setPreviewMd] = useState<string | null>(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
+  // read-only full contract document (shown when viewing a sent agreement)
+  const [documentMd, setDocumentMd] = useState<string | null>(null);
 
   // two-step propose flow: structured form -> editable final document
   const [proposeStep, setProposeStep] = useState<'form' | 'document'>('form');
@@ -267,19 +266,14 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
     }
   }
 
-  async function loadSignedContract() {
-    if (!ctx?.agreement) return;
-    setPreviewLoading(true);
-    setError('');
+  async function fetchAgreementDocument(agreementId: string) {
     try {
-      const res = await fetch(`/api/agreements/${ctx.agreement.id}/contract`);
+      const res = await fetch(`/api/agreements/${agreementId}/contract`);
       if (!res.ok) throw new Error(await res.text());
       const data = (await res.json()) as { markdown: string };
-      setPreviewMd(data.markdown);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load the contract document.');
-    } finally {
-      setPreviewLoading(false);
+      setDocumentMd(data.markdown);
+    } catch {
+      setDocumentMd(null);
     }
   }
 
@@ -295,6 +289,11 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
     if (initial) {
       applyDefaults(data);
       setMode(!data.agreement && data.canPropose ? 'propose' : 'view');
+    }
+    if (data.agreement?.hasContractDocument) {
+      void fetchAgreementDocument(data.agreement.id);
+    } else {
+      setDocumentMd(null);
     }
     setLoading(false);
   }
@@ -734,32 +733,60 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
                       </span>
                     </div>
 
-                    <dl className="grid grid-cols-2 gap-3">
-                      <div className="detail-cell">
-                        <dt>Monthly rent</dt>
-                        <dd>{euro(agreement.monthlyRent)}</dd>
-                      </div>
-                      <div className="detail-cell">
-                        <dt>Deposit</dt>
-                        <dd>{agreement.deposit != null ? euro(agreement.deposit) : '—'}</dd>
-                      </div>
-                      <div className="detail-cell">
-                        <dt>Start</dt>
-                        <dd>{longDate(agreement.startDate)}</dd>
-                      </div>
-                      <div className="detail-cell">
-                        <dt>End</dt>
-                        <dd>{agreement.endDate ? longDate(agreement.endDate) : 'Open-ended'}</dd>
-                      </div>
-                    </dl>
+                    {agreement.hasContractDocument ? (
+                      documentMd ? (
+                        <div>
+                          <div className="mb-2 flex items-center justify-between gap-2">
+                            <p className="field-label mb-0">Contract document</p>
+                            <button
+                              type="button"
+                              className="text-xs font-semibold text-[var(--color-brand-deep)] underline"
+                              onClick={() => {
+                                void navigator.clipboard?.writeText(documentMd);
+                              }}
+                            >
+                              Copy
+                            </button>
+                          </div>
+                          <div className="max-h-[48vh] overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-paper)] px-4 py-3">
+                            <pre className="whitespace-pre-wrap break-words font-sans text-[13px] leading-relaxed text-[var(--color-ink)]">
+                              {documentMd}
+                            </pre>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-[var(--color-ink-muted)]">Loading the contract document…</p>
+                      )
+                    ) : (
+                      <>
+                        <dl className="grid grid-cols-2 gap-3">
+                          <div className="detail-cell">
+                            <dt>Monthly rent</dt>
+                            <dd>{euro(agreement.monthlyRent)}</dd>
+                          </div>
+                          <div className="detail-cell">
+                            <dt>Deposit</dt>
+                            <dd>{agreement.deposit != null ? euro(agreement.deposit) : '—'}</dd>
+                          </div>
+                          <div className="detail-cell">
+                            <dt>Start</dt>
+                            <dd>{longDate(agreement.startDate)}</dd>
+                          </div>
+                          <div className="detail-cell">
+                            <dt>End</dt>
+                            <dd>{agreement.endDate ? longDate(agreement.endDate) : 'Open-ended'}</dd>
+                          </div>
+                        </dl>
 
-                    {agreement.terms && (
-                      <div>
-                        <p className="field-label">Additional terms</p>
-                        <p className="whitespace-pre-wrap rounded-xl border border-[var(--color-border)] bg-[var(--color-paper)] px-4 py-3 text-sm text-[var(--color-ink)]">
-                          {agreement.terms}
-                        </p>
-                      </div>
+                        {agreement.terms && (
+                          <div>
+                            <p className="field-label">Additional terms</p>
+                            <p className="whitespace-pre-wrap rounded-xl border border-[var(--color-border)] bg-[var(--color-paper)] px-4 py-3 text-sm text-[var(--color-ink)]">
+                              {agreement.terms}
+                            </p>
+                          </div>
+                        )}
+                      </>
                     )}
 
                     {/* signatures */}
@@ -783,17 +810,6 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
                           Both parties have signed. A signed PDF copy has been emailed to you both.
                         </p>
                       </div>
-                    )}
-
-                    {agreement.hasContractDocument && (
-                      <button
-                        type="button"
-                        className="btn-ghost w-full text-sm"
-                        onClick={loadSignedContract}
-                        disabled={previewLoading}
-                      >
-                        {previewLoading ? 'Loading…' : 'View full contract document'}
-                      </button>
                     )}
 
                     {agreement.status === 'proposed' && agreement.viewerIsProposer && (
@@ -1001,34 +1017,6 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
                 Close
               </button>
             )}
-          </div>
-        )}
-
-        {/* ── Contract document preview overlay ─────────── */}
-        {previewMd !== null && (
-          <div className="absolute inset-0 z-20 flex flex-col bg-white">
-            <div className="flex items-center justify-between gap-3 border-b border-[var(--color-border)] bg-[var(--color-paper)] px-6 py-4">
-              <h3 className="font-display text-base font-bold text-[var(--color-ink)]">Contract document</h3>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className="btn-ghost text-sm"
-                  onClick={() => {
-                    void navigator.clipboard?.writeText(previewMd);
-                  }}
-                >
-                  Copy
-                </button>
-                <button type="button" className="btn-brand text-sm" onClick={() => setPreviewMd(null)}>
-                  Done
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 overflow-y-auto px-6 py-5">
-              <pre className="whitespace-pre-wrap break-words font-sans text-[13px] leading-relaxed text-[var(--color-ink)]">
-                {previewMd}
-              </pre>
-            </div>
           </div>
         )}
       </div>
