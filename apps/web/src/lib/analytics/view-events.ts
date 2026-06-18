@@ -197,3 +197,47 @@ export async function getViewersForListings(
 
   return new Set(rows.map((row) => row.viewerId));
 }
+
+export async function getListingVisitorStats(listingId: string): Promise<ViewVisitorStat[]> {
+  const ch = await getClickHouse();
+  if (ch) {
+    const result = await ch.query({
+      query: `
+        SELECT
+          viewer_id,
+          min(viewed_at) AS first_viewed_at,
+          max(viewed_at) AS last_viewed_at
+        FROM view_events
+        WHERE entity_type = {entityType:String}
+          AND entity_id = {entityId:String}
+        GROUP BY viewer_id
+        ORDER BY last_viewed_at DESC
+      `,
+      query_params: { entityType: 'listing', entityId: listingId },
+      format: 'JSONEachRow',
+    });
+
+    const rows = await result.json<{
+      viewer_id: string;
+      first_viewed_at: string;
+      last_viewed_at: string;
+    }>();
+
+    return rows.map((row) => ({
+      viewerId: row.viewer_id,
+      firstViewedAt: new Date(row.first_viewed_at),
+      lastViewedAt: new Date(row.last_viewed_at),
+    }));
+  }
+
+  const rows = await db.query.listingViews.findMany({
+    where: (table, { eq }) => eq(table.listingId, listingId),
+    orderBy: (table, { desc }) => [desc(table.lastViewedAt)],
+  });
+
+  return rows.map((row) => ({
+    viewerId: row.viewerId,
+    firstViewedAt: row.firstViewedAt,
+    lastViewedAt: row.lastViewedAt,
+  }));
+}

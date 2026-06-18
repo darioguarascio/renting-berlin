@@ -6,6 +6,8 @@ import { users } from '../../db/schema';
 import { getListingByPath } from '../../lib/listings';
 import { recordListingView } from '../../lib/listing-views';
 import { getPublishedListingFeedback, hasLandlordReplied, redactReviewerNames, type ListingFeedbackSummary } from '../../lib/feedback';
+import { getListingVisitors } from '../../lib/listing-views';
+import type { ProfileVisitor } from '../../types/tenant-request';
 import { buildListingPath, listingHref } from '../../lib/urls';
 import { externalProviderLabel } from '../../lib/external-listings';
 import {
@@ -21,6 +23,7 @@ import ContactButton from '../../components/ContactButton.tsx';
 import ExternalListingAlertCTA from '../../components/ExternalListingAlertCTA.tsx';
 import ListingGallery from '../../components/ListingGallery.tsx';
 import ListingFeedbackSection from '../../components/ListingFeedbackSection.tsx';
+import ListingVisitorsSection from '../../components/ListingVisitorsSection.tsx';
 import MapView from '../../components/MapView.tsx';
 import ListingPhotoPlaceholder from '../../components/ListingPhotoPlaceholder.tsx';
 
@@ -60,6 +63,11 @@ if (listing.status !== 'active' || (listing.moderationStatus !== 'approved' && !
 
 if (session && !isPublisher) {
   void recordListingView(listing.id, session.user.id).catch(() => {});
+}
+
+let listingVisitors: ProfileVisitor[] = [];
+if (isPublisher) {
+  listingVisitors = await getListingVisitors(listing.id, listing.publisherId).catch(() => []);
 }
 
 let reviewerNamesHidden = false;
@@ -205,11 +213,15 @@ const breadcrumbJsonLd = buildListingBreadcrumbJsonLd({
               reviewerNamesHidden={reviewerNamesHidden}
             />
           )}
+
+          {isPublisher && (
+            <ListingVisitorsSection visitors={listingVisitors} />
+          )}
         </div>
       </div>
 
       <aside class="relative z-0 lg:col-span-2">
-        <div class="card sticky top-24 z-10 overflow-hidden p-6">
+        <div class="card overflow-hidden p-6">
           <div class="flex items-start justify-between gap-3">
             <div>
               <p class="flex items-center gap-1.5 text-sm text-[var(--color-ink-muted)]">
@@ -273,9 +285,27 @@ const breadcrumbJsonLd = buildListingBreadcrumbJsonLd({
 
         <div class="mt-6">
           <MapView client:only="react" listings={[summary]} height="280px" />
-          {listing.approximateLocation && (
-            <p class="mt-2 text-xs text-[var(--color-ink-muted)]">Approximate location shown for privacy</p>
-          )}
+          <div class="mt-2 flex items-center justify-between gap-2">
+            {listing.approximateLocation ? (
+              <p class="text-xs text-[var(--color-ink-muted)]">Approximate location shown for privacy</p>
+            ) : (
+              <p class="text-xs text-[var(--color-ink-muted)]">{neighborhoodLabel}, Berlin</p>
+            )}
+            {!listing.approximateLocation && (
+              <a
+                href={`https://www.google.com/maps?q=${listing.lat},${listing.lng}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex shrink-0 items-center gap-1 text-xs font-medium text-[var(--color-brand)] hover:underline"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-3.5" aria-hidden>
+                  <path fill-rule="evenodd" d="M8.914 6.025a.75.75 0 0 1 1.06 0 3.5 3.5 0 0 1 0 4.95l-2 2a3.5 3.5 0 0 1-4.95-4.95l1.172-1.171a.75.75 0 0 1 1.06 1.06L3.89 9.06a2 2 0 0 0 2.83 2.83l2-2a2 2 0 0 0 0-2.83.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                  <path fill-rule="evenodd" d="M7.086 9.975a.75.75 0 0 1-1.06 0 3.5 3.5 0 0 1 0-4.95l2-2a3.5 3.5 0 0 1 4.95 4.95l-1.172 1.171a.75.75 0 0 1-1.06-1.06l1.172-1.172a2 2 0 0 0-2.83-2.83l-2 2a2 2 0 0 0 0 2.83.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+                </svg>
+                Open in Maps
+              </a>
+            )}
+          </div>
         </div>
       </aside>
     </div>

@@ -74,18 +74,26 @@ export async function getClickHouse(): Promise<ClickHouseClient | null> {
   if (!clickhouseConfigured()) return null;
 
   if (!client) {
-    client = await createClickHouseClient();
+    try {
+      client = await createClickHouseClient();
+    } catch {
+      return null;
+    }
   }
 
   if (!schemaReady) {
-    schemaReady = ensureSchema(client).catch((error) => {
-      schemaReady = null;
-      throw error;
-    });
+    schemaReady = ensureSchema(client);
   }
 
-  await schemaReady;
-  return client;
+  try {
+    await schemaReady;
+    return client;
+  } catch {
+    // ClickHouse unreachable or schema failed — reset and fall back to Postgres
+    schemaReady = null;
+    client = null;
+    return null;
+  }
 }
 
 export async function closeClickHouse(): Promise<void> {

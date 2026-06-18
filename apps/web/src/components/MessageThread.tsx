@@ -202,7 +202,7 @@ export default function MessageThread({ conversationId, embedded = false, showMo
                 isMine={msg.isMine}
               />
               <span className="chat-bubble__meta">
-                <time>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>
+                <time>{new Date(msg.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</time>
                 {msg.isMine && <MessageReceipt status={receiptStatusFromReadAt(msg.readAt)} />}
               </span>
             </div>

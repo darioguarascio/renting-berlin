@@ -96,5 +96,5 @@ function formatListTime(iso: string): string {
   }
 
   const isThisYear = date.getFullYear() === now.getFullYear();
-  return date.toLocaleDateString([], isThisYear ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' });
+  return date.toLocaleDateString('en-GB', isThisYear ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' });
 }
