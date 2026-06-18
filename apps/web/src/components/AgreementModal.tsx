@@ -148,9 +148,13 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
   const [bankBic, setBankBic] = useState('');
   const [excludedClauses, setExcludedClauses] = useState<Set<OptionalClauseId>>(new Set());
 
-  // contract preview
+  // contract preview / read-only viewer overlay
   const [previewMd, setPreviewMd] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+
+  // two-step propose flow: structured form -> editable final document
+  const [proposeStep, setProposeStep] = useState<'form' | 'document'>('form');
+  const [editableMarkdown, setEditableMarkdown] = useState('');
 
   // sign form
   const [signName, setSignName] = useState('');
@@ -169,6 +173,7 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
     setDeposit(data.defaults.deposit != null ? String(data.defaults.deposit) : '');
     setStartDate(data.defaults.startDate);
     setEndDate(data.defaults.endDate ?? '');
+    setProposeStep('form');
     setPropertyAddress(data.contractDefaults.propertyAddress);
     setDistrict(data.contractDefaults.district);
     setFloor(data.contractDefaults.floor);
@@ -225,30 +230,40 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
     });
   }
 
-  async function loadPreview() {
-    setPreviewLoading(true);
+  function contractRequestBody() {
+    return {
+      title: title.trim() || undefined,
+      monthlyRent: Number(monthlyRent) || 0,
+      deposit: deposit ? Number(deposit) : null,
+      startDate: startDate || undefined,
+      endDate: endDate || null,
+      terms: terms.trim() || undefined,
+      contract: buildContractConfig(),
+    };
+  }
+
+  async function continueToDocument() {
     setError('');
+    const rentNum = Number(monthlyRent);
+    if (!title.trim()) return setError('Add a short title for the agreement.');
+    if (!monthlyRent || Number.isNaN(rentNum) || rentNum < 0) return setError('Enter a valid monthly rent.');
+    if (!startDate) return setError('Pick a start date.');
+
+    setSubmitting(true);
     try {
       const res = await fetch(`/api/conversations/${conversationId}/agreement/contract-preview`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: title.trim() || undefined,
-          monthlyRent: Number(monthlyRent) || 0,
-          deposit: deposit ? Number(deposit) : null,
-          startDate: startDate || undefined,
-          endDate: endDate || null,
-          terms: terms.trim() || undefined,
-          contract: buildContractConfig(),
-        }),
+        body: JSON.stringify(contractRequestBody()),
       });
       if (!res.ok) throw new Error(await res.text());
       const data = (await res.json()) as { markdown: string };
-      setPreviewMd(data.markdown);
+      setEditableMarkdown(data.markdown);
+      setProposeStep('document');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not render the contract preview.');
+      setError(err instanceof Error ? err.message : 'Could not generate the contract document.');
     } finally {
-      setPreviewLoading(false);
+      setSubmitting(false);
     }
   }
 
@@ -295,6 +310,7 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
     if (!title.trim()) return setError('Add a short title for the agreement.');
     if (!monthlyRent || Number.isNaN(rentNum) || rentNum < 0) return setError('Enter a valid monthly rent.');
     if (!startDate) return setError('Pick a start date.');
+    if (!editableMarkdown.trim()) return setError('The contract document cannot be empty.');
     if (proposeName.trim().length < 2) return setError('Type your full name to sign.');
     if (!proposeAgree) return setError('Please confirm you intend this agreement to be binding.');
 
@@ -314,6 +330,7 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
           rejectOthers,
           rejectMessage: rejectOthers ? rejectMessage.trim() || undefined : undefined,
           contract: buildContractConfig(),
+          contractMarkdown: editableMarkdown,
         }),
       });
       if (!res.ok) throw new Error(await res.text());
@@ -431,6 +448,8 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
               {/* ── Propose form ───────────────────────────── */}
               {showProposeForm ? (
                 <>
+                  {proposeStep === 'form' && (
+                    <>
                   {agreement && (agreement.status === 'declined' || agreement.status === 'withdrawn') && (
                     <p className="rounded-xl border border-[var(--color-border)] bg-[var(--color-paper)] px-4 py-3 text-xs text-[var(--color-ink-muted)]">
                       The previous agreement was {agreement.status}. You can propose a fresh one below.
@@ -624,16 +643,33 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          className="btn-ghost w-full text-sm"
-                          onClick={loadPreview}
-                          disabled={previewLoading}
-                        >
-                          {previewLoading ? 'Rendering…' : 'Preview contract document'}
-                        </button>
                       </div>
                     )}
+                  </div>
+                    </>
+                  )}
+
+                  {proposeStep === 'document' && (
+                    <>
+                  <div>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <span className="field-label mb-0">Final contract document</span>
+                      <button
+                        type="button"
+                        className="text-xs font-semibold text-[var(--color-brand-deep)] underline"
+                        onClick={() => setProposeStep('form')}
+                      >
+                        Back to details
+                      </button>
+                    </div>
+                    <p className="mb-2 text-xs text-[var(--color-ink-muted)]">
+                      This exact text becomes the binding agreement. Edit anything you like before signing.
+                    </p>
+                    <textarea
+                      className="field-input min-h-[320px] resize-y font-mono text-[12px] leading-relaxed"
+                      value={editableMarkdown}
+                      onChange={(e) => setEditableMarkdown(e.target.value)}
+                    />
                   </div>
 
                   <div className="rounded-xl border border-[var(--color-brand-light)] bg-[var(--color-brand-muted)] px-4 py-3">
@@ -657,8 +693,10 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
                       </span>
                     </label>
                   </div>
+                    </>
+                  )}
 
-                  {ctx.conversation.viewerIsLandlord && ctx.rejectableCount > 0 && (
+                  {proposeStep === 'form' && ctx.conversation.viewerIsLandlord && ctx.rejectableCount > 0 && (
                     <div className="rounded-xl border border-[var(--color-border)] px-4 py-3">
                       <label className="flex cursor-pointer items-start gap-2 text-sm text-[var(--color-ink)]">
                         <input
@@ -747,7 +785,7 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
                       </div>
                     )}
 
-                    {agreement.status === 'signed' && agreement.hasContractDocument && (
+                    {agreement.hasContractDocument && (
                       <button
                         type="button"
                         className="btn-ghost w-full text-sm"
@@ -853,7 +891,10 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
                         <button
                           type="button"
                           className="btn-ghost w-full text-sm"
-                          onClick={() => setMode('propose')}
+                          onClick={() => {
+                            setProposeStep('form');
+                            setMode('propose');
+                          }}
                         >
                           Propose a new agreement
                         </button>
@@ -880,14 +921,30 @@ export default function AgreementModal({ conversationId, onClose, onChanged }: P
         {!loading && ctx && (
           <div className="flex flex-wrap justify-end gap-2 border-t border-[var(--color-border)] px-6 py-4">
             {showProposeForm ? (
-              <>
-                <button type="button" onClick={onClose} disabled={submitting} className="btn-ghost">
-                  Cancel
-                </button>
-                <button type="button" onClick={submitPropose} disabled={submitting} className="btn-brand">
-                  {submitting ? 'Sending…' : 'Propose & sign'}
-                </button>
-              </>
+              proposeStep === 'form' ? (
+                <>
+                  <button type="button" onClick={onClose} disabled={submitting} className="btn-ghost">
+                    Cancel
+                  </button>
+                  <button type="button" onClick={continueToDocument} disabled={submitting} className="btn-brand">
+                    {submitting ? 'Preparing…' : 'Continue to document'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setProposeStep('form')}
+                    disabled={submitting}
+                    className="btn-ghost"
+                  >
+                    Back
+                  </button>
+                  <button type="button" onClick={submitPropose} disabled={submitting} className="btn-brand">
+                    {submitting ? 'Sending…' : 'Propose & sign'}
+                  </button>
+                </>
+              )
             ) : agreement && agreement.status === 'proposed' && agreement.viewerIsProposer ? (
               <>
                 <button type="button" onClick={onClose} disabled={submitting} className="btn-ghost">

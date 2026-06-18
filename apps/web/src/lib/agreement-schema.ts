@@ -59,6 +59,8 @@ export const proposeAgreementSchema = z.object({
   rejectOthers: z.boolean().default(false),
   rejectMessage: z.string().trim().max(2000).optional(),
   contract: contractConfigSchema.optional(),
+  // The final, possibly hand-edited contract document the proposer reviewed.
+  contractMarkdown: z.string().max(100_000).optional(),
 });
 
 export type ProposeAgreementInput = z.infer<typeof proposeAgreementSchema>;

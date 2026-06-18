@@ -161,30 +161,33 @@ function assembleContractMarkdown(
  * that turns it into a PDF and emails both parties. Best-effort.
  */
 async function finalizeSignedContract(row: AgreementRow): Promise<void> {
-  const conv = await db.query.conversations.findFirst({
-    where: eq(conversations.id, row.conversationId),
-  });
-  if (!conv) return;
-
-  const { publisher, inquirer, listing } = await loadContractParticipants(conv);
-  const markdown = assembleContractMarkdown(
-    publisher,
-    inquirer,
-    listing,
-    {
-      monthlyRent: row.monthlyRent,
-      deposit: row.deposit,
-      startDate: row.startDate.toISOString().slice(0, 10),
-      endDate: row.endDate ? row.endDate.toISOString().slice(0, 10) : null,
-      terms: row.terms,
-    },
-    row.contractConfig ?? null,
-  );
-
-  await db
-    .update(agreements)
-    .set({ contractMarkdown: markdown, updatedAt: new Date() })
-    .where(eq(agreements.id, row.id));
+  // The proposer reviews and may hand-edit the document before proposing, so
+  // prefer the stored text and only render from config as a fallback.
+  if (!row.contractMarkdown) {
+    const conv = await db.query.conversations.findFirst({
+      where: eq(conversations.id, row.conversationId),
+    });
+    if (conv) {
+      const { publisher, inquirer, listing } = await loadContractParticipants(conv);
+      const markdown = assembleContractMarkdown(
+        publisher,
+        inquirer,
+        listing,
+        {
+          monthlyRent: row.monthlyRent,
+          deposit: row.deposit,
+          startDate: row.startDate.toISOString().slice(0, 10),
+          endDate: row.endDate ? row.endDate.toISOString().slice(0, 10) : null,
+          terms: row.terms,
+        },
+        row.contractConfig ?? null,
+      );
+      await db
+        .update(agreements)
+        .set({ contractMarkdown: markdown, updatedAt: new Date() })
+        .where(eq(agreements.id, row.id));
+    }
+  }
 
   await enqueueAgreementJob({ type: 'signed', agreementId: row.id });
 }
@@ -378,6 +381,7 @@ export async function proposeAgreement(
       proposerSignatureName: input.signatureName,
       proposerSignedAt: new Date(),
       contractConfig: input.contract ?? null,
+      contractMarkdown: input.contractMarkdown?.trim() ? input.contractMarkdown : null,
     })
     .returning();
 
