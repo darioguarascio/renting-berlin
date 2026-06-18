@@ -132,7 +132,11 @@ jobs:
               fi
             }
 
-            SERVICES="web worker-notifications worker-emails worker-moderation worker-profile-views worker-telegram"
+            SERVICES="web worker-notifications worker-emails worker-moderation worker-profile-views worker-telegram worker-agreements"
+
+            # Reclaim disk before pulling new images (volumes/DB are preserved).
+            docker system prune -af || true
+            docker builder prune -af || true
 
             compose pull $SERVICES
             compose --profile tools run --rm migrate
