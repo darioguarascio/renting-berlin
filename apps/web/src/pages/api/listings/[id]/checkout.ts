@@ -31,6 +31,7 @@ export const POST: APIRoute = async ({ request, params }) => {
     return Response.json({
       status: result.listing.status,
       transactionCreated: result.transactionCreated,
+      rejectedCount: result.rejectedCount,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Invalid checkout data';

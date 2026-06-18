@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react';
+import AgreementModal from './AgreementModal';
 import { trackEvent } from '../lib/rybbit';
+
+const DEFAULT_REJECTION =
+  'Thank you so much for your interest and for taking the time to reach out. ' +
+  'Unfortunately the place has now been promised to someone else, so I have to ' +
+  'pass for now. Wishing you all the best with your search! 🙏';
 
 interface CheckoutListing {
   id: string;
@@ -65,6 +71,9 @@ export default function ListingCheckoutModal({
   const [contacts, setContacts] = useState<CheckoutContact[]>([]);
   const [rentedToUserId, setRentedToUserId] = useState<string | null>(null);
   const [rentalEndDate, setRentalEndDate] = useState('');
+  const [rejectOthers, setRejectOthers] = useState(true);
+  const [rejectMessage, setRejectMessage] = useState(DEFAULT_REJECTION);
+  const [agreementConvId, setAgreementConvId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/listings/${listingId}/checkout`)
@@ -98,6 +107,8 @@ export default function ListingCheckoutModal({
           rentedToUserId,
           rentalEndDate: rentedToUserId ? rentalEndDate : null,
           updateListingEndDate: true,
+          rejectOthers: rentedToUserId ? rejectOthers && otherContactsCount > 0 : false,
+          rejectMessage: rejectMessage.trim() || undefined,
         }),
       });
       if (!res.ok) throw new Error(await res.text());
@@ -112,7 +123,15 @@ export default function ListingCheckoutModal({
   }
 
   const tenantSelected = rentedToUserId !== null;
-  const tenantName = contacts.find((c) => c.userId === rentedToUserId)?.userName;
+  const selectedContact = contacts.find((c) => c.userId === rentedToUserId) ?? null;
+  const tenantName = selectedContact?.userName;
+  const otherContactsCount = rentedToUserId ? contacts.filter((c) => c.userId !== rentedToUserId).length : 0;
+
+  if (agreementConvId) {
+    return (
+      <AgreementModal conversationId={agreementConvId} onClose={() => setAgreementConvId(null)} />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
@@ -244,6 +263,51 @@ export default function ListingCheckoutModal({
                     </>
                   )}
                 </div>
+              )}
+
+              {tenantSelected && selectedContact && (
+                <section className="rounded-xl border border-[var(--color-brand-light)] bg-[var(--color-brand-muted)] px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-[var(--color-ink)]">
+                      Put it in writing with {tenantName}?
+                    </p>
+                    <span className="badge badge-accent">Beta</span>
+                  </div>
+                  <p className="mt-1 text-xs text-[var(--color-ink-muted)]">
+                    Send a digital agreement you both sign to make the deal binding.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setAgreementConvId(selectedContact.conversationId)}
+                    className="btn-ghost mt-3 w-full text-sm"
+                  >
+                    Set up signing agreement
+                  </button>
+                </section>
+              )}
+
+              {tenantSelected && otherContactsCount > 0 && (
+                <section className="rounded-xl border border-[var(--color-border)] px-4 py-3">
+                  <label className="flex cursor-pointer items-start gap-2 text-sm text-[var(--color-ink)]">
+                    <input
+                      type="checkbox"
+                      checked={rejectOthers}
+                      onChange={(e) => setRejectOthers(e.target.checked)}
+                      className="mt-0.5 size-4 accent-[var(--color-brand)]"
+                    />
+                    <span>
+                      Send a polite decline to the other <strong>{otherContactsCount}</strong>{' '}
+                      {otherContactsCount === 1 ? 'person' : 'people'} who messaged about this listing.
+                    </span>
+                  </label>
+                  {rejectOthers && (
+                    <textarea
+                      className="field-input mt-3 min-h-[80px] resize-y text-sm"
+                      value={rejectMessage}
+                      onChange={(e) => setRejectMessage(e.target.value)}
+                    />
+                  )}
+                </section>
               )}
 
               {error && listing && (

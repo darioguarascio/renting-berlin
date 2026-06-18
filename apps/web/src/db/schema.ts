@@ -34,6 +34,12 @@ export const seekerVisibilityEnum = pgEnum('seeker_visibility', [
   'nobody',
 ]);
 export const moderationStatusEnum = pgEnum('moderation_status', ['pending', 'approved', 'flagged']);
+export const agreementStatusEnum = pgEnum('agreement_status', [
+  'proposed',
+  'signed',
+  'declined',
+  'withdrawn',
+]);
 export const moderationEntityTypeEnum = pgEnum('moderation_entity_type', [
   'listing',
   'tenant_request',
@@ -326,6 +332,47 @@ export const messageTemplates = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index('message_templates_user_idx').on(table.userId)],
+);
+
+/**
+ * Beta: digital rental agreements signed by both parties inside a conversation.
+ * The proposer signs on creation; the agreement becomes binding once the
+ * counterparty also signs.
+ */
+export const agreements = pgTable(
+  'agreements',
+  {
+    id: text('id').primaryKey(),
+    conversationId: text('conversation_id')
+      .notNull()
+      .references(() => conversations.id, { onDelete: 'cascade' }),
+    listingId: text('listing_id').references(() => listings.id, { onDelete: 'set null' }),
+    proposerId: text('proposer_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    counterpartyId: text('counterparty_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    status: agreementStatusEnum('status').notNull().default('proposed'),
+    title: text('title').notNull(),
+    monthlyRent: integer('monthly_rent').notNull(),
+    deposit: integer('deposit'),
+    startDate: timestamp('start_date', { withTimezone: true }).notNull(),
+    endDate: timestamp('end_date', { withTimezone: true }),
+    terms: text('terms'),
+    proposerSignatureName: text('proposer_signature_name').notNull(),
+    proposerSignedAt: timestamp('proposer_signed_at', { withTimezone: true }).notNull().defaultNow(),
+    counterpartySignatureName: text('counterparty_signature_name'),
+    counterpartySignedAt: timestamp('counterparty_signed_at', { withTimezone: true }),
+    declineReason: text('decline_reason'),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('agreements_conversation_idx').on(table.conversationId),
+    index('agreements_listing_idx').on(table.listingId),
+  ],
 );
 
 export const listingViews = pgTable(

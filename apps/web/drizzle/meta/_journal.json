@@ -78,6 +78,13 @@
       "when": 1781373584697,
       "tag": "0010_hide_reviewer_names",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1781373584698,
+      "tag": "0011_agreements",
+      "breakpoints": true
     }
   ]
 }

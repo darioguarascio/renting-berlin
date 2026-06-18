@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import AgreementModal from './AgreementModal';
 import ConversationContextLink from './ConversationContextLink';
 import MessageComposer, { type ComposerPayload } from './MessageComposer';
 import MessageContent from './MessageContent';
@@ -41,10 +42,21 @@ function withGrouping(messages: Message[]) {
   });
 }
 
+interface AgreementSummary {
+  agreement: {
+    status: 'proposed' | 'signed' | 'declined' | 'withdrawn';
+    title: string;
+    viewerIsProposer: boolean;
+  } | null;
+  conversation: { otherUserName: string };
+}
+
 export default function MessageThread({ conversationId, embedded = false, showMobileBack = false }: Props) {
   const [data, setData] = useState<ThreadData | null>(null);
   const [sending, setSending] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [agreementOpen, setAgreementOpen] = useState(false);
+  const [agreementSummary, setAgreementSummary] = useState<AgreementSummary | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const templateKind =
@@ -55,8 +67,14 @@ export default function MessageThread({ conversationId, embedded = false, showMo
     if (res.ok) setData(await res.json());
   }
 
+  async function loadAgreement() {
+    const res = await fetch(`/api/conversations/${conversationId}/agreement`);
+    if (res.ok) setAgreementSummary(await res.json());
+  }
+
   useEffect(() => {
     load();
+    loadAgreement();
     const interval = setInterval(load, 5000);
     return () => clearInterval(interval);
   }, [conversationId]);
@@ -173,6 +191,18 @@ export default function MessageThread({ conversationId, embedded = false, showMo
 
         <button
           type="button"
+          className="chat-compose__icon-btn text-[var(--color-ink-muted)] hover:text-[var(--color-brand-deep)]"
+          aria-label="Rental agreement"
+          title="Rental agreement (beta)"
+          onClick={() => setAgreementOpen(true)}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+          </svg>
+        </button>
+
+        <button
+          type="button"
           className="chat-compose__icon-btn text-[var(--color-ink-muted)] hover:text-red-600"
           aria-label="Delete conversation"
           title="Delete conversation"
@@ -186,6 +216,41 @@ export default function MessageThread({ conversationId, embedded = false, showMo
       </header>
 
       <ConversationContextLink listing={listingContext} seekerProfile={data.seekerProfile} variant="bar" />
+
+      {agreementSummary?.agreement &&
+        (agreementSummary.agreement.status === 'proposed' ||
+          agreementSummary.agreement.status === 'signed') && (
+          <button
+            type="button"
+            onClick={() => setAgreementOpen(true)}
+            className="flex w-full items-center gap-2 border-b border-[var(--color-border)] bg-[var(--color-brand-muted)] px-4 py-2 text-left text-sm text-[var(--color-brand-deep)] hover:bg-[var(--color-brand-light)]"
+          >
+            <span aria-hidden>{agreementSummary.agreement.status === 'signed' ? '✅' : '📄'}</span>
+            <span className="min-w-0 flex-1 truncate font-semibold">
+              {agreementSummary.agreement.status === 'signed'
+                ? `Agreement signed: ${agreementSummary.agreement.title}`
+                : agreementSummary.agreement.viewerIsProposer
+                  ? `Agreement sent — waiting for ${agreementSummary.conversation.otherUserName} to sign`
+                  : `${agreementSummary.conversation.otherUserName} proposed an agreement`}
+            </span>
+            <span className="shrink-0 text-xs font-bold underline">
+              {agreementSummary.agreement.status === 'proposed' && !agreementSummary.agreement.viewerIsProposer
+                ? 'Review & sign'
+                : 'Open'}
+            </span>
+          </button>
+        )}
+
+      {agreementOpen && (
+        <AgreementModal
+          conversationId={conversationId}
+          onClose={() => setAgreementOpen(false)}
+          onChanged={() => {
+            void load();
+            void loadAgreement();
+          }}
+        />
+      )}
 
       <div className="chat-thread-messages">
         {groupedMessages.map((msg) => (

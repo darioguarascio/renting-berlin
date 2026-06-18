@@ -4,6 +4,7 @@ import { db } from '../db';
 import { conversations, listings, messages, rentalTransactions, users } from '../db/schema';
 import { parseDate, toIsoString } from './dates';
 import { checkoutInputSchema, type CheckoutInput } from './rental-checkout-schema';
+import { rejectOtherListingConversations } from './agreements';
 import { removeListingFromIndex } from './search';
 
 export { checkoutInputSchema, type CheckoutInput };
@@ -159,7 +160,17 @@ export async function completeListingCheckout(
     if (listing.status === 'active' || finalStatus === 'closed') {
       await removeListingFromIndex(listingId);
     }
-    return { listing: row, transactionCreated: !existingTx };
+
+    let rejectedCount = 0;
+    if (data.rejectOthers) {
+      const result = await rejectOtherListingConversations(listingId, publisherId, {
+        exceptConversationId: conv.id,
+        message: data.rejectMessage,
+      });
+      rejectedCount = result.count;
+    }
+
+    return { listing: row, transactionCreated: !existingTx, rejectedCount };
   }
 
   const [row] = await db
@@ -172,5 +183,5 @@ export async function completeListingCheckout(
     await removeListingFromIndex(listingId);
   }
 
-  return { listing: row, transactionCreated: false };
+  return { listing: row, transactionCreated: false, rejectedCount: 0 };
 }
