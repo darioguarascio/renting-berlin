@@ -1697,11 +1697,38 @@ body:has(.chat-app) > header {
   border-right: 1px solid var(--color-border);
 }
 
+/* Mobile: one panel at a time (list OR thread), like WhatsApp / Telegram */
+@media (max-width: 1023px) {
+  .chat-app--list .chat-sidebar {
+    display: flex;
+    flex: 1;
+    width: 100%;
+  }
+
+  .chat-app--list .chat-main {
+    display: none;
+  }
+
+  .chat-app--thread-open .chat-sidebar {
+    display: none;
+  }
+
+  .chat-app--thread-open .chat-main {
+    display: flex;
+    flex: 1;
+    width: 100%;
+  }
+}
+
 @media (min-width: 1024px) {
   .chat-sidebar {
     width: 22rem;
     max-width: 40%;
     flex-shrink: 0;
+  }
+
+  .chat-main {
+    display: flex;
   }
 }
 
@@ -1747,19 +1774,12 @@ body:has(.chat-app) > header {
 }
 
 .chat-main {
-  display: flex;
+  display: none;
   flex: 1;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
   background: var(--chat-bg);
-}
-
-@media (max-width: 1023px) {
-  .chat-app--thread-open .chat-main {
-    width: 100%;
-    flex: 1 1 auto;
-  }
 }
 
 .chat-empty {

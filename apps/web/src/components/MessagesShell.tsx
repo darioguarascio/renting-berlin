@@ -74,8 +74,8 @@ export default function MessagesShell({ conversationId: initialConversationId }:
   });
 
   return (
-    <div className={`chat-app ${activeConversationId ? 'chat-app--thread-open' : ''}`}>
-      <aside className={`chat-sidebar ${activeConversationId ? 'hidden lg:flex' : 'flex'}`}>
+    <div className={`chat-app ${activeConversationId ? 'chat-app--thread-open' : 'chat-app--list'}`}>
+      <aside className="chat-sidebar">
         <header className="chat-sidebar__header chat-sidebar__header--stacked">
           <Breadcrumbs items={breadcrumbItems} />
           <h1 className="chat-sidebar__title">Chats</h1>
@@ -83,7 +83,7 @@ export default function MessagesShell({ conversationId: initialConversationId }:
         <ConversationList selectedId={activeConversationId} onSelect={openConversation} />
       </aside>
 
-      <main className={`chat-main ${activeConversationId ? 'flex' : 'hidden lg:flex'}`}>
+      <main className="chat-main">
         {activeConversationId ? (
           <MessageThread
             key={activeConversationId}
