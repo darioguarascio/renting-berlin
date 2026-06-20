@@ -23,7 +23,10 @@ if (!password) {
 }
 
 async function authFetch(path, { method = 'GET', body, cookie } = {}) {
-  const headers = { Accept: 'application/json' };
+  const headers = {
+    Accept: 'application/json',
+    Origin: siteUrl,
+  };
   if (body) headers['Content-Type'] = 'application/json';
   if (cookie) headers.Cookie = cookie;
 

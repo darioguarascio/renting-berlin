@@ -79,7 +79,7 @@ async function backfillListingEvents(ch, sql) {
     values: listings.map((row) => ({
       listing_id: row.id,
       event_type: 'published',
-      published_at: row.published_at,
+      published_at: toClickHouseDateTime(new Date(row.published_at)),
     })),
     format: 'JSONEachRow',
   });
@@ -115,7 +115,7 @@ async function backfillSiteVisits(ch, sql) {
     values: visits.map((row) => ({
       visitor_id: row.id,
       page: 'offers',
-      visited_at: row.last_offers_visit_at,
+      visited_at: row.last_offers_visit_at.toISOString().replace('T', ' ').replace('Z', ''),
     })),
     format: 'JSONEachRow',
   });

@@ -2,6 +2,7 @@ import { and, eq, gt, isNotNull, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { listings } from '../../db/schema';
 import { clickhouseConfigured, getClickHouse } from '../clickhouse/client';
+import { toClickHouseDateTime } from '../clickhouse/datetime';
 
 export type ListingEventType = 'published' | 'unpublished';
 
@@ -76,7 +77,7 @@ async function backfillListingEventsIfNeeded(): Promise<void> {
       values: rows.map((row) => ({
         listing_id: row.id,
         event_type: 'published',
-        published_at: row.publishedAt!,
+        published_at: toClickHouseDateTime(row.publishedAt!),
       })),
       format: 'JSONEachRow',
     });
@@ -107,7 +108,7 @@ export async function recordListingEvent(
         {
           listing_id: listingId,
           event_type: eventType,
-          published_at: publishedAt,
+          published_at: toClickHouseDateTime(publishedAt),
         },
       ],
       format: 'JSONEachRow',

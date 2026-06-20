@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { users } from '../../db/schema';
 import { getClickHouse } from '../clickhouse/client';
+import { toClickHouseDateTime } from '../clickhouse/datetime';
 
 export type SitePage = 'offers';
 
@@ -70,7 +71,7 @@ export async function recordSiteVisit(
     try {
       await ch.insert({
         table: 'site_visits',
-        values: [{ visitor_id: visitorId, page, visited_at: visitedAt }],
+        values: [{ visitor_id: visitorId, page, visited_at: toClickHouseDateTime(visitedAt) }],
         format: 'JSONEachRow',
       });
       return;

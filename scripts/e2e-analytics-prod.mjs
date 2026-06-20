@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Browser E2E: login, visit /offers twice, verify "new since last visit" flow.
+ * Browser E2E: API login, visit /offers twice, verify analytics cookies.
  *
  * Usage:
  *   E2E_ANALYTICS_EMAIL=... E2E_ANALYTICS_PASSWORD=... \
- *   npx playwright install chromium && node scripts/e2e-analytics-prod.mjs
+ *   node scripts/e2e-analytics-prod.mjs
  */
 
 import { chromium } from 'playwright';
@@ -18,12 +18,44 @@ if (!password) {
   process.exit(1);
 }
 
-async function login(page) {
-  await page.goto(`${siteUrl}/login`, { waitUntil: 'networkidle' });
-  await page.getByLabel(/email/i).fill(email);
-  await page.getByLabel(/^password$/i).fill(password);
-  await page.getByRole('button', { name: /log in|sign in/i }).click();
-  await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 30000 });
+function mergeCookies(setCookie) {
+  const jar = new Map();
+  for (const raw of setCookie) {
+    const [pair] = raw.split(';');
+    const eq = pair.indexOf('=');
+    jar.set(pair.slice(0, eq).trim(), pair.slice(eq + 1));
+  }
+  return [...jar.entries()].map(([name, value]) => ({
+    name,
+    value,
+    domain: new URL(siteUrl).hostname,
+    path: '/',
+    httpOnly: true,
+    secure: siteUrl.startsWith('https'),
+    sameSite: 'Lax',
+  }));
+}
+
+async function signInViaApi() {
+  const res = await fetch(`${siteUrl}/api/auth/sign-in/email`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      Origin: siteUrl,
+    },
+    body: JSON.stringify({ email, password, rememberMe: true }),
+  });
+
+  const setCookie = res.headers.getSetCookie?.() ?? [];
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`API sign-in failed (${res.status}): ${text}`);
+  }
+  if (setCookie.length === 0) {
+    throw new Error('API sign-in did not return session cookies');
+  }
+  return mergeCookies(setCookie);
 }
 
 async function visitOffers(page) {
@@ -32,24 +64,23 @@ async function visitOffers(page) {
 }
 
 async function main() {
+  const sessionCookies = await signInViaApi();
+  console.log(`API login OK (${sessionCookies.length} cookies)`);
+
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext();
+  await context.addCookies(sessionCookies);
   const page = await context.newPage();
-
-  console.log('Logging in…');
-  await login(page);
 
   console.log('First /offers visit (baseline)…');
   await visitOffers(page);
   const firstBanner = await page.getByText(/new listing/i).count();
   console.log(`Banner after first visit: ${firstBanner > 0 ? 'visible' : 'hidden'}`);
 
-  console.log('Second /offers visit (should record site_visits)…');
+  console.log('Second /offers visit…');
   await page.waitForTimeout(1500);
   await visitOffers(page);
   const secondBanner = await page.getByText(/new listing/i).count();
-  const listingCount = await page.locator('strong').first().textContent().catch(() => '?');
-  console.log(`Listings count line: ${listingCount?.trim()}`);
   console.log(`Banner after second visit: ${secondBanner > 0 ? 'visible' : 'hidden'}`);
 
   const cookies = await context.cookies();
