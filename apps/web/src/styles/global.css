@@ -1774,7 +1774,7 @@ body:has(.chat-app) > header {
 }
 
 .chat-main {
-  display: none;
+  display: flex;
   flex: 1;
   flex-direction: column;
   min-width: 0;
