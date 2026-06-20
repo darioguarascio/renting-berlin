@@ -202,5 +202,13 @@ jobs:
       - name: Notify Telegram
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_DEPLOY_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_DEPLOY_CHAT_ID }}
-        run: bash scripts/telegram-send.sh release-notes.txt
+          TELEGRAM_DEPLOY_CHAT_ID: ${{ secrets.TELEGRAM_DEPLOY_CHAT_ID }}
+          TELEGRAM_CHAT_ID_SECRET: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          set -euo pipefail
+          export TELEGRAM_CHAT_ID="${TELEGRAM_DEPLOY_CHAT_ID:-${TELEGRAM_CHAT_ID_SECRET:-}}"
+          if [ -z "${TELEGRAM_CHAT_ID}" ]; then
+            echo "::error::Set TELEGRAM_DEPLOY_CHAT_ID or TELEGRAM_CHAT_ID in GitHub repo secrets"
+            exit 1
+          fi
+          bash scripts/telegram-send.sh release-notes.txt
