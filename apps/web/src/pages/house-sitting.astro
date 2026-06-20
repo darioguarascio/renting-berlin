@@ -1,0 +1,15 @@
+---
+import AccountLayout from '../layouts/AccountLayout.astro';
+import StaysPage from '../components/StaysPage.tsx';
+
+export const prerender = false;
+---
+
+<AccountLayout
+  title="House-sitting — renting.berlin"
+  heading="House-sitting"
+  description="Offer your place to your circle while you're away, and grab a friend's place when theirs is free."
+  currentPath="/house-sitting"
+>
+  <StaysPage client:load />
+</AccountLayout>

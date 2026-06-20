@@ -9,7 +9,9 @@ export type NotificationEvent =
   | 'saved_searches'
   | 'profile_views'
   | 'listing_updates'
-  | 'product_news';
+  | 'product_news'
+  | 'connections'
+  | 'stays';
 
 export interface NotificationPreferences {
   inAppEnabled: boolean;
@@ -45,7 +47,7 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   updatedAt: new Date().toISOString(),
 };
 
-const EVENT_FIELD: Record<NotificationEvent, keyof NotificationPreferences> = {
+const EVENT_FIELD: Partial<Record<NotificationEvent, keyof NotificationPreferences>> = {
   messages: 'notifyMessages',
   saved_searches: 'notifySavedSearches',
   profile_views: 'notifyProfileViews',
@@ -135,11 +137,13 @@ export async function updateNotificationPreferences(
 export async function shouldNotifyInApp(userId: string, event: NotificationEvent): Promise<boolean> {
   const prefs = await getNotificationPreferences(userId);
   if (!prefs.inAppEnabled) return false;
-  return Boolean(prefs[EVENT_FIELD[event]]);
+  const field = EVENT_FIELD[event];
+  return field ? Boolean(prefs[field]) : true;
 }
 
 export async function shouldNotifyEmail(userId: string, event: NotificationEvent): Promise<boolean> {
   const prefs = await getNotificationPreferences(userId);
   if (!prefs.emailEnabled) return false;
-  return Boolean(prefs[EVENT_FIELD[event]]);
+  const field = EVENT_FIELD[event];
+  return field ? Boolean(prefs[field]) : true;
 }

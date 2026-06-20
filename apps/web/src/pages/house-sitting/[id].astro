@@ -1,0 +1,16 @@
+---
+import AccountLayout from '../../layouts/AccountLayout.astro';
+import StayOfferDetail from '../../components/StayOfferDetail.tsx';
+
+export const prerender = false;
+
+const { id } = Astro.params;
+---
+
+<AccountLayout
+  title="House-sitting — renting.berlin"
+  heading="House-sitting"
+  currentPath="/house-sitting"
+>
+  <StayOfferDetail client:load offerId={id!} />
+</AccountLayout>

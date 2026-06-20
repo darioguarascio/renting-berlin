@@ -13,7 +13,7 @@ const PUBLIC_PAGES = new Set([
   '/sitemap.xml',
   '/robots.txt',
 ]);
-const PUBLIC_PAGE_PREFIXES = ['/rent-in/', '/guides/', '/e/', '/listings/'];
+const PUBLIC_PAGE_PREFIXES = ['/rent-in/', '/guides/', '/e/', '/listings/', '/invite/'];
 
 export function isPublicPage(path: string): boolean {
   if (PUBLIC_PAGES.has(path)) return true;

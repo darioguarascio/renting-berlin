@@ -1,0 +1,15 @@
+---
+import AccountLayout from '../layouts/AccountLayout.astro';
+import CirclePage from '../components/CirclePage.tsx';
+
+export const prerender = false;
+---
+
+<AccountLayout
+  title="Your circle — renting.berlin"
+  heading="Your circle"
+  description="A closed group of people you trust. Only your circle can see the stays you open up."
+  currentPath="/circle"
+>
+  <CirclePage client:load />
+</AccountLayout>

@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   findFirstSavedSearch,
   findManySavedSearches,
-  findManySearchNotifications,
   insertReturning,
   updateReturning,
   updateWhere,
@@ -20,7 +19,6 @@ const {
 } = vi.hoisted(() => ({
   findFirstSavedSearch: vi.fn(),
   findManySavedSearches: vi.fn(),
-  findManySearchNotifications: vi.fn(),
   insertReturning: vi.fn(),
   updateReturning: vi.fn(),
   updateWhere: vi.fn(),
@@ -40,7 +38,6 @@ vi.mock('../db', () => ({
   db: {
     query: {
       savedSearches: { findFirst: findFirstSavedSearch, findMany: findManySavedSearches },
-      searchNotifications: { findMany: findManySearchNotifications },
       listings: { findFirst: findFirstListing },
       tenantRequests: { findFirst: findFirstRequest },
       users: { findFirst: findFirstUser },
@@ -113,11 +110,7 @@ import {
   deleteSavedSearch,
   filtersHash,
   generateSearchName,
-  getUnreadSearchNotificationCount,
   listSavedSearches,
-  listSearchNotifications,
-  markAllSearchNotificationsRead,
-  markSearchNotificationRead,
   notifyNewListing,
   notifyNewTenantRequest,
   updateSavedSearch,
@@ -257,41 +250,6 @@ describe('saved search CRUD', () => {
   it('returns false when deleting a missing saved search', async () => {
     findFirstSavedSearch.mockResolvedValue(null);
     await expect(deleteSavedSearch('user_1', 'missing')).resolves.toBe(false);
-  });
-});
-
-describe('search notifications', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    findManySearchNotifications.mockResolvedValue([
-      {
-        id: 'note_1',
-        savedSearchId: 'search_1',
-        searchType: 'listings',
-        title: 'New listing matches your search',
-        body: 'Bright flat',
-        link: '/listings/bright-flat--abc12345',
-        readAt: null,
-        createdAt: new Date('2026-01-03'),
-      },
-    ]);
-    selectWhere.mockResolvedValue([{ count: 2 }]);
-    updateWhere.mockResolvedValue(undefined);
-  });
-
-  it('lists notifications for a user', async () => {
-    const rows = await listSearchNotifications('user_1');
-    expect(rows[0]?.title).toMatch(/New listing/);
-  });
-
-  it('counts unread notifications', async () => {
-    await expect(getUnreadSearchNotificationCount('user_1')).resolves.toBe(2);
-  });
-
-  it('marks one or all notifications as read', async () => {
-    await markSearchNotificationRead('user_1', 'note_1');
-    await markAllSearchNotificationsRead('user_1');
-    expect(updateWhere).toHaveBeenCalled();
   });
 });
 

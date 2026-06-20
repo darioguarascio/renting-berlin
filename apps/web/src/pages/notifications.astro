@@ -1,0 +1,15 @@
+---
+import AccountLayout from '../layouts/AccountLayout.astro';
+import NotificationsPage from '../components/NotificationsPage.tsx';
+
+export const prerender = false;
+---
+
+<AccountLayout
+  title="Notifications — renting.berlin"
+  heading="Notifications"
+  description="Everything new since you last checked."
+  currentPath="/notifications"
+>
+  <NotificationsPage client:load />
+</AccountLayout>

@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto';
-import { and, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { db } from '../db';
-import { listings, savedSearches, searchNotifications, tenantRequests, users } from '../db/schema';
+import { listings, savedSearches, tenantRequests, users } from '../db/schema';
+import { createNotification } from './notifications';
 import { matchesListingFilters, searchListings, toSummary } from './search';
 import { matchesTenantRequestFilters, searchTenantRequests } from './tenant-requests';
 import type { ListingSearchFilters, ListingSummary } from '../types/listing';
@@ -27,17 +28,6 @@ export interface SavedSearchRecord {
   searchUrl: string;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface SearchNotificationRecord {
-  id: string;
-  savedSearchId: string;
-  searchType: SavedSearchType;
-  title: string;
-  body: string;
-  link: string;
-  readAt: string | null;
-  createdAt: string;
 }
 
 export type SavedSearchType = 'listings' | 'tenant_requests';
@@ -298,60 +288,14 @@ async function createSearchNotification(input: {
   body: string;
   link: string;
 }) {
-  try {
-    await db.insert(searchNotifications).values({
-      id: nanoid(),
-      userId: input.userId,
-      savedSearchId: input.savedSearchId,
-      searchType: input.searchType,
-      itemId: input.itemId,
-      title: input.title,
-      body: input.body,
-      link: input.link,
-    });
-  } catch {
-    // duplicate notification for same search+item
-  }
-}
-
-export async function listSearchNotifications(userId: string, limit = 20): Promise<SearchNotificationRecord[]> {
-  const rows = await db.query.searchNotifications.findMany({
-    where: eq(searchNotifications.userId, userId),
-    orderBy: (table, { desc: d }) => [d(table.createdAt)],
-    limit,
+  await createNotification({
+    userId: input.userId,
+    type: input.searchType === 'listings' ? 'saved_search_listing' : 'saved_search_seeker',
+    title: input.title,
+    body: input.body,
+    link: input.link,
+    dedupeKey: `saved_search:${input.savedSearchId}:${input.itemId}`,
   });
-  return rows.map((r) => ({
-    id: r.id,
-    savedSearchId: r.savedSearchId,
-    searchType: r.searchType,
-    title: r.title,
-    body: r.body,
-    link: r.link,
-    readAt: r.readAt?.toISOString() ?? null,
-    createdAt: r.createdAt.toISOString(),
-  }));
-}
-
-export async function getUnreadSearchNotificationCount(userId: string): Promise<number> {
-  const [{ count }] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(searchNotifications)
-    .where(and(eq(searchNotifications.userId, userId), isNull(searchNotifications.readAt)));
-  return count;
-}
-
-export async function markSearchNotificationRead(userId: string, id: string) {
-  await db
-    .update(searchNotifications)
-    .set({ readAt: new Date() })
-    .where(and(eq(searchNotifications.id, id), eq(searchNotifications.userId, userId)));
-}
-
-export async function markAllSearchNotificationsRead(userId: string) {
-  await db
-    .update(searchNotifications)
-    .set({ readAt: new Date() })
-    .where(and(eq(searchNotifications.userId, userId), isNull(searchNotifications.readAt)));
 }
 
 export type { ListingSummary };

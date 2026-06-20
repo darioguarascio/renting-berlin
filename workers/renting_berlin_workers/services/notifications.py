@@ -146,16 +146,18 @@ def create_search_notification(
     body: str,
     link: str,
 ) -> None:
+    notif_type = "saved_search_listing" if search_type == "listings" else "saved_search_seeker"
+    dedupe_key = f"saved_search:{saved_search_id}:{item_id}"
     with cursor() as cur:
         try:
             cur.execute(
                 """
-                INSERT INTO search_notifications
-                  (id, user_id, saved_search_id, search_type, item_id, title, body, link)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (saved_search_id, item_id) DO NOTHING
+                INSERT INTO notifications
+                  (id, user_id, type, title, body, link, dedupe_key)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (user_id, dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING
                 """,
-                (new_id(), user_id, saved_search_id, search_type, item_id, title, body, link),
+                (new_id(), user_id, notif_type, title, body, link, dedupe_key),
             )
         except Exception:
             pass

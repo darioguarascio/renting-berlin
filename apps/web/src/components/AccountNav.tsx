@@ -11,9 +11,12 @@ export type AccountNavItem = {
 export const ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
   { href: '/dashboard', label: 'Dashboard', description: 'Overview', icon: 'dashboard' },
   { href: '/account/listings', label: 'My listings', description: 'Manage your offers', icon: 'listings' },
+  { href: '/house-sitting', label: 'House-sitting', description: 'Swap places with your circle', icon: 'stays', accent: true },
+  { href: '/circle', label: 'Your circle', description: 'People you trust', icon: 'circle' },
   { href: '/account/profile-views', label: 'Profile views', description: 'Who viewed your profile', icon: 'profile-views' },
   { href: '/account/settings', label: 'Settings', description: 'Account & sign out', icon: 'settings' },
-  { href: '/account/notifications', label: 'Notifications', description: 'Alerts & contact prefs', icon: 'notifications' },
+  { href: '/notifications', label: 'Notifications', description: 'Your alerts inbox', icon: 'notifications' },
+  { href: '/account/notifications', label: 'Notification settings', description: 'Alerts & contact prefs', icon: 'settings' },
   { href: '/saved-searches', label: 'Saved searches', description: 'Search alerts', icon: 'saved-searches' },
   { href: '/messages', label: 'Messages', description: 'Conversations', icon: 'messages', accent: true },
   { href: '/favorites', label: 'Favorites', description: 'Saved listings', icon: 'favorites' },

@@ -55,6 +55,15 @@ export const moderationFieldEnum = pgEnum('moderation_field', [
   'body',
   'attachment',
 ]);
+export const connectionStatusEnum = pgEnum('connection_status', ['pending', 'accepted', 'blocked']);
+export const stayOfferStatusEnum = pgEnum('stay_offer_status', ['open', 'taken', 'closed', 'cancelled']);
+export const stayOfferVisibilityEnum = pgEnum('stay_offer_visibility', ['connections', 'selected']);
+export const stayClaimStatusEnum = pgEnum('stay_claim_status', [
+  'interested',
+  'accepted',
+  'declined',
+  'withdrawn',
+]);
 
 export const users = pgTable('users', {
   id: text('id').primaryKey(),
@@ -65,6 +74,7 @@ export const users = pgTable('users', {
   image: text('image'),
   lastAuthProvider: text('last_auth_provider'),
   lastOffersVisitAt: timestamp('last_offers_visit_at', { withTimezone: true }),
+  lastNotificationsVisitAt: timestamp('last_notifications_visit_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -479,28 +489,31 @@ export const moderationResults = pgTable(
   (table) => [index('moderation_results_entity_idx').on(table.entityType, table.entityId)],
 );
 
-export const searchNotifications = pgTable(
-  'search_notifications',
+/**
+ * Shared in-app notification inbox. Every feature (saved searches, circle,
+ * house-sitting, …) writes here. `dedupeKey` makes inserts idempotent.
+ */
+export const notifications = pgTable(
+  'notifications',
   {
     id: text('id').primaryKey(),
     userId: text('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    savedSearchId: text('saved_search_id')
-      .notNull()
-      .references(() => savedSearches.id, { onDelete: 'cascade' }),
-    searchType: savedSearchTypeEnum('search_type').notNull(),
-    itemId: text('item_id').notNull(),
+    type: text('type').notNull(),
     title: text('title').notNull(),
     body: text('body').notNull(),
     link: text('link').notNull(),
+    dedupeKey: text('dedupe_key'),
     readAt: timestamp('read_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
-    index('search_notifications_user_idx').on(table.userId),
-    index('search_notifications_user_unread_idx').on(table.userId, table.readAt),
-    uniqueIndex('search_notifications_unique_item_idx').on(table.savedSearchId, table.itemId),
+    index('notifications_user_idx').on(table.userId),
+    index('notifications_user_unread_idx').on(table.userId, table.readAt),
+    uniqueIndex('notifications_dedupe_idx')
+      .on(table.userId, table.dedupeKey)
+      .where(sql`${table.dedupeKey} is not null`),
   ],
 );
 
@@ -540,5 +553,121 @@ export const emailTrackingEvents = pgTable(
   (table) => [
     index('email_tracking_events_send_idx').on(table.sendId),
     index('email_tracking_events_type_idx').on(table.type),
+  ],
+);
+
+/**
+ * Closed-group social graph. A single row represents the relationship between
+ * two users; `areConnected` checks both directions. Connections are formed by
+ * accepting an invite link (invite-only), never by public discovery.
+ */
+export const connections = pgTable(
+  'connections',
+  {
+    id: text('id').primaryKey(),
+    requesterId: text('requester_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    addresseeId: text('addressee_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    status: connectionStatusEnum('status').notNull().default('accepted'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    respondedAt: timestamp('responded_at', { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex('connections_pair_idx').on(table.requesterId, table.addresseeId),
+    index('connections_requester_idx').on(table.requesterId),
+    index('connections_addressee_idx').on(table.addresseeId),
+  ],
+);
+
+/** Shareable invite links used to grow a user's closed circle. */
+export const connectionInvites = pgTable(
+  'connection_invites',
+  {
+    id: text('id').primaryKey(),
+    code: text('code').notNull().unique(),
+    inviterId: text('inviter_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    label: text('label'),
+    maxUses: integer('max_uses'),
+    usedCount: integer('used_count').notNull().default(0),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('connection_invites_inviter_idx').on(table.inviterId)],
+);
+
+/**
+ * "My place is free in this time" — an informal, non-public offer visible only
+ * to the host's connections. Deliberately lighter than `listings`.
+ */
+export const stayOffers = pgTable(
+  'stay_offers',
+  {
+    id: text('id').primaryKey(),
+    hostId: text('host_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    note: text('note'),
+    locationLabel: text('location_label').notNull(),
+    /** Address / key handover / door code — revealed only to the accepted guest. */
+    accessDetails: text('access_details'),
+    availableFrom: timestamp('available_from', { withTimezone: true }).notNull(),
+    availableTo: timestamp('available_to', { withTimezone: true }).notNull(),
+    status: stayOfferStatusEnum('status').notNull().default('open'),
+    visibility: stayOfferVisibilityEnum('visibility').notNull().default('connections'),
+    autoAcceptFirst: boolean('auto_accept_first').notNull().default(false),
+    takenByUserId: text('taken_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+    photoUrls: jsonb('photo_urls').notNull().$type<string[]>().default([]),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('stay_offers_host_idx').on(table.hostId),
+    index('stay_offers_status_idx').on(table.status),
+  ],
+);
+
+/** Explicit audience subset, used only when a stay offer's visibility = 'selected'. */
+export const stayOfferAudience = pgTable(
+  'stay_offer_audience',
+  {
+    offerId: text('offer_id')
+      .notNull()
+      .references(() => stayOffers.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+  },
+  (table) => [uniqueIndex('stay_offer_audience_idx').on(table.offerId, table.userId)],
+);
+
+/**
+ * "I want to take it." Claims queue by `createdAt` (first-come-first-serve).
+ * The host accepts one, which atomically blocks the rest.
+ */
+export const stayClaims = pgTable(
+  'stay_claims',
+  {
+    id: text('id').primaryKey(),
+    offerId: text('offer_id')
+      .notNull()
+      .references(() => stayOffers.id, { onDelete: 'cascade' }),
+    claimantId: text('claimant_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    status: stayClaimStatusEnum('status').notNull().default('interested'),
+    message: text('message'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    respondedAt: timestamp('responded_at', { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex('stay_claims_offer_claimant_idx').on(table.offerId, table.claimantId),
+    index('stay_claims_offer_created_idx').on(table.offerId, table.createdAt),
   ],
 );

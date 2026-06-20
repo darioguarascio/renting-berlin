@@ -1,0 +1,71 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { acceptInvite, getInvitePreview } from '../../lib/connections';
+import { authEntryUrl } from '../../lib/public-routes';
+
+export const prerender = false;
+
+const { code } = Astro.params;
+const session = Astro.locals.session;
+
+const preview = await getInvitePreview(code!);
+const inviterName = preview?.inviterHandle ? `@${preview.inviterHandle}` : preview?.inviterName ?? 'Someone';
+
+let outcome: 'accepted' | 'already' | 'invalid' | 'guest' | 'notfound' = 'guest';
+
+if (!preview) {
+  outcome = 'notfound';
+} else if (!preview.valid) {
+  outcome = 'invalid';
+} else if (session) {
+  const result = await acceptInvite(code!, session.user.id);
+  if (result.ok) {
+    outcome = result.alreadyConnected ? 'already' : 'accepted';
+  } else {
+    outcome = result.reason === 'self' ? 'already' : 'invalid';
+  }
+}
+
+const loginUrl = authEntryUrl(`/invite/${code}`, 'signup');
+---
+
+<BaseLayout title="Join a circle — renting.berlin">
+  <div class="mx-auto max-w-md px-4 py-20 text-center">
+    <div class="rounded-3xl border border-[var(--color-border)] bg-white p-8 shadow-[var(--shadow-card)]">
+      {outcome === 'guest' && (
+        <>
+          <h1 class="font-display text-2xl font-bold text-[var(--color-ink)]">
+            {inviterName} invited you to their circle
+          </h1>
+          <p class="mt-3 text-sm text-[var(--color-ink-muted)]">
+            Join to see when their place is free — and share yours with people you trust. Log in or sign up to accept.
+          </p>
+          <a href={loginUrl} class="btn-brand mt-6 inline-flex">Accept invite</a>
+        </>
+      )}
+      {outcome === 'accepted' && (
+        <>
+          <h1 class="font-display text-2xl font-bold text-[var(--color-ink)]">You're connected with {inviterName}</h1>
+          <p class="mt-3 text-sm text-[var(--color-ink-muted)]">You'll now see their house-sitting offers, and they'll see yours.</p>
+          <div class="mt-6 flex justify-center gap-3">
+            <a href="/house-sitting" class="btn-brand">See house-sitting</a>
+            <a href="/circle" class="btn-ghost">Your circle</a>
+          </div>
+        </>
+      )}
+      {outcome === 'already' && (
+        <>
+          <h1 class="font-display text-2xl font-bold text-[var(--color-ink)]">You're already in {inviterName}'s circle</h1>
+          <a href="/house-sitting" class="btn-brand mt-6 inline-flex">See house-sitting</a>
+        </>
+      )}
+      {(outcome === 'invalid' || outcome === 'notfound') && (
+        <>
+          <h1 class="font-display text-2xl font-bold text-[var(--color-ink)]">This invite isn't available</h1>
+          <p class="mt-3 text-sm text-[var(--color-ink-muted)]">The link may have expired or been revoked. Ask for a fresh one.</p>
+          <a href="/dashboard" class="btn-ghost mt-6 inline-flex">Go to dashboard</a>
+        </>
+      )}
+    </div>
+  </div>
+</BaseLayout>

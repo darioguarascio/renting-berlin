@@ -3,10 +3,15 @@ import { db } from '../../db';
 
 const TRUNCATE_SQL = sql`
   TRUNCATE TABLE
+    notifications,
+    stay_claims,
+    stay_offer_audience,
+    stay_offers,
+    connection_invites,
+    connections,
     messages,
     conversations,
     message_templates,
-    search_notifications,
     saved_searches,
     profile_views,
     listing_views,
