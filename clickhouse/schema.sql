@@ -38,3 +38,23 @@ CREATE TABLE IF NOT EXISTS renting_berlin.email_events
 ENGINE = MergeTree
 PARTITION BY toYYYYMM(created_at)
 ORDER BY (send_id, created_at, id);
+
+CREATE TABLE IF NOT EXISTS renting_berlin.listing_events
+(
+    listing_id String,
+    event_type LowCardinality(String),
+    published_at DateTime64(3, 'UTC')
+)
+ENGINE = MergeTree
+PARTITION BY toYYYYMM(published_at)
+ORDER BY (event_type, published_at, listing_id);
+
+CREATE TABLE IF NOT EXISTS renting_berlin.site_visits
+(
+    visitor_id String,
+    page LowCardinality(String),
+    visited_at DateTime64(3, 'UTC')
+)
+ENGINE = MergeTree
+PARTITION BY toYYYYMM(visited_at)
+ORDER BY (page, visitor_id, visited_at);

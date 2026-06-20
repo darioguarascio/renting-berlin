@@ -46,6 +46,10 @@ vi.mock('./redis', () => ({
   },
 }));
 
+vi.mock('./analytics/listing-events', () => ({
+  recordListingEvent: vi.fn(),
+}));
+
 import {
   indexListing,
   matchesListingFilters,

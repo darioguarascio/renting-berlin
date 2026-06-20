@@ -1,0 +1,53 @@
+# Reference copy of production DB stack on rb.main-0 (/home/app/db/docker-compose.yml).
+# Shares ~/ .env with the app stack (CLICKHOUSE_PASSWORD). See deploy/.env.example.
+
+services:
+  postgres:
+    image: postgis/postgis:17-3.5
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    ports:
+      - "10.30.0.2:15432:5432"
+      - "10.0.0.11:25432:5432"
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - ./.data/postgres:/var/lib/postgresql/data
+      - ./.config/postgres:/etc/postgresql/custom
+
+  redis:
+    image: redis:8-alpine
+    container_name: redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      /usr/local/etc/redis/redis.conf
+    ports:
+      - "10.30.0.2:16379:6379"
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - ./.data/redis:/data
+      - ./.config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.3
+    container_name: clickhouse
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    ports:
+      - "10.30.0.2:18123:8123"
+      - "127.0.0.1:8123:8123"
+      - "10.30.0.2:19000:9000"
+      - "127.0.0.1:9000:9000"
+    volumes:
+      - ./.data/clickhouse/data:/var/lib/clickhouse
+      - ./.data/clickhouse/log:/var/log/clickhouse-server
+      - ./.config/clickhouse:/etc/clickhouse-server/config.d
+
+networks:
+  default:
+    name: app-network

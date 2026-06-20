@@ -166,6 +166,7 @@ jobs:
 
             compose pull $SERVICES
             compose --profile tools run --rm migrate
+            compose run --rm --no-deps web node bootstrap-analytics.mjs
             compose up -d $SERVICES
             compose ps
 

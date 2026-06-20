@@ -44,6 +44,7 @@ COPY --from=build /app/apps/web/server.mjs ./server.mjs
 COPY --from=build /app/apps/web/server ./server
 COPY --from=build /app/apps/web/migrate.sh ./migrate.sh
 COPY --from=build /app/apps/web/start.sh ./start.sh
+COPY --from=build /app/apps/web/bootstrap-analytics.mjs ./bootstrap-analytics.mjs
 COPY --from=build /app/apps/web/docker-entrypoint.sh ./docker-entrypoint.sh
 COPY --from=build /app/apps/web/drizzle.config.ts ./drizzle.config.ts
 COPY --from=build /app/apps/web/drizzle ./drizzle

@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import SearchPage from '../../components/SearchPage.tsx';
 import { searchListings } from '../../lib/search';
 import { authEntryUrl } from '../../lib/public-routes';
+import { countNewListingsSince, getLastOffersVisit, OFFERS_SEEN_COOKIE, recordOffersVisit, VISITOR_COOKIE } from '../../lib/offers-visit';
 import { countActiveFilters, listingSearchRequiresAuth } from '../../lib/search-url';
 import { resolveSearchView, SEARCH_VIEW_COOKIE } from '../../lib/search-view-preference';
 import type { ListingSearchFilters } from '../../types/listing';
@@ -41,10 +42,39 @@ if (listingSearchRequiresAuth(!!session, filters as Record<string, unknown>)) {
 }
 
 let result = { items: [], total: 0, page: 1, limit: 12, totalPages: 1 };
+let newSinceVisit: number | null = null;
+try {
+  const lastVisit = await getLastOffersVisit(
+    session?.user.id,
+    Astro.cookies.get(VISITOR_COOKIE)?.value,
+    Astro.cookies.get(OFFERS_SEEN_COOKIE)?.value,
+  );
+  if (lastVisit) {
+    try {
+      newSinceVisit = await countNewListingsSince(lastVisit);
+    } catch {
+      // count is optional
+    }
+  }
+} catch {
+  // visit lookup is optional
+}
+
 try {
   result = await searchListings(filters);
 } catch {
   // DB may not be running yet during dev
+}
+
+try {
+  await recordOffersVisit(
+    session?.user.id,
+    Astro.cookies.get(VISITOR_COOKIE)?.value,
+    (name, value, options) => {
+    Astro.cookies.set(name, value, options);
+  });
+} catch {
+  // visit tracking is optional
 }
 ---
 
@@ -56,5 +86,6 @@ try {
     view={view}
     isAuthenticated={!!session}
     loginRedirect={Astro.url.pathname + Astro.url.search}
+    newSinceVisit={newSinceVisit}
   />
 </BaseLayout>

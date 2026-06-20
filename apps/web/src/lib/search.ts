@@ -3,6 +3,7 @@ import { and, eq, gte, lte, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { listings } from '../db/schema';
 import { connectRedis, getRedis, REDIS_KEYS } from './redis';
+import { recordListingEvent } from './analytics/listing-events';
 import type { ListingSearchFilters, ListingSummary, SearchResult } from '../types/listing';
 import { buildListingPath } from './urls';
 
@@ -220,6 +221,7 @@ export async function indexListing(id: string): Promise<void> {
   pipeline.set(REDIS_KEYS.listingData(id), JSON.stringify(summary));
   pipeline.geoadd(REDIS_KEYS.geoIndex, row.lng, row.lat, id);
   await pipeline.exec();
+  await recordListingEvent(id, 'published', row.publishedAt ?? row.createdAt);
 }
 
 export async function removeListingFromIndex(id: string): Promise<void> {
@@ -230,6 +232,7 @@ export async function removeListingFromIndex(id: string): Promise<void> {
   pipeline.del(REDIS_KEYS.listingData(id));
   pipeline.zrem(REDIS_KEYS.geoIndex, id);
   await pipeline.exec();
+  await recordListingEvent(id, 'unpublished');
 }
 
 export { toSummary };

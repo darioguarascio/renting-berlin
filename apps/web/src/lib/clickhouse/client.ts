@@ -88,8 +88,8 @@ export async function getClickHouse(): Promise<ClickHouseClient | null> {
   try {
     await schemaReady;
     return client;
-  } catch {
-    // ClickHouse unreachable or schema failed — reset and fall back to Postgres
+  } catch (error) {
+    console.error('[clickhouse] Schema bootstrap failed:', error);
     schemaReady = null;
     client = null;
     return null;

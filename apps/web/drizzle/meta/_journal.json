@@ -99,6 +99,13 @@
       "when": 1781373584700,
       "tag": "0013_message_metadata",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1781373584701,
+      "tag": "0014_last_offers_visit",
+      "breakpoints": true
     }
   ]
 }

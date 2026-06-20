@@ -16,6 +16,7 @@ interface Props {
   view: SearchViewMode;
   isAuthenticated: boolean;
   loginRedirect: string;
+  newSinceVisit?: number | null;
 }
 
 function buildPageUrl(filters: ListingSearchFilters, page: number, view: SearchViewMode): string {
@@ -29,7 +30,14 @@ function buildPageUrl(filters: ListingSearchFilters, page: number, view: SearchV
   return `/offers?${params.toString()}`;
 }
 
-export default function SearchPage({ initialFilters, result, view, isAuthenticated, loginRedirect }: Props) {
+export default function SearchPage({
+  initialFilters,
+  result,
+  view,
+  isAuthenticated,
+  loginRedirect,
+  newSinceVisit = null,
+}: Props) {
   useEffect(() => {
     if (isAuthenticated) {
       saveSearchViewPreference('offers', view);
@@ -38,6 +46,18 @@ export default function SearchPage({ initialFilters, result, view, isAuthenticat
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      {newSinceVisit != null && newSinceVisit > 0 && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--color-brand)]/20 bg-[var(--color-brand-muted)] px-4 py-3 sm:px-5">
+          <p className="text-sm text-[var(--color-ink)]">
+            <strong className="font-semibold text-[var(--color-brand-deep)]">{newSinceVisit}</strong>{' '}
+            new listing{newSinceVisit !== 1 ? 's' : ''} since your last visit
+          </p>
+          <a href="/offers?sort=updated" className="text-sm font-semibold text-[var(--color-brand)] hover:underline">
+            Show newest
+          </a>
+        </div>
+      )}
+
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-[var(--color-brand)]">Angebote · Offers</p>

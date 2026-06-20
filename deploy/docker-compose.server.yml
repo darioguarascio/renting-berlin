@@ -1,5 +1,5 @@
 # Reference copy of production compose on rb.main-0 (/home/app/docker-compose.yml).
-# The live file is managed on the server; update this when changing production layout.
+# Connection strings: see deploy/.env.example (env_file: .env below).
 
 x-worker-common: &worker-common
   image: darioguarascio/renting.berlin-workers:${DOCKER_IMAGE_TAG:-dev}
