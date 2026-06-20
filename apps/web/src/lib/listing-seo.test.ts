@@ -71,7 +71,7 @@ describe('resolveListingOgImage', () => {
   });
 
   it('falls back to og image when there are no photos', () => {
-    expect(resolveListingOgImage([], siteUrl)).toBe(`${siteUrl}/og.svg`);
+    expect(resolveListingOgImage([], siteUrl)).toBe(`${siteUrl}/api/og.png`);
   });
 });
 
@@ -99,7 +99,7 @@ describe('buildListingJsonLd', () => {
 
   it('falls back to og image when there are no photos', () => {
     const jsonLd = buildListingJsonLd({ ...baseListing, photoUrls: [] }, siteUrl);
-    expect(jsonLd.image).toBe(`${siteUrl}/og.svg`);
+    expect(jsonLd.image).toBe(`${siteUrl}/api/og.png`);
   });
 
   it('uses updatedAt when publishedAt is missing', () => {
