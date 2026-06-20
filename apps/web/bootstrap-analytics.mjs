@@ -6,6 +6,34 @@ import postgres from 'postgres';
 
 const rootDir = dirname(fileURLToPath(import.meta.url));
 
+function toClickHouseDateTime(value) {
+  return new Date(value).toISOString().replace('T', ' ').replace('Z', '');
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isTransientError(error) {
+  const code = error && typeof error === 'object' ? error.code : undefined;
+  return code === 'ENOTFOUND' || code === 'ECONNREFUSED' || code === 'ETIMEDOUT';
+}
+
+async function withRetries(label, fn, { attempts = 5, delayMs = 2000 } = {}) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (!isTransientError(error) || attempt === attempts) throw error;
+      console.warn(`[analytics-bootstrap] ${label} failed (attempt ${attempt}/${attempts}): ${error.message ?? error}`);
+      await sleep(delayMs * attempt);
+    }
+  }
+  throw lastError;
+}
+
 function getSchemaPath() {
   const fromEnv = process.env.CLICKHOUSE_SCHEMA_PATH?.trim();
   if (fromEnv && existsSync(fromEnv)) return fromEnv;
@@ -115,7 +143,7 @@ async function backfillSiteVisits(ch, sql) {
     values: visits.map((row) => ({
       visitor_id: row.id,
       page: 'offers',
-      visited_at: row.last_offers_visit_at.toISOString().replace('T', ' ').replace('Z', ''),
+      visited_at: toClickHouseDateTime(row.last_offers_visit_at),
     })),
     format: 'JSONEachRow',
   });
@@ -133,7 +161,7 @@ async function main() {
   const ch = createClickHouseClient();
 
   console.log('[analytics-bootstrap] Applying ClickHouse schema…');
-  await applySchema(ch);
+  await withRetries('schema apply', () => applySchema(ch));
   console.log('[analytics-bootstrap] ClickHouse schema applied');
 
   if (!dbUrl) {
