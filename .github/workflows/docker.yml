@@ -8,8 +8,31 @@ jobs:
   test:
     uses: ./.github/workflows/test.yml
 
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.notes.outputs.version }}
+      changed: ${{ steps.notes.outputs.changed }}
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Compute version and release notes
+        id: notes
+        env:
+          SITE_URL: https://renting.berlin
+        run: bash scripts/release-notes.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: release-notes.txt
+          if-no-files-found: ignore
+
   build-web:
-    needs: test
+    needs: [test, version]
     runs-on: ubuntu-latest
 
     steps:
@@ -36,6 +59,9 @@ jobs:
           context: .
           target: runner
           push: true
+          build-args: |
+            APP_VERSION=${{ needs.version.outputs.version }}
+            APP_COMMIT=${{ github.sha }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=web
@@ -142,3 +168,39 @@ jobs:
             compose --profile tools run --rm migrate
             compose up -d $SERVICES
             compose ps
+
+  release:
+    needs: [deploy, version]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-notes
+
+      - name: Create and push version tag
+        if: needs.version.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          tag="${{ needs.version.outputs.version }}"
+          if git rev-parse "$tag" >/dev/null 2>&1; then
+            echo "Tag $tag already exists; skipping."
+          else
+            git tag -a "$tag" -m "Release $tag"
+            git push origin "$tag"
+          fi
+
+      - name: Notify Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_DEPLOY_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_DEPLOY_CHAT_ID }}
+        run: bash scripts/telegram-send.sh release-notes.txt

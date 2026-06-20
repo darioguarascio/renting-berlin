@@ -4,7 +4,7 @@ import Header from '../components/Header.tsx';
 import Logo from '../components/Logo.tsx';
 import { getSession } from '../lib/session';
 import { authEntryUrl } from '../lib/public-routes';
-import { getSiteUrl } from '../lib/site-url';
+import { getSiteUrl, getAppVersion, getAppCommitShort } from '../lib/site-url';
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { favorites } from '../db/schema';
@@ -42,6 +42,10 @@ const canonicalUrl = canonical ?? `${siteUrl}${Astro.url.pathname}`;
 const ogImage = ogImageProp ?? `${siteUrl}/og.svg`;
 const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 const githubUrl = 'https://github.com/darioguarascio/renting-berlin';
+const telegramUrl = 'https://t.me/renting_berlin';
+const appVersion = getAppVersion();
+const appCommit = getAppCommitShort();
+const versionTitle = appCommit === 'unknown' ? 'Current version' : `Current version · commit ${appCommit}`;
 
 let initialUser: {
   id: string;
@@ -171,9 +175,30 @@ const isAuthenticated = !!initialUser;
           </div>
         </div>
         <div class="mt-10 flex flex-col items-center gap-3 border-t border-white/10 pt-6 text-xs text-white/40 sm:flex-row sm:justify-between">
-          <p>© {new Date().getFullYear()} renting.berlin — Berlin rentals, built for Berliners.</p>
+          <p>
+            © {new Date().getFullYear()} renting.berlin — Berlin rentals, built for Berliners.
+            <span class="ml-1 text-white/30">·</span>
+            <a
+              href="/api/health"
+              class="ml-1 font-mono text-white/30 transition hover:text-white/60"
+              title={versionTitle}
+              target="_blank"
+              rel="noopener noreferrer"
+            >{appVersion}</a>
+          </p>
           <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
             <a href="/privacy" class="text-white/60 transition hover:text-white">Privacy</a>
+            <a
+              href={telegramUrl}
+              class="inline-flex items-center gap-1.5 text-white/60 transition hover:text-white"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-4" aria-hidden="true">
+                <path d="M21.94 4.66a1.5 1.5 0 0 0-1.6-.23L3.4 11.74c-1.18.5-1.13 2.2.08 2.62l4.2 1.45 1.62 5.05c.2.62.98.82 1.46.38l2.34-2.17 4.27 3.13c.6.44 1.46.12 1.62-.6l3.2-15.02a1.5 1.5 0 0 0-.55-1.52ZM9.7 14.32l8.2-5.1c.16-.1.33.12.19.25l-6.66 6.06a1 1 0 0 0-.31.6l-.23 2.06c-.02.16-.25.18-.3.03l-1.07-3.3a.5.5 0 0 1 .19-.6Z" />
+              </svg>
+              Telegram
+            </a>
             <a
               href={githubUrl}
               class="inline-flex items-center gap-1.5 text-white/60 transition hover:text-white"
@@ -183,7 +208,7 @@ const isAuthenticated = !!initialUser;
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-4" aria-hidden="true">
                 <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0 0 22 12.017C22 6.484 17.522 2 12 2Z" clip-rule="evenodd" />
               </svg>
-              Open source on GitHub
+              GitHub
             </a>
           </div>
         </div>

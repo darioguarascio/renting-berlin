@@ -24,9 +24,13 @@ COPY scripts/link-workspace-deps.mjs ./scripts/
 RUN npm ci --omit=dev
 
 FROM base AS runner
+ARG APP_VERSION=dev
+ARG APP_COMMIT=unknown
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=4321
+ENV APP_VERSION=$APP_VERSION
+ENV APP_COMMIT=$APP_COMMIT
 
 RUN apk add --no-cache wget su-exec
 
