@@ -18,7 +18,7 @@ describe('email template', () => {
 
     expect(html).toContain('renting.berlin');
     expect(html).toContain('#2679a3');
-    expect(html).toContain('/email/logo.svg');
+    expect(html).toContain('/email/logo.png');
     expect(html).toContain('Bright 2-room flat in Kreuzberg');
     expect(html).toContain('https://renting.berlin/e/c/send123/0');
     expect(html).toContain('https://renting.berlin/e/o/send123.gif');

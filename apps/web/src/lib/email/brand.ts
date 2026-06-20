@@ -14,7 +14,7 @@ export const EMAIL_BRAND = {
 } as const;
 
 export function emailLogoUrl(siteUrl: string): string {
-  return `${siteUrl.replace(/\/$/, '')}/email/logo.svg`;
+  return `${siteUrl.replace(/\/$/, '')}/email/logo.png`;
 }
 
 export const DEFAULT_EMAIL_FOOTER =

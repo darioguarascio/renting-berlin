@@ -5,6 +5,8 @@ from functools import lru_cache
 from html import escape
 from pathlib import Path
 
+from .from_address import email_logo_url
+
 BRAND = {
     "name": "renting.berlin",
     "brand": "#2679a3",
@@ -112,7 +114,7 @@ def render_html_email(
               <table role="presentation" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="padding-right:12px;vertical-align:middle;">
-                    <img src="{escape(logo_url)}" width="40" height="40" alt="" style="display:block;border:0;" />
+                    <img src="{escape(logo_url)}" width="40" height="40" alt="{escape(BRAND['name'])}" style="display:block;border:0;border-radius:10px;" />
                   </td>
                   <td style="vertical-align:middle;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:800;color:{colors['white']};">
                     renting<span style="color:{colors['brand_light']};">.</span>berlin
@@ -152,7 +154,7 @@ def render_branded_email(
     tracked_links: list[str] | None = None,
     open_pixel_url: str | None = None,
 ) -> tuple[str, str]:
-    logo_url = f"{site_url.rstrip('/')}/email/logo.svg"
+    logo_url = email_logo_url(site_url)
     text = render_text_email(content, site_url=site_url, tracked_links=tracked_links)
     html = render_html_email(
         content,

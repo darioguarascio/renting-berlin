@@ -3,6 +3,7 @@ import { db } from '../db';
 import { users } from '../db/schema';
 import type { EmailJob } from './email-events';
 import { buildNotificationEmail } from './email/send';
+import { formatEmailFrom } from './email/from';
 
 function smtpConfigured(): boolean {
   return Boolean(process.env.SMTP_HOST && process.env.EMAIL_FROM);
@@ -26,7 +27,7 @@ export async function sendEmail(to: string, subject: string, text: string, html:
   });
 
   await transporter.sendMail({
-    from: process.env.EMAIL_FROM,
+    from: formatEmailFrom(),
     to,
     subject,
     text,

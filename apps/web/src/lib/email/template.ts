@@ -1,4 +1,4 @@
-import { DEFAULT_EMAIL_FOOTER, EMAIL_BRAND } from './brand';
+import { DEFAULT_EMAIL_FOOTER, EMAIL_BRAND, emailLogoUrl } from './brand';
 import { escapeHtml } from './utils';
 
 const TEXT_EMAIL_LAYOUT = `renting.berlin
@@ -105,7 +105,7 @@ export function renderHtmlEmail(
               <table role="presentation" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="padding-right:12px;vertical-align:middle;">
-                    <img src="${escapeHtml(options.logoUrl)}" width="40" height="40" alt="" style="display:block;border:0;" />
+                    <img src="${escapeHtml(options.logoUrl)}" width="40" height="40" alt="${escapeHtml(EMAIL_BRAND.name)}" style="display:block;border:0;border-radius:10px;" />
                   </td>
                   <td style="vertical-align:middle;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:800;color:${colors.white};">
                     renting<span style="color:${colors.brandLight};">.</span>berlin
@@ -146,7 +146,7 @@ export function renderBrandedEmail(
     openPixelUrl?: string;
   },
 ): RenderedEmail {
-  const logoUrl = `${options.siteUrl.replace(/\/$/, '')}/email/logo.svg`;
+  const logoUrl = emailLogoUrl(options.siteUrl);
   return {
     subject: content.subject,
     text: renderTextEmail(content, options),

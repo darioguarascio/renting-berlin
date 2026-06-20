@@ -10,6 +10,7 @@ from email.utils import formatdate, make_msgid
 from typing import Sequence
 
 from ..config import EMAIL_FROM, SITE_URL, SMTP_HOST, SMTP_PASS, SMTP_PORT, SMTP_SECURE, SMTP_USER
+from ..email.from_address import format_email_from
 from ..db import cursor
 from ..email.build import build_notification_email
 from ..metrics import record_email
@@ -61,7 +62,7 @@ def send_email(
         message = body
 
     message["Subject"] = subject
-    message["From"] = EMAIL_FROM
+    message["From"] = format_email_from(EMAIL_FROM)
     message["To"] = to
     message["Date"] = formatdate(localtime=True)
     message["Message-ID"] = make_msgid(domain=EMAIL_FROM.rsplit("@", 1)[-1])
