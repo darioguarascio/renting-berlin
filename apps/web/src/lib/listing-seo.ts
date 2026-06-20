@@ -13,7 +13,7 @@ const SITE_NAME = 'renting.berlin';
 
 export function resolveListingOgImage(photoUrls: string[], siteUrl = getSiteUrl()): string {
   const primaryPhoto = photoUrls[0];
-  if (!primaryPhoto) return `${siteUrl}/og.svg`;
+  if (!primaryPhoto) return `${siteUrl}/api/og.png`;
   return primaryPhoto.startsWith('http') ? primaryPhoto : `${siteUrl}${primaryPhoto}`;
 }
 

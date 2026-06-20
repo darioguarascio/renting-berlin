@@ -16,18 +16,18 @@ export default function Logo({ size = 'md', showTagline = false, variant = 'defa
 
   return (
     <div className={`flex items-center ${s.gap}`}>
-      <svg width={s.icon} height={s.icon} viewBox="0 0 40 40" fill="none" aria-hidden>
-        <rect width="40" height="40" rx="11" fill="url(#logo-grad)" />
-        <path
-          d="M11 28V12h5.2c3.4 0 5.6 1.8 5.6 4.6 0 2-1.1 3.4-2.8 4l3.4 7.4h-3.4l-3-6.8H14.4V28H11zm3.4-9.6h1.6c1.6 0 2.5-.8 2.5-2s-.9-2-2.5-2h-1.6v4z"
-          fill="white"
-        />
+      <svg width={s.icon} height={s.icon} viewBox="0 0 32 32" fill="none" aria-hidden>
         <defs>
-          <linearGradient id="logo-grad" x1="4" y1="4" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#2679a3" />
-            <stop offset="1" stopColor="#006699" />
+          <linearGradient id="logo-door-grad" x1="13" y1="20" x2="13" y2="27" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#dd4477" />
+            <stop offset="100%" stopColor="#c42d63" />
           </linearGradient>
         </defs>
+        <path
+          d="M7 27.2V16H3.5L16 4.5 28.5 16H25v11.2q0 .8-.8.8H7.8q-.8 0-.8-.8Z"
+          fill="#2679a3"
+        />
+        <rect x="13" y="20" width="6" height="7.5" rx="1" fill="url(#logo-door-grad)" />
       </svg>
       <div className="leading-none">
         <span className={`font-display font-extrabold tracking-tight ${light ? 'text-white' : 'text-[var(--color-ink)]'} ${s.word}`}>

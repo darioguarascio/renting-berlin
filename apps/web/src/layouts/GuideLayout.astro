@@ -29,6 +29,7 @@ const pageTitle = `${guide.title} — renting.berlin`;
   description={guide.description}
   canonical={guideUrl(guide.slug)}
   ogType="article"
+  ogEyebrow={GUIDE_CATEGORIES[guide.category]}
   articlePublishedTime={toIsoDateTime(guide.publishedAt)}
   articleModifiedTime={toIsoDateTime(modifiedAt)}
   articleSection={GUIDE_CATEGORIES[guide.category]}

@@ -5,6 +5,7 @@ import Logo from '../components/Logo.tsx';
 import { getSession } from '../lib/session';
 import { authEntryUrl } from '../lib/public-routes';
 import { getSiteUrl, getAppVersion, getAppCommitShort } from '../lib/site-url';
+import { buildOgImageUrl } from '../lib/og-url';
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { favorites } from '../db/schema';
@@ -18,6 +19,8 @@ interface Props {
   ogType?: 'website' | 'article';
   ogImage?: string;
   ogImageAlt?: string;
+  ogEyebrow?: string;
+  ogStats?: string[];
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   articlePublishedTime?: string;
   articleModifiedTime?: string;
@@ -31,6 +34,8 @@ const {
   ogType = 'website',
   ogImage: ogImageProp,
   ogImageAlt,
+  ogEyebrow,
+  ogStats,
   jsonLd,
   articlePublishedTime,
   articleModifiedTime,
@@ -39,7 +44,10 @@ const {
 
 const siteUrl = getSiteUrl();
 const canonicalUrl = canonical ?? `${siteUrl}${Astro.url.pathname}`;
-const ogImage = ogImageProp ?? `${siteUrl}/og.svg`;
+const ogImage =
+  ogImageProp ??
+  buildOgImageUrl({ title, subtitle: description, eyebrow: ogEyebrow, stats: ogStats }, siteUrl);
+const ogImageType = ogImage.endsWith('.svg') ? 'image/svg+xml' : 'image/png';
 const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 const githubUrl = 'https://github.com/darioguarascio/renting-berlin';
 const telegramUrl = 'https://t.me/renting_berlin';
@@ -93,6 +101,13 @@ const isAuthenticated = !!initialUser;
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:type" content={ogImageType} />
+    {!ogImageProp && (
+      <>
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+      </>
+    )}
     {ogImageAlt && <meta property="og:image:alt" content={ogImageAlt} />}
     <meta property="og:url" content={canonicalUrl} />
     {articlePublishedTime && <meta property="article:published_time" content={articlePublishedTime} />}
@@ -105,8 +120,12 @@ const isAuthenticated = !!initialUser;
     {jsonLdBlocks.map((block) => (
       <script type="application/ld+json" set:html={JSON.stringify(block)} />
     ))}
-    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <title>{title}</title>
     <script is:inline src="https://t.surl.it/api/script.js" data-site-id="5" defer></script>

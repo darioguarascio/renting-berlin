@@ -33,9 +33,22 @@ try {
 }
 
 const description = buildNeighborhoodSeoDescription(label, stats);
+
+const ogStats: string[] = [];
+if (stats.totalListings > 0) {
+  ogStats.push(`${stats.totalListings} listing${stats.totalListings === 1 ? '' : 's'}`);
+  if (stats.rent.median != null) ogStats.push(`€${stats.rent.median}/mo median`);
+  if (stats.size.averageSqm != null) ogStats.push(`${stats.size.averageSqm} m² avg`);
+  if (stats.anmeldungAvailableCount > 0) ogStats.push(`${stats.anmeldungAvailableCount} w/ Anmeldung`);
+}
 ---
 
-<BaseLayout title={`Rent in ${label} — renting.berlin`} description={description}>
+<BaseLayout
+  title={`Rent in ${label} — renting.berlin`}
+  description={description}
+  ogEyebrow="Berlin neighborhoods"
+  ogStats={ogStats}
+>
   <section class="hero-mesh grid-berlin relative overflow-hidden border-b border-[var(--color-border)] py-14">
     <div class="mx-auto max-w-7xl px-4 sm:px-6">
       <div class="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--color-brand-light)] bg-white/80 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[var(--color-brand-deep)] backdrop-blur">

@@ -130,7 +130,14 @@ const pageDescription = buildListingDescription({
   anmeldungAvailable: listing.anmeldungAvailable,
 });
 const canonical = listingPageUrl(listing.slug, listing.shortCode);
-const ogImage = resolveListingOgImage(listing.photoUrls);
+// Use the listing photo when available; otherwise let BaseLayout generate a
+// branded OG image from the listing title/description + stats below.
+const ogImage = listing.photoUrls.length > 0 ? resolveListingOgImage(listing.photoUrls) : undefined;
+const ogStats = [
+  `€${listing.costs.rentPerMonth}/mo`,
+  `${listing.sizeSqm} m²`,
+  `${listing.rooms} room${listing.rooms === 1 ? '' : 's'}`,
+];
 const listingJsonLd = buildListingJsonLd({
   title: listing.title,
   slug: listing.slug,
@@ -162,6 +169,8 @@ const breadcrumbJsonLd = buildListingBreadcrumbJsonLd({
   canonical={canonical}
   ogImage={ogImage}
   ogImageAlt={listing.title}
+  ogEyebrow={`${neighborhoodLabel}, Berlin`}
+  ogStats={ogStats}
   jsonLd={[listingJsonLd, breadcrumbJsonLd]}
 >
   <article class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
