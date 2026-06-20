@@ -21,9 +21,14 @@ interface Props {
 
 const MAX_ATTACHMENTS = 5;
 
+const MAX_TEXTAREA_HEIGHT = 144;
+
 function resizeTextarea(el: HTMLTextAreaElement) {
   el.style.height = 'auto';
-  el.style.height = `${Math.min(el.scrollHeight, 144)}px`;
+  const next = Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT);
+  el.style.height = `${next}px`;
+  // Only show the scrollbar once the content actually overflows the cap.
+  el.style.overflowY = el.scrollHeight > MAX_TEXTAREA_HEIGHT ? 'auto' : 'hidden';
 }
 
 function AttachIcon() {
@@ -146,6 +151,7 @@ export default function MessageComposer({
     setMenuOpen(false);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.overflowY = 'hidden';
     }
   }
 

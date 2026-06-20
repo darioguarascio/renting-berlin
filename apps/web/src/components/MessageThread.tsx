@@ -70,19 +70,44 @@ export default function MessageThread({ conversationId, embedded = false, showMo
   const [deleting, setDeleting] = useState(false);
   const [agreementOpen, setAgreementOpen] = useState(false);
   const [agreementSummary, setAgreementSummary] = useState<AgreementSummary | null>(null);
+  const [showNewMessages, setShowNewMessages] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
+  const didInitialScroll = useRef(false);
+  const isNearBottom = useRef(true);
+  const lastSignature = useRef('');
 
   const templateKind =
     data?.contextKind === 'seeker' ? 'outreach' : data?.contextKind === 'listing' ? 'inquiry' : 'general';
 
+  function scrollToBottom(behavior: ScrollBehavior) {
+    bottomRef.current?.scrollIntoView({ behavior });
+    isNearBottom.current = true;
+    setShowNewMessages(false);
+  }
+
+  function handleScroll() {
+    const el = messagesRef.current;
+    if (!el) return;
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+    isNearBottom.current = nearBottom;
+    if (nearBottom) setShowNewMessages(false);
+  }
+
   async function load() {
     const res = await fetch(`/api/conversations/${conversationId}`);
-    if (res.ok) {
-      setData(await res.json());
-      setLoadError(false);
+    if (!res.ok) {
+      setLoadError(true);
       return;
     }
-    setLoadError(true);
+    const json = (await res.json()) as ThreadData;
+    setLoadError(false);
+    // Skip the state update when nothing changed (id + read state) to avoid
+    // a re-render on every 5s poll.
+    const signature = json.messages.map((m) => `${m.id}:${m.readAt ?? ''}`).join('|');
+    if (signature === lastSignature.current) return;
+    lastSignature.current = signature;
+    setData(json);
   }
 
   async function loadAgreement() {
@@ -93,6 +118,10 @@ export default function MessageThread({ conversationId, embedded = false, showMo
   useEffect(() => {
     setData(null);
     setLoadError(false);
+    setShowNewMessages(false);
+    didInitialScroll.current = false;
+    isNearBottom.current = true;
+    lastSignature.current = '';
     load();
     loadAgreement();
     const interval = setInterval(load, 5000);
@@ -100,7 +129,21 @@ export default function MessageThread({ conversationId, embedded = false, showMo
   }, [conversationId]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!data) return;
+    // Jump straight to the latest message when a conversation first opens.
+    if (!didInitialScroll.current) {
+      scrollToBottom('auto');
+      didInitialScroll.current = true;
+      return;
+    }
+    // Afterwards, only follow new messages if the reader is already at the
+    // bottom (or sent the message themselves); otherwise surface a pill.
+    const last = data.messages[data.messages.length - 1];
+    if (isNearBottom.current || last?.isMine) {
+      scrollToBottom('smooth');
+    } else {
+      setShowNewMessages(true);
+    }
   }, [data?.messages.length]);
 
   async function send(payload: ComposerPayload) {
@@ -302,7 +345,8 @@ export default function MessageThread({ conversationId, embedded = false, showMo
         />
       )}
 
-      <div className="chat-thread-messages">
+      <div className="chat-thread-body">
+        <div className="chat-thread-messages" ref={messagesRef} onScroll={handleScroll}>
         {groupedMessages.map((msg) => {
           if (msg.metadata?.type === 'agreement') {
             const card = AGREEMENT_CARD[msg.metadata.event];
@@ -352,6 +396,20 @@ export default function MessageThread({ conversationId, embedded = false, showMo
           );
         })}
         <div ref={bottomRef} />
+        </div>
+
+        {showNewMessages && (
+          <button
+            type="button"
+            className="chat-thread-jump"
+            onClick={() => scrollToBottom('smooth')}
+          >
+            New messages
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-4">
+              <path fillRule="evenodd" d="M12 2.25a.75.75 0 0 1 .75.75v15.19l5.47-5.47a.75.75 0 1 1 1.06 1.06l-6.75 6.75a.75.75 0 0 1-1.06 0l-6.75-6.75a.75.75 0 1 1 1.06-1.06l5.47 5.47V3a.75.75 0 0 1 .75-.75Z" clipRule="evenodd" />
+            </svg>
+          </button>
+        )}
       </div>
 
       <MessageComposer templateKind={templateKind} onSend={send} sending={sending} variant="chat" />
