@@ -8,6 +8,8 @@ require_env TEST_DATABASE_URL
 export DATABASE_URL="${TEST_DATABASE_URL}"
 export BETTER_AUTH_SECRET="${BETTER_AUTH_SECRET:-test-secret-integration}"
 export BETTER_AUTH_URL="${BETTER_AUTH_URL:-http://localhost:4321}"
+export GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-test-google-client-id.apps.googleusercontent.com}"
+export GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-test-google-client-secret}"
 
 teardown() {
   echo ""

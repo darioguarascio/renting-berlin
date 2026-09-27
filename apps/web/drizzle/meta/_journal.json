@@ -120,6 +120,13 @@
       "when": 1781373584703,
       "tag": "0016_notifications_visit_drop_search_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1781373584704,
+      "tag": "0017_auth_schema_guard",
+      "breakpoints": true
     }
   ]
 }

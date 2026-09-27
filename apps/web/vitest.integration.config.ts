@@ -40,6 +40,9 @@ export default defineConfig({
     TEST_DATABASE_URL: testDatabaseUrl,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? 'test-secret-integration',
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL ?? 'http://localhost:4321',
+    GOOGLE_CLIENT_ID:
+      process.env.GOOGLE_CLIENT_ID ?? 'test-google-client-id.apps.googleusercontent.com',
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ?? 'test-google-client-secret',
     NODE_ENV: 'test',
     MODERATION_DISABLED: '1',
     NOTIFICATIONS_SYNC: '1',

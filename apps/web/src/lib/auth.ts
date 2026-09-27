@@ -98,6 +98,10 @@ export const auth = betterAuth({
       verification: schema.verifications,
     },
   }),
+  account: {
+    // Cookie-backed OAuth state avoids hard 500s when verification rows cannot be written.
+    storeStateStrategy: 'cookie',
+  },
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,
