@@ -35,7 +35,29 @@ export function isStaticAsset(path: string): boolean {
   );
 }
 
+export function normalizeRedirectPath(
+  path: string | null | undefined,
+  fallback = '/dashboard',
+): string {
+  const trimmed = (path ?? '').trim();
+  if (!trimmed) return fallback;
+  if (/^https?:\/\//i.test(trimmed) || trimmed.startsWith('//')) return fallback;
+
+  let normalized = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  const pathname = normalized.split('?')[0] ?? normalized;
+
+  // Bare listing slugs (flat-in-xberg--21TVC_kN) must stay absolute under /listings/.
+  if (
+    !pathname.startsWith('/listings/') &&
+    /^\/[a-z0-9-]+--[A-Za-z0-9_-]+$/.test(pathname)
+  ) {
+    normalized = `/listings${normalized}`;
+  }
+
+  return normalized;
+}
+
 export function authEntryUrl(path: string, mode: 'login' | 'signup' = 'login'): string {
   const base = mode === 'signup' ? '/signup' : '/login';
-  return `${base}?redirect=${encodeURIComponent(path)}`;
+  return `${base}?redirect=${encodeURIComponent(normalizeRedirectPath(path))}`;
 }

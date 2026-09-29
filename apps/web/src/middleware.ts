@@ -5,6 +5,7 @@ import {
   isPublicApi,
   isPublicPage,
   isStaticAsset,
+  normalizeRedirectPath,
 } from './lib/public-routes';
 import { getSession } from './lib/session';
 
@@ -43,7 +44,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const handle = await getUserHandle(session.user.id);
 
     if (handle && path === HANDLE_SETUP_PATH) {
-      const redirect = new URL(context.url).searchParams.get('redirect') ?? '/dashboard';
+      const redirect = normalizeRedirectPath(new URL(context.url).searchParams.get('redirect'));
       return context.redirect(redirect);
     }
 

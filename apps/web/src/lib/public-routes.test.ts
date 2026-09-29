@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { AUDIENCE_PAGES } from './audience-pages';
-import { authEntryUrl, isPublicApi, isPublicPage, isStaticAsset } from './public-routes';
+import {
+  authEntryUrl,
+  isPublicApi,
+  isPublicPage,
+  isStaticAsset,
+  normalizeRedirectPath,
+} from './public-routes';
 
 describe('isPublicPage', () => {
   it('allows marketing and auth pages', () => {
@@ -59,9 +65,28 @@ describe('isStaticAsset', () => {
   });
 });
 
+describe('normalizeRedirectPath', () => {
+  it('normalizes bare listing slugs to /listings paths', () => {
+    expect(normalizeRedirectPath('flat-in-xberg--21TVC_kN')).toBe(
+      '/listings/flat-in-xberg--21TVC_kN',
+    );
+  });
+
+  it('rejects external redirect targets', () => {
+    expect(normalizeRedirectPath('https://evil.example/phish')).toBe('/dashboard');
+  });
+
+  it('keeps absolute in-app paths unchanged', () => {
+    expect(normalizeRedirectPath('/offers?view=map')).toBe('/offers?view=map');
+  });
+});
+
 describe('authEntryUrl', () => {
   it('builds login redirect links', () => {
     expect(authEntryUrl('/offers')).toBe('/login?redirect=%2Foffers');
     expect(authEntryUrl('/offers?view=map', 'signup')).toBe('/signup?redirect=%2Foffers%3Fview%3Dmap');
+    expect(authEntryUrl('flat-in-xberg--21TVC_kN', 'signup')).toBe(
+      '/signup?redirect=%2Flistings%2Fflat-in-xberg--21TVC_kN',
+    );
   });
 });

@@ -288,7 +288,7 @@ const breadcrumbJsonLd = buildListingBreadcrumbJsonLd({
             externalUrl={listing.externalUrl}
             externalProvider={listing.externalProvider}
             isAuthenticated={isAuthenticated}
-            loginRedirect={canonicalPath}
+            loginRedirect={listingHref(listing.slug, listing.shortCode)}
           />
         </div>
 

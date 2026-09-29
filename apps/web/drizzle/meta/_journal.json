@@ -127,6 +127,13 @@
       "when": 1781373584704,
       "tag": "0017_auth_schema_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1781373584705,
+      "tag": "0018_listing_archives",
+      "breakpoints": true
     }
   ]
 }

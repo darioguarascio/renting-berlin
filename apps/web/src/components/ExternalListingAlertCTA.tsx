@@ -1,5 +1,4 @@
 import SaveSearchButton from './SaveSearchButton';
-import { authEntryUrl } from '../lib/public-routes';
 import { buildSearchUrl } from '../lib/search-url';
 import type { BerlinNeighborhood, ListingCategory, RentType } from '../types/listing';
 
@@ -46,7 +45,7 @@ export default function ExternalListingAlertCTA({
           type="listings"
           filters={filters}
           isAuthenticated={isAuthenticated}
-          loginRedirect={isAuthenticated ? searchUrl : authEntryUrl(searchUrl, 'signup')}
+          loginRedirect={searchUrl}
         />
       </div>
       {!isAuthenticated && (

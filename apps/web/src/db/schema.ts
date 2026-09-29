@@ -193,6 +193,24 @@ export const listings = pgTable(
   ],
 );
 
+export const listingArchives = pgTable(
+  'listing_archives',
+  {
+    id: text('id').primaryKey(),
+    listingId: text('listing_id')
+      .notNull()
+      .references(() => listings.id, { onDelete: 'cascade' }),
+    archivedAt: timestamp('archived_at', { withTimezone: true }).notNull().defaultNow(),
+    reason: text('reason').notNull(),
+    snapshot: jsonb('snapshot').notNull().$type<Record<string, unknown>>(),
+  },
+  (table) => [
+    uniqueIndex('listing_archives_listing_id_idx').on(table.listingId),
+    index('listing_archives_archived_at_idx').on(table.archivedAt),
+    index('listing_archives_reason_idx').on(table.reason),
+  ],
+);
+
 export const favorites = pgTable(
   'favorites',
   {

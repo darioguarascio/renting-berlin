@@ -1,4 +1,5 @@
 import { authClient } from '../lib/auth-client';
+import { normalizeRedirectPath } from '../lib/public-routes';
 import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, suggestHandleFromName } from '../lib/urls';
 import AccountHandleForm from './AccountHandleForm';
 import Logo from './Logo';
@@ -6,7 +7,7 @@ import Logo from './Logo';
 function getRedirectTarget(): string {
   if (typeof window === 'undefined') return '/dashboard';
   const params = new URLSearchParams(window.location.search);
-  return params.get('redirect') ?? '/dashboard';
+  return normalizeRedirectPath(params.get('redirect'));
 }
 
 export default function HandleSetupPage() {

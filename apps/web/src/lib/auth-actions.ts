@@ -1,4 +1,5 @@
 import { authClient } from '../lib/auth-client';
+import { normalizeRedirectPath } from './public-routes';
 import { trackEvent } from './rybbit';
 
 export { authClient };
@@ -16,7 +17,7 @@ export function setLastUsedProvider(provider: string): void {
 function getCallbackUrl(): string {
   if (typeof window === 'undefined') return '/dashboard';
   const params = new URLSearchParams(window.location.search);
-  return params.get('redirect') ?? '/dashboard';
+  return normalizeRedirectPath(params.get('redirect'));
 }
 
 function getSignupCallbackUrl(): string {
@@ -24,7 +25,7 @@ function getSignupCallbackUrl(): string {
   const params = new URLSearchParams(window.location.search);
   const redirect = params.get('redirect');
   if (redirect) {
-    return `/signup/handle?redirect=${encodeURIComponent(redirect)}`;
+    return `/signup/handle?redirect=${encodeURIComponent(normalizeRedirectPath(redirect))}`;
   }
   return '/signup/handle';
 }
